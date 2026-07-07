@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Input Soal — ExamCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#1a3c6e;--navy-dark:#122a52;--navy-light:#e8eef7;
+  --orange:#e8821a;--orange-light:#fff4e8;
+  --bg:#f0f2f5;--surface:#ffffff;--border:#e2e6ea;--border2:#d1d8e0;
+  --ink:#1a2332;--ink2:#4a5568;--ink3:#9aa5b4;--ink4:#c9d3dc;
+  --green:#2e7d32;--green-light:#e8f5e9;
+  --red:#c62828;--red-light:#ffebee;
+  --amber:#f59e0b;--amber-light:#fffbeb;
+  --sky:#0369a1;--sky-light:#e0f2fe;
+  --sidebar-w:220px;--topbar-h:60px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex}
+
+/* ── SKELETON ── */
+@keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+.sk{background:linear-gradient(90deg,#e8ebef 25%,#f4f6f8 50%,#e8ebef 75%);background-size:600px 100%;animation:shimmer 1.4s ease-in-out infinite;border-radius:6px}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;z-index:100;display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-brand{display:flex;align-items:center;gap:11px;padding:0 18px;height:var(--topbar-h);border-bottom:1px solid var(--border);flex-shrink:0}
+.brand-icon{width:36px;height:36px;background:var(--navy);border-radius:8px;display:grid;place-items:center;flex-shrink:0}
+.brand-icon svg{width:18px;height:18px;fill:white}
+.brand-name{font-size:15px;font-weight:700;color:var(--ink)}
+.brand-sub{font-size:9.5px;font-weight:500;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+.nav-section{padding:16px 10px 0}
+.nav-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);padding:0 8px;margin-bottom:5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;font-size:13px;font-weight:500;color:var(--ink2);cursor:pointer;transition:all .15s;border:none;background:transparent;width:100%;text-align:left;font-family:'Inter',sans-serif;margin-bottom:1px;text-decoration:none}
+.nav-item:hover{background:var(--bg);color:var(--ink)}
+.nav-item.active{background:var(--navy-light);color:var(--navy);font-weight:600}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.sidebar-footer{margin-top:auto;border-top:1px solid var(--border);padding:14px;flex-shrink:0}
+.user-card{display:flex;align-items:center;gap:9px;padding:8px;border-radius:8px;cursor:pointer;transition:background .15s}
+.user-card:hover{background:var(--bg)}
+.user-avatar{width:32px;height:32px;background:var(--navy);border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.user-name{font-size:13px;font-weight:600;color:var(--ink)}
+.user-role{font-size:11px;color:var(--ink3)}
+.logout-btn{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;font-size:12px;color:var(--ink3);cursor:pointer;transition:all .15s;border:none;background:transparent;width:100%;margin-top:2px;font-family:'Inter',sans-serif}
+.logout-btn:hover{background:var(--red-light);color:var(--red)}
+
+/* ── MAIN ── */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:15px;font-weight:700;color:var(--ink)}
+.topbar-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;border:1.5px solid}
+.btn-primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-primary:hover{background:var(--navy-dark)}
+.btn-primary:disabled{background:var(--ink3);border-color:var(--ink3);cursor:not-allowed}
+.btn-ghost{background:transparent;color:var(--ink2);border-color:var(--border)}
+.btn-ghost:hover{background:var(--bg);color:var(--ink)}
+.btn-danger{background:var(--red-light);color:var(--red);border-color:rgba(198,40,40,.2)}
+.btn-danger:hover{background:var(--red);color:#fff}
+.btn svg{width:14px;height:14px}
+
+/* ── CONTENT ── */
+.content{padding:22px 24px;flex:1}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.page-title{font-size:20px;font-weight:700;color:var(--ink)}
+.page-sub{font-size:13px;color:var(--ink3);margin-top:2px}
+
+/* ── LAYOUT ── */
+.layout{display:grid;grid-template-columns:1fr 360px;gap:18px;align-items:start}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);background:#f7f9fc}
+.card-title{font-size:14px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px}
+.card-title svg{width:15px;height:15px;color:var(--ink3)}
+.card-body{padding:18px}
+
+/* ── FORM ── */
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:5px}
+.form-label .req{color:var(--red)}
+.form-input,.form-select,.form-textarea{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;color:var(--ink);background:var(--surface);outline:none;transition:border-color .18s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--navy)}
+.form-textarea{resize:vertical;min-height:100px;line-height:1.6}
+.form-hint{font-size:11px;color:var(--ink3);margin-top:4px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ── TYPE TABS ── */
+.type-tabs{display:flex;background:var(--bg);border-radius:9px;padding:4px;gap:4px;margin-bottom:18px}
+.type-tab{flex:1;padding:9px;border-radius:6px;border:none;background:transparent;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:500;color:var(--ink3);cursor:pointer;transition:all .15s;text-align:center}
+.type-tab.active{background:var(--surface);color:var(--navy);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+
+/* ── OPTIONS ── */
+.option-item{display:flex;align-items:flex-start;gap:10px;padding:10px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;margin-bottom:8px;transition:border-color .15s}
+.option-item:has(.option-correct:checked){border-color:var(--green);background:var(--green-light)}
+.option-key{width:28px;height:28px;border-radius:6px;background:var(--surface);border:1.5px solid var(--border);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--ink3);flex-shrink:0;margin-top:2px;font-family:'JetBrains Mono',monospace}
+.option-item:has(.option-correct:checked) .option-key{background:var(--green);color:#fff;border-color:var(--green)}
+.option-input{flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;color:var(--ink);background:var(--surface);outline:none}
+.option-input:focus{border-color:var(--navy)}
+.option-correct{width:16px;height:16px;accent-color:var(--green);flex-shrink:0;margin-top:6px;cursor:pointer}
+.option-del{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--ink3);cursor:pointer;display:grid;place-items:center;flex-shrink:0;margin-top:1px;transition:all .15s}
+.option-del:hover{background:var(--red-light);color:var(--red);border-color:rgba(198,40,40,.2)}
+.option-del svg{width:12px;height:12px}
+
+/* ── DIFFICULTY SELECTOR ── */
+.diff-btns{display:flex;gap:8px}
+.diff-btn{flex:1;padding:8px;border-radius:7px;border:1.5px solid var(--border);background:transparent;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:var(--ink3);cursor:pointer;transition:all .15s;text-align:center}
+.diff-btn.easy.active{background:var(--green-light);border-color:var(--green);color:var(--green)}
+.diff-btn.medium.active{background:var(--amber-light);border-color:var(--amber);color:#92400e}
+.diff-btn.hard.active{background:var(--red-light);border-color:rgba(198,40,40,.3);color:var(--red)}
+
+/* ── PREVIEW ── */
+.preview-q{font-size:15px;color:var(--ink);line-height:1.7;margin-bottom:14px;font-weight:400}
+.preview-option{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:7px;font-size:13px;color:var(--ink2)}
+.preview-key{width:26px;height:26px;border-radius:6px;border:1.5px solid var(--border2);display:grid;place-items:center;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--ink3);flex-shrink:0}
+.preview-option.correct-opt{background:var(--green-light);border-color:rgba(46,125,50,.3);color:var(--green)}
+.preview-option.correct-opt .preview-key{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* ── SOAL LIST ── */
+.soal-item{display:flex;align-items:flex-start;gap:10px;padding:13px 16px;border-bottom:1px solid var(--border);transition:background .15s}
+.soal-item:last-child{border-bottom:none}
+.soal-item:hover{background:var(--bg)}
+.soal-num{width:28px;height:28px;border-radius:6px;background:var(--navy-light);color:var(--navy);display:grid;place-items:center;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.soal-text{flex:1;font-size:13px;color:var(--ink);line-height:1.5}
+.soal-meta{font-size:11px;color:var(--ink3);margin-top:2px}
+.diff-badge{display:inline-flex;padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:600}
+.diff-easy{background:var(--green-light);color:var(--green)}
+.diff-medium{background:var(--amber-light);color:#92400e}
+.diff-hard{background:var(--red-light);color:var(--red)}
+
+/* ── CHAR COUNTER ── */
+.char-count{font-size:11px;color:var(--ink3);text-align:right;margin-top:3px}
+.char-count.warn{color:var(--amber)}
+.char-count.over{color:var(--red)}
+
+/* ── SESSION TRACKER ── */
+.session-stat{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border-radius:8px;margin-bottom:10px;font-size:13px}
+.ss-label{color:var(--ink2)}
+.ss-value{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--navy)}
+
+/* ── PROGRESS BAR ── */
+.prog-track{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:4px}
+.prog-fill{height:100%;background:var(--navy);border-radius:3px;transition:width .4s ease}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%)}
+  .main{margin-left:0}
+  .layout{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg></div>
+    <div><div class="brand-name">ExamCore</div><div class="brand-sub">Exam Management</div></div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Menu Utama</div>
+    <a class="nav-item" href="guru-dashboard.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard
+    </a>
+    <a class="nav-item" href="manajemen-kelas.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Manajemen Kelas
+    </a>
+    <a class="nav-item active" href="input-soal.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Input Soal
+    </a>
+    <a class="nav-item" href="jadwal-ujian.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Jadwal Ujian
+    </a>
+    <div class="nav-label" style="margin-top:12px">Laporan</div>
+    <a class="nav-item" href="rekap-nilai.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Rekap Nilai
+    </a>
+    <a class="nav-item" href="import-arsip.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Import & Arsip
+    </a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" data-user-avatar>G</div>
+      <div><div class="user-name" data-user-name>Guru</div><div class="user-role" data-user-role>guru</div></div>
+    </div>
+    <button class="logout-btn" onclick="logout()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout
+    </button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-title">Input Soal</div>
+    <div class="topbar-r">
+      <button class="btn btn-ghost" onclick="resetForm()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>Reset
+      </button>
+      <button class="btn btn-primary" id="btn-save" onclick="simpanSoal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <span id="btn-save-text">Simpan Soal</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="page-head">
+      <div>
+        <div class="page-title">Input Soal</div>
+        <div class="page-sub">Buat soal baru untuk bank soal Anda</div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- LEFT: FORM -->
+      <div style="display:flex;flex-direction:column;gap:16px">
+
+        <!-- Tipe Soal -->
+        <div class="card">
+          <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Tipe Soal</div></div>
+          <div class="card-body">
+            <div style="background:var(--navy-light);color:var(--navy);border-radius:9px;padding:10px 12px;font-size:13px;font-weight:600;margin-bottom:14px">Pilihan Ganda</div>
+            <div class="row2">
+              <div class="form-group" style="margin:0">
+                <label class="form-label">Kategori</label>
+                <select class="form-select" id="sel-category">
+                  <option value="">— Pilih Kategori —</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label class="form-label">Bobot Nilai</label>
+                <input class="form-input" type="number" id="inp-weight" value="1" min="0.1" max="10" step="0.1">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Teks Soal -->
+        <div class="card">
+          <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Teks Soal</div></div>
+          <div class="card-body">
+            <div class="form-group" style="margin:0">
+              <label class="form-label">Pertanyaan <span class="req">*</span></label>
+              <textarea class="form-textarea" id="inp-question" placeholder="Tulis pertanyaan di sini..." rows="5" oninput="updatePreview();updateCharCount(this,2000)" maxlength="2000" style="min-height:120px"></textarea>
+              <div class="char-count" id="cc-question">0 / 2000</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gambar Soal -->
+        <div class="card">
+          <div class="card-head"><div class="card-title">Gambar Soal</div></div>
+          <div class="card-body">
+            <input class="form-input" type="file" id="inp-image" accept="image/jpeg,image/png,image/jpg,image/gif,image/svg+xml" onchange="setQuestionImage(this.files[0])">
+            <div id="image-preview" style="display:none;margin-top:10px">
+              <img id="image-preview-img" alt="Preview gambar soal" style="max-width:100%;max-height:220px;border:1px solid var(--border);border-radius:8px;display:block;margin-bottom:8px">
+              <button class="btn btn-danger" type="button" onclick="removeQuestionImage()" style="font-size:12px;padding:6px 10px">Hapus Gambar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Opsi Jawaban (MC) -->
+        <div class="card" id="card-options">
+          <div class="card-head">
+            <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Pilihan Jawaban</div>
+            <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="addOption()">+ Tambah Opsi</button>
+          </div>
+          <div class="card-body">
+            <div style="font-size:11px;color:var(--ink3);margin-bottom:10px">Centang radio button untuk menandai jawaban yang benar.</div>
+            <div id="options-list"></div>
+          </div>
+        </div>
+
+        <!-- Benar/Salah -->
+        <div class="card" id="card-tf" style="display:none">
+          <div class="card-head"><div class="card-title">Jawaban Benar / Salah</div></div>
+          <div class="card-body">
+            <div class="diff-btns">
+              <button class="diff-btn easy active" id="tf-true"  onclick="setTF('true',this)">✓ Benar (True)</button>
+              <button class="diff-btn hard"       id="tf-false" onclick="setTF('false',this)">✗ Salah (False)</button>
+            </div>
+            <input type="hidden" id="inp-tf-answer" value="true">
+          </div>
+        </div>
+
+        <!-- Tingkat Kesulitan -->
+        <div class="card">
+          <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Tingkat Kesulitan & Info</div></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">Tingkat Kesulitan <span class="req">*</span></label>
+              <div class="diff-btns" id="diff-btns">
+                <button class="diff-btn easy" onclick="setDiff('easy',this)">Mudah</button>
+                <button class="diff-btn medium active" onclick="setDiff('medium',this)">Sedang</button>
+                <button class="diff-btn hard" onclick="setDiff('hard',this)">Sulit</button>
+              </div>
+              <input type="hidden" id="inp-difficulty" value="medium">
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="form-label">Pembahasan / Penjelasan</label>
+              <textarea class="form-textarea" id="inp-explanation" placeholder="Tulis penjelasan jawaban (opsional)..." rows="3" oninput="updateCharCount(this,1000)" maxlength="1000" style="min-height:80px"></textarea>
+              <div class="char-count" id="cc-explanation">0 / 1000</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: PREVIEW + SESSION -->
+      <div style="display:flex;flex-direction:column;gap:14px;position:sticky;top:76px">
+
+        <!-- Session tracker -->
+        <div class="card">
+          <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Sesi Ini</div></div>
+          <div class="card-body" style="padding:14px">
+            <div class="session-stat"><span class="ss-label">Soal dibuat</span><span class="ss-value" id="ss-count">0</span></div>
+            <div class="session-stat"><span class="ss-label">Mudah</span><span class="ss-value" style="color:var(--green)" id="ss-easy">0</span></div>
+            <div class="session-stat"><span class="ss-label">Sedang</span><span class="ss-value" style="color:var(--amber)" id="ss-medium">0</span></div>
+            <div class="session-stat" style="margin-bottom:12px"><span class="ss-label">Sulit</span><span class="ss-value" style="color:var(--red)" id="ss-hard">0</span></div>
+            <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+            <div style="font-size:11px;color:var(--ink3)">Target 30 soal</div>
+          </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Preview Soal</div>
+            <span style="font-size:10px;color:var(--ink3);background:var(--bg);padding:3px 8px;border-radius:20px;border:1px solid var(--border)">Live</span>
+          </div>
+          <div class="card-body" id="preview-body">
+            <div style="text-align:center;padding:20px;color:var(--ink3);font-size:12.5px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;opacity:.3;display:block;margin:0 auto 8px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+              Mulai mengetik soal untuk melihat preview
+            </div>
+          </div>
+        </div>
+
+        <!-- Daftar soal sesi -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Soal Dibuat</div>
+            <button class="btn btn-danger" style="font-size:11px;padding:5px 10px" onclick="clearSession()">Hapus Semua</button>
+          </div>
+          <div id="soal-list">
+            <div style="padding:20px;text-align:center;color:var(--ink3);font-size:12.5px">Belum ada soal dibuat</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="auth.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (!requireAuth('guru')) return;
+  renderUser();
+  initOptions();
+  loadCategories();
+  renderSoalList();
+});
+
+/* ── State ── */
+let currentType      = 'multiple_choice';
+let currentDiff      = 'medium';
+let tfAnswer         = 'true';
+let currentImageFile = null;
+let sessionSoal      = JSON.parse(localStorage.getItem('ec_input_soal_session') || '[]');
+let optionCount      = 0;
+const OPTION_KEYS    = ['A','B','C','D','E'];
+
+/* ── Tipe Soal ── */
+function setType(type, btn) {
+  currentType = type;
+  document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('card-options').style.display = type === 'multiple_choice' ? '' : 'none';
+  document.getElementById('card-tf').style.display      = type === 'true_false'      ? '' : 'none';
+  updatePreview();
+}
+
+/* ── Tingkat Kesulitan ── */
+function setDiff(diff, btn) {
+  currentDiff = diff;
+  document.querySelectorAll('#diff-btns .diff-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('inp-difficulty').value = diff;
+}
+
+/* ── Benar/Salah ── */
+function setTF(val, btn) {
+  tfAnswer = val;
+  document.getElementById('inp-tf-answer').value = val;
+  document.getElementById('tf-true').classList.toggle('active', val === 'true');
+  document.getElementById('tf-false').classList.toggle('active', val === 'false');
+}
+
+/* ── Opsi MC ── */
+function initOptions() {
+  const list = document.getElementById('options-list');
+  list.innerHTML = '';
+  optionCount = 0;
+  ['A','B','C','D'].forEach(k => addOption(k));
+}
+
+function addOption(key = null) {
+  if (optionCount >= 5) { toast('Maksimal 5 opsi jawaban','warn'); return; }
+  const k    = key || OPTION_KEYS[optionCount];
+  const idx  = optionCount;
+  optionCount++;
+  const list = document.getElementById('options-list');
+  const div  = document.createElement('div');
+  div.className = 'option-item';
+  div.id        = `opt-${k}`;
+  div.innerHTML = `
+    <div class="option-key">${k}</div>
+    <input class="option-input" type="text" id="opt-text-${k}" placeholder="Opsi ${k}..." oninput="updatePreview()">
+    <input class="option-correct" type="radio" name="correct" id="opt-radio-${k}" value="${k}" onchange="updatePreview()" ${k === 'A' && idx === 0 ? 'checked' : ''}>
+    <button class="option-del" onclick="removeOption('${k}')" title="Hapus opsi">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>`;
+  list.appendChild(div);
+}
+
+function removeOption(key) {
+  const el = document.getElementById(`opt-${key}`);
+  if (el) { el.remove(); optionCount--; }
+  updatePreview();
+}
+
+/* ── Preview ── */
+function updatePreview() {
+  const qText  = document.getElementById('inp-question').value.trim();
+  const body   = document.getElementById('preview-body');
+  if (!qText) {
+    body.innerHTML = `<div style="text-align:center;padding:20px;color:var(--ink3);font-size:12.5px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;opacity:.3;display:block;margin:0 auto 8px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>Mulai mengetik soal untuk melihat preview</div>`;
+    return;
+  }
+
+  let html = `<div class="preview-q">${qText}</div>`;
+
+  if (currentType === 'multiple_choice') {
+    const radios = document.querySelectorAll('.option-correct');
+    let correct  = 'A';
+    radios.forEach(r => { if (r.checked) correct = r.value; });
+    document.querySelectorAll('.option-input').forEach(inp => {
+      const key = inp.id.replace('opt-text-','');
+      const val = inp.value.trim();
+      if (!val) return;
+      const isC = key === correct;
+      html += `<div class="preview-option ${isC ? 'correct-opt' : ''}"><div class="preview-key">${key}</div><div>${val}</div></div>`;
+    });
+  } else if (currentType === 'true_false') {
+    html += `<div class="preview-option ${tfAnswer==='true'?'correct-opt':''}"><div class="preview-key">T</div><div>Benar (True)</div></div>`;
+    html += `<div class="preview-option ${tfAnswer==='false'?'correct-opt':''}"><div class="preview-key">F</div><div>Salah (False)</div></div>`;
+  } else {
+    html += `<div style="padding:12px;background:var(--bg);border-radius:8px;font-size:13px;color:var(--ink3);border:1.5px dashed var(--border)">Area jawaban esai — siswa mengetik jawaban di sini</div>`;
+  }
+
+  body.innerHTML = html;
+}
+
+/* ── Char Counter ── */
+function updateCharCount(el, max) {
+  const len = el.value.length;
+  const id  = el.id === 'inp-question' ? 'cc-question' : 'cc-explanation';
+  const cc  = document.getElementById(id);
+  if (!cc) return;
+  cc.textContent = `${len} / ${max}`;
+  cc.className   = `char-count ${len > max * 0.9 ? 'warn' : ''} ${len >= max ? 'over' : ''}`;
+}
+
+/* ── Load Categories ── */
+async function loadCategories() {
+  try {
+    const data = await api('GET', '/guru/questions/categories');
+    const sel  = document.getElementById('sel-category');
+    (data.data || []).forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id; opt.textContent = c.name;
+      sel.appendChild(opt);
+    });
+  } catch(_) {}
+}
+
+/* ── Gambar Soal ── */
+function setQuestionImage(file) {
+  if (!file) return;
+  currentImageFile = file;
+  const preview     = document.getElementById('image-preview');
+  const img         = document.getElementById('image-preview-img');
+  const reader      = new FileReader();
+  reader.onload = e => { img.src = e.target.result; preview.style.display = 'block'; };
+  reader.readAsDataURL(file);
+}
+
+function removeQuestionImage() {
+  currentImageFile = null;
+  document.getElementById('image-preview').style.display = 'none';
+  document.getElementById('image-preview-img').src = '';
+  document.getElementById('inp-image').value = '';
+}
+
+/* ── Simpan Soal ── */
+async function simpanSoal() {
+  const qText = document.getElementById('inp-question').value.trim();
+  if (!qText) { toast('Teks soal tidak boleh kosong','err'); return; }
+
+  let correctAnswer = null;
+  let options       = null;
+
+  if (currentType === 'multiple_choice') {
+    const radios  = document.querySelectorAll('.option-correct');
+    let correct   = null;
+    radios.forEach(r => { if (r.checked) correct = r.value; });
+    if (!correct) { toast('Pilih jawaban yang benar','err'); return; }
+    correctAnswer = correct;
+    options       = {};
+    let hasOpts   = false;
+    document.querySelectorAll('.option-input').forEach(inp => {
+      const key = inp.id.replace('opt-text-','');
+      const val = inp.value.trim();
+      if (val) { options[key] = val; hasOpts = true; }
+    });
+    if (!hasOpts || Object.keys(options).length < 2) { toast('Isi minimal 2 opsi jawaban','err'); return; }
+  } else if (currentType === 'true_false') {
+    correctAnswer = document.getElementById('inp-tf-answer').value;
+    options       = { true: 'Benar', false: 'Salah' };
+  }
+
+  const btn = document.getElementById('btn-save');
+  const txt = document.getElementById('btn-save-text');
+  btn.disabled = true; txt.textContent = 'Menyimpan...';
+
+  try {
+    const payload = {
+      question_text:  qText,
+      question_type:  currentType,
+      options,
+      correct_answer: correctAnswer,
+      difficulty:     document.getElementById('inp-difficulty').value,
+      weight:         parseFloat(document.getElementById('inp-weight').value) || 1,
+      explanation:    document.getElementById('inp-explanation').value.trim() || null,
+      category_id:    document.getElementById('sel-category').value || null,
+    };
+
+    // Pakai multipart/form-data kalau ada gambar
+    if (currentImageFile) {
+      const fd = new FormData();
+      fd.append('image',          currentImageFile);
+      fd.append('question_text',  payload.question_text);
+      fd.append('question_type',  payload.question_type);
+      fd.append('correct_answer', payload.correct_answer);
+      fd.append('difficulty',     payload.difficulty);
+      fd.append('weight',         String(payload.weight));
+      if (payload.explanation)    fd.append('explanation', payload.explanation);
+      if (payload.category_id)    fd.append('category_id', payload.category_id);
+      Object.entries(options || {}).forEach(([k, v]) => fd.append(`options[${k}]`, v));
+      await apiUpload('/guru/questions', fd);
+    } else {
+      await api('POST', '/guru/questions', payload);
+    }
+    toast('Soal berhasil disimpan','ok');
+
+    // Add to session list
+    sessionSoal.push({ ...payload, savedAt: new Date().toISOString() });
+    localStorage.setItem('ec_input_soal_session', JSON.stringify(sessionSoal));
+    updateSession();
+    renderSoalList();
+    resetForm();
+  } catch(e) {
+    // Demo: save locally
+    toast('Soal disimpan (mode demo)','ok');
+    const fallback = {
+      question_text:  qText, question_type: currentType, options,
+      correct_answer: correctAnswer,
+      difficulty:     document.getElementById('inp-difficulty').value,
+      weight:         parseFloat(document.getElementById('inp-weight').value) || 1,
+      explanation:    document.getElementById('inp-explanation').value.trim() || null,
+      category_id:    document.getElementById('sel-category').value || null,
+    };
+    sessionSoal.push({ ...fallback, savedAt: new Date().toISOString() });
+    localStorage.setItem('ec_input_soal_session', JSON.stringify(sessionSoal));
+    updateSession();
+    renderSoalList();
+    resetForm();
+  } finally {
+    btn.disabled = false; txt.textContent = 'Simpan Soal';
+  }
+}
+
+/* ── Session ── */
+function updateSession() {
+  const total  = sessionSoal.length;
+  const easy   = sessionSoal.filter(s => s.difficulty === 'easy').length;
+  const medium = sessionSoal.filter(s => s.difficulty === 'medium').length;
+  const hard   = sessionSoal.filter(s => s.difficulty === 'hard').length;
+  document.getElementById('ss-count').textContent  = total;
+  document.getElementById('ss-easy').textContent   = easy;
+  document.getElementById('ss-medium').textContent = medium;
+  document.getElementById('ss-hard').textContent   = hard;
+  document.getElementById('prog-fill').style.width = Math.min(100, total / 30 * 100).toFixed(0) + '%';
+}
+
+function renderSoalList() {
+  const el = document.getElementById('soal-list');
+  if (!sessionSoal.length) {
+    el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--ink3);font-size:12.5px">Belum ada soal dibuat</div>';
+    return;
+  }
+  el.innerHTML = sessionSoal.map((s, i) => `
+    <div class="soal-item">
+      <div class="soal-num">${i+1}</div>
+      <div style="flex:1">
+        <div class="soal-text">${s.question_text.substring(0,60)}${s.question_text.length > 60 ? '...' : ''}</div>
+        <div class="soal-meta">
+          <span class="diff-badge diff-${s.difficulty}">${s.difficulty === 'easy' ? 'Mudah' : s.difficulty === 'medium' ? 'Sedang' : 'Sulit'}</span>
+          · Bobot: ${s.weight}
+        </div>
+      </div>
+      <button onclick="hapusSoal(${i})" style="background:none;border:none;cursor:pointer;color:var(--ink3);padding:4px" title="Hapus">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+function hapusSoal(i) {
+  sessionSoal.splice(i, 1);
+  localStorage.setItem('ec_input_soal_session', JSON.stringify(sessionSoal));
+  updateSession(); renderSoalList();
+}
+
+function clearSession() {
+  if (!sessionSoal.length) return;
+  confirm('Hapus semua soal dalam sesi ini?', () => {
+    sessionSoal = [];
+    localStorage.removeItem('ec_input_soal_session');
+    updateSession(); renderSoalList();
+  });
+}
+
+function resetForm() {
+  document.getElementById('inp-question').value    = '';
+  document.getElementById('inp-explanation').value = '';
+  document.getElementById('inp-weight').value      = '1';
+  document.getElementById('cc-question').textContent   = '0 / 2000';
+  document.getElementById('cc-explanation').textContent= '0 / 1000';
+  removeQuestionImage();
+  initOptions();
+  setDiff('medium', document.querySelector('.diff-btn.medium'));
+  setTF('true', document.getElementById('tf-true'));
+  updatePreview();
+}
+
+updateSession();
+</script>
+</body>
+</html>

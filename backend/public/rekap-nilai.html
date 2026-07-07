@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rekap Nilai — ExamCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#1a3c6e;--navy-dark:#122a52;--navy-light:#e8eef7;
+  --orange:#e8821a;--orange-light:#fff4e8;
+  --bg:#f0f2f5;--surface:#ffffff;--border:#e2e6ea;--border2:#d1d8e0;
+  --ink:#1a2332;--ink2:#4a5568;--ink3:#9aa5b4;--ink4:#c9d3dc;
+  --green:#2e7d32;--green-light:#e8f5e9;
+  --red:#c62828;--red-light:#ffebee;
+  --amber:#f59e0b;--amber-light:#fffbeb;
+  --sky:#0369a1;--sky-light:#e0f2fe;
+  --sidebar-w:220px;--topbar-h:60px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex}
+@keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+.sk{background:linear-gradient(90deg,#e8ebef 25%,#f4f6f8 50%,#e8ebef 75%);background-size:600px 100%;animation:shimmer 1.4s ease-in-out infinite;border-radius:6px}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;z-index:100;display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-brand{display:flex;align-items:center;gap:11px;padding:0 18px;height:var(--topbar-h);border-bottom:1px solid var(--border);flex-shrink:0}
+.brand-icon{width:36px;height:36px;background:var(--navy);border-radius:8px;display:grid;place-items:center;flex-shrink:0}
+.brand-icon svg{width:18px;height:18px;fill:white}
+.brand-name{font-size:15px;font-weight:700;color:var(--ink)}
+.brand-sub{font-size:9.5px;font-weight:500;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+.nav-section{padding:16px 10px 0}
+.nav-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);padding:0 8px;margin-bottom:5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;font-size:13px;font-weight:500;color:var(--ink2);cursor:pointer;transition:all .15s;border:none;background:transparent;width:100%;text-align:left;font-family:'Inter',sans-serif;margin-bottom:1px;text-decoration:none}
+.nav-item:hover{background:var(--bg);color:var(--ink)}
+.nav-item.active{background:var(--navy-light);color:var(--navy);font-weight:600}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.sidebar-footer{margin-top:auto;border-top:1px solid var(--border);padding:14px;flex-shrink:0}
+.user-card{display:flex;align-items:center;gap:9px;padding:8px;border-radius:8px;cursor:pointer}
+.user-avatar{width:32px;height:32px;background:var(--navy);border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.user-name{font-size:13px;font-weight:600;color:var(--ink)}
+.user-role{font-size:11px;color:var(--ink3)}
+.logout-btn{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;font-size:12px;color:var(--ink3);cursor:pointer;transition:all .15s;border:none;background:transparent;width:100%;margin-top:2px;font-family:'Inter',sans-serif}
+.logout-btn:hover{background:var(--red-light);color:var(--red)}
+
+/* MAIN */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column}
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:15px;font-weight:700;color:var(--ink)}
+.topbar-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;border:1.5px solid}
+.btn-primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-primary:hover{background:var(--navy-dark)}
+.btn-ghost{background:transparent;color:var(--ink2);border-color:var(--border)}
+.btn-ghost:hover{background:var(--bg);color:var(--ink)}
+.btn svg{width:14px;height:14px}
+.content{padding:22px 24px;flex:1}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
+.page-title{font-size:20px;font-weight:700;color:var(--ink)}
+.page-sub{font-size:13px;color:var(--ink3);margin-top:2px}
+
+/* TABS */
+.main-tabs{display:flex;border-bottom:1.5px solid var(--border);margin-bottom:20px}
+.main-tab{padding:10px 18px;font-size:13.5px;font-weight:500;color:var(--ink3);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none;font-family:'Inter',sans-serif}
+.main-tab:hover{color:var(--ink)}
+.main-tab.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:600}
+.view{display:none}
+.view.active{display:block}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);background:#f7f9fc}
+.card-title{font-size:14px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px}
+.card-title svg{width:15px;height:15px;color:var(--ink3)}
+.card-body{padding:16px 18px}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;border-left:5px solid}
+.sc-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);margin-bottom:10px}
+.sc-value{font-size:32px;font-weight:700;color:var(--ink);line-height:1;margin-bottom:4px;font-variant-numeric:tabular-nums}
+.sc-sub{font-size:12px;color:var(--ink3)}
+
+/* TABLE */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:#f7f9fc}
+th{padding:10px 14px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--ink3);border-bottom:1.5px solid var(--border);white-space:nowrap}
+td{padding:12px 14px;border-bottom:1px solid var(--border);color:var(--ink2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#f9fafc}
+.td-main{color:var(--ink);font-weight:500}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.b-green{background:var(--green-light);color:var(--green)}
+.b-red{background:var(--red-light);color:var(--red)}
+.b-navy{background:var(--navy-light);color:var(--navy)}
+.b-amber{background:var(--amber-light);color:#92400e}
+.b-gray{background:var(--bg);color:var(--ink3)}
+
+/* RANK BADGE */
+.rank-badge{width:26px;height:26px;border-radius:6px;display:grid;place-items:center;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.rank-1{background:#fff8e1;color:#f59e0b}
+.rank-2{background:#f5f5f5;color:#9e9e9e}
+.rank-3{background:#fbe9e7;color:#bf360c}
+.rank-n{background:var(--bg);color:var(--ink3)}
+
+/* BAR CHART */
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.bar-label{font-size:12px;color:var(--ink2);width:100px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{flex:1;height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.bar-val{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink3);width:40px;text-align:right;flex-shrink:0}
+
+/* GRADE DIST */
+.grade-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.grade-box{text-align:center;padding:12px 6px;border-radius:8px;border:1px solid var(--border)}
+.grade-letter{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.grade-count{font-size:11px;color:var(--ink3);margin-top:3px}
+
+/* KR20 GAUGE */
+.kr20-wrap{text-align:center;padding:10px}
+.kr20-val{font-family:'JetBrains Mono',monospace;font-size:40px;font-weight:700;line-height:1}
+.kr20-label{font-size:12px;color:var(--ink3);margin-top:4px}
+.kr20-bar{height:10px;background:var(--bg);border-radius:5px;overflow:hidden;margin:12px 0 6px}
+.kr20-fill{height:100%;border-radius:5px;transition:width .8s ease}
+.kr20-desc{font-size:11px;color:var(--ink3)}
+
+/* ITEM CARD */
+.item-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:14px;margin-bottom:10px}
+.item-card:last-child{margin-bottom:0}
+.item-q{font-size:13px;color:var(--ink);margin-bottom:10px;line-height:1.5}
+.item-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.metric{background:var(--bg);border-radius:7px;padding:10px}
+.metric-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);margin-bottom:6px}
+.metric-val{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--ink)}
+.metric-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:5px}
+.metric-fill{height:100%;border-radius:3px}
+
+/* TREND ARROW */
+.trend-up{color:var(--green)}.trend-down{color:var(--red)}.trend-stable{color:var(--ink3)}
+
+/* FILTER */
+.filter-row{display:flex;gap:8px;padding:12px 18px;border-bottom:1px solid var(--border);background:#f7f9fc;flex-wrap:wrap}
+.filter-chip{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid;transition:all .15s;background:transparent;font-family:'Inter',sans-serif}
+.filter-chip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.filter-chip:not(.active){color:var(--ink3);border-color:var(--border)}
+.filter-chip:not(.active):hover{border-color:var(--navy-light);color:var(--navy)}
+
+/* SELECTORS */
+.sel-row{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.form-select{padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;color:var(--ink);background:var(--surface);outline:none;transition:border-color .18s;cursor:pointer}
+.form-select:focus{border-color:var(--navy)}
+
+/* HISTORY TIMELINE */
+.timeline{position:relative;padding-left:24px}
+.timeline::before{content:'';position:absolute;left:7px;top:0;bottom:0;width:1px;background:var(--border)}
+.tl-item{position:relative;margin-bottom:14px}
+.tl-dot{width:14px;height:14px;border-radius:50%;position:absolute;left:-21px;top:3px;border:2px solid var(--surface)}
+.tl-content{background:var(--bg);border-radius:8px;padding:10px 12px;border:1px solid var(--border)}
+.tl-title{font-size:13px;font-weight:500;color:var(--ink)}
+.tl-meta{font-size:11.5px;color:var(--ink3);margin-top:2px}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}.stats-row{grid-template-columns:1fr 1fr}.grade-grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg></div>
+    <div><div class="brand-name">ExamCore</div><div class="brand-sub">Exam Management</div></div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Menu Utama</div>
+    <a class="nav-item" href="guru-dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</a>
+    <a class="nav-item" href="manajemen-kelas.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Manajemen Kelas</a>
+    <a class="nav-item" href="input-soal.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Input Soal</a>
+    <a class="nav-item" href="jadwal-ujian.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Jadwal Ujian</a>
+    <div class="nav-label" style="margin-top:12px">Laporan</div>
+    <a class="nav-item active" href="rekap-nilai.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Rekap Nilai</a>
+    <a class="nav-item" href="import-arsip.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Import & Arsip</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" data-user-avatar>G</div>
+      <div><div class="user-name" data-user-name>Guru</div><div class="user-role" data-user-role>guru</div></div>
+    </div>
+    <button class="logout-btn" onclick="logout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-title">Rekap Nilai</div>
+    <div class="topbar-r">
+      <button class="btn btn-ghost" onclick="exportCSV()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export CSV</button>
+      <button class="btn btn-primary" onclick="loadAll()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>Refresh</button>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="page-head">
+      <div><div class="page-title">Rekap Nilai</div><div class="page-sub">Analisis performa siswa dan kualitas soal</div></div>
+      <div style="display:flex;gap:10px">
+        <select class="form-select" id="sel-class" onchange="loadAll()"><option value="">— Pilih Kelas —</option></select>
+        <select class="form-select" id="sel-semester"><option value="Ganjil">Ganjil</option><option value="Genap">Genap</option></select>
+      </div>
+    </div>
+
+    <!-- MAIN TABS -->
+    <div class="main-tabs">
+      <button class="main-tab active" onclick="switchTab('rekap',this)">Rekap Kelas</button>
+      <button class="main-tab" onclick="switchTab('siswa',this)">Perkembangan Siswa</button>
+      <button class="main-tab" onclick="switchTab('analisis',this)">Analisis Soal</button>
+    </div>
+
+    <!-- TAB 1: REKAP KELAS -->
+    <div class="view active" id="view-rekap">
+      <!-- Stats -->
+      <div class="stats-row" id="stats-row">
+        <div class="stat-card" style="border-left-color:var(--navy)"><div class="sc-label">Rata-rata</div><div class="sc-value sk" style="height:32px;width:80px;margin-bottom:6px"></div><div class="sc-sub sk" style="height:12px;width:100px"></div></div>
+        <div class="stat-card" style="border-left-color:var(--green)"><div class="sc-label">Lulus</div><div class="sc-value sk" style="height:32px;width:80px;margin-bottom:6px"></div><div class="sc-sub sk" style="height:12px;width:100px"></div></div>
+        <div class="stat-card" style="border-left-color:var(--orange)"><div class="sc-label">Tertinggi</div><div class="sc-value sk" style="height:32px;width:80px;margin-bottom:6px"></div><div class="sc-sub sk" style="height:12px;width:100px"></div></div>
+        <div class="stat-card" style="border-left-color:var(--red)"><div class="sc-label">Terendah</div><div class="sc-value sk" style="height:32px;width:80px;margin-bottom:6px"></div><div class="sc-sub sk" style="height:12px;width:100px"></div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <!-- Tren Ujian -->
+        <div class="card">
+          <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Tren Nilai per Ujian</div></div>
+          <div class="card-body" id="trend-chart"><div class="sk" style="height:120px;border-radius:8px"></div></div>
+        </div>
+        <!-- Grade Distribution -->
+        <div class="card">
+          <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>Distribusi Grade</div></div>
+          <div class="card-body">
+            <div class="grade-grid" id="grade-dist">
+              <div class="sk" style="height:60px;border-radius:8px"></div>
+              <div class="sk" style="height:60px;border-radius:8px"></div>
+              <div class="sk" style="height:60px;border-radius:8px"></div>
+              <div class="sk" style="height:60px;border-radius:8px"></div>
+              <div class="sk" style="height:60px;border-radius:8px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ranking Table -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Ranking Nilai</div>
+          <select class="form-select" style="font-size:12px;padding:5px 10px" onchange="loadRanking(this.value)">
+            <option value="">Semua Ujian</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Rank</th><th>Nama Siswa</th><th>Rata-rata</th><th>Grade</th><th>Ujian</th><th>Lulus</th><th>Tren</th></tr></thead>
+            <tbody id="tbody-ranking">
+              <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--ink3)">Pilih kelas terlebih dahulu</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: PERKEMBANGAN SISWA -->
+    <div class="view" id="view-siswa">
+      <div class="sel-row">
+        <select class="form-select" id="sel-student" onchange="loadStudentReport()"><option value="">— Pilih Siswa —</option></select>
+      </div>
+      <div id="student-report-wrap" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Statistik Siswa</div></div>
+          <div class="card-body" id="student-stats"><div style="text-align:center;color:var(--ink3);font-size:13px;padding:20px">Pilih siswa untuk melihat data</div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">Tren Nilai</div></div>
+          <div class="card-body" id="student-trend"><div style="text-align:center;color:var(--ink3);font-size:13px;padding:20px">Pilih siswa untuk melihat tren</div></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="card-head"><div class="card-title">Riwayat Ujian</div></div>
+          <div id="student-history"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: ANALISIS SOAL -->
+    <div class="view" id="view-analisis">
+      <div style="display:grid;grid-template-columns:1fr 280px;gap:16px;align-items:start">
+        <div>
+          <!-- Filter chips -->
+          <div class="card" style="margin-bottom:14px">
+            <div class="filter-row" id="item-filters">
+              <button class="filter-chip active" data-filter="all" onclick="filterItems('all',this)">Semua</button>
+              <button class="filter-chip" data-filter="keep" onclick="filterItems('keep',this)">✓ Pertahankan</button>
+              <button class="filter-chip" data-filter="review" onclick="filterItems('review',this)">⚠ Review</button>
+              <button class="filter-chip" data-filter="revise" onclick="filterItems('revise',this)">✎ Revisi</button>
+              <button class="filter-chip" data-filter="remove" onclick="filterItems('remove',this)">✗ Hapus</button>
+            </div>
+            <div id="item-analysis-list" style="padding:14px">
+              <div style="text-align:center;color:var(--ink3);font-size:13px;padding:20px">Pilih kelas untuk melihat analisis soal</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KR-20 & Summary -->
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="card">
+            <div class="card-head"><div class="card-title">Reliabilitas KR-20</div></div>
+            <div class="card-body">
+              <div class="kr20-wrap" id="kr20-wrap">
+                <div class="sk" style="height:40px;width:80px;margin:0 auto 8px;border-radius:6px"></div>
+                <div class="sk" style="height:12px;width:120px;margin:0 auto 12px;border-radius:6px"></div>
+                <div class="sk" style="height:10px;width:100%;border-radius:5px;margin-bottom:6px"></div>
+                <div class="sk" style="height:11px;width:80%;border-radius:5px"></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div class="card-title">Ringkasan Soal</div></div>
+            <div class="card-body" id="item-summary">
+              <div style="text-align:center;color:var(--ink3);font-size:12px;padding:10px">Menunggu data...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="auth.js"></script>
+<script>
+/* ── Demo Data ── */
+const DEMO = {
+  classes: [{id:1,name:'X IPA 1',subject:'Matematika'},{id:2,name:'XI IPS 1',subject:'Ekonomi'}],
+  stats: {avg:76.4, pass_pct:82, highest:{score:97,name:'Siti Rahayu'}, lowest:{score:52,name:'Rizal Pratama'}},
+  trends: [{exam_title:'UH 1',average:72.1},{exam_title:'UH 2',average:74.5},{exam_title:'UTS',average:76.4},{exam_title:'UH 3',average:78.2},{exam_title:'UH 4',average:80.1}],
+  grade_dist: {A:8,B:12,C:7,D:4,E:1},
+  rankings: [
+    {rank:1,name:'Siti Rahayu',avg:92.5,grade:'A',exams:5,passed:5,trend:'up'},
+    {rank:2,name:'Ahmad Naufal',avg:88.0,grade:'A',exams:5,passed:5,trend:'stable'},
+    {rank:3,name:'Eka Putri',avg:83.5,grade:'B',exams:5,passed:5,trend:'up'},
+    {rank:4,name:'Gita Andriani',avg:79.2,grade:'B',exams:5,passed:4,trend:'stable'},
+    {rank:5,name:'Dita Kusuma',avg:74.6,grade:'B',exams:5,passed:4,trend:'down'},
+    {rank:6,name:'Fajar Nugroho',avg:71.0,grade:'C',exams:5,passed:3,trend:'stable'},
+    {rank:7,name:'Hendra Wijaya',avg:68.5,grade:'C',exams:5,passed:3,trend:'down'},
+    {rank:8,name:'Indah Lestari',avg:64.2,grade:'C',exams:5,passed:2,trend:'up'},
+    {rank:9,name:'Budi Saputra',avg:58.0,grade:'D',exams:5,passed:2,trend:'stable'},
+    {rank:10,name:'Rizal Pratama',avg:52.3,grade:'E',exams:5,passed:1,trend:'down'},
+  ],
+  students: [{id:1,name:'Siti Rahayu'},{id:2,name:'Ahmad Naufal'},{id:3,name:'Eka Putri'},{id:4,name:'Gita Andriani'},{id:5,name:'Dita Kusuma'}],
+  student_report: {
+    avg:88.0, highest:{score:95,exam:'UTS'},
+    total_exams:5, passed:5,
+    history:[
+      {exam_title:'UH 1',score:82,is_passed:true,submitted_at:'2024-09-10',trend:'stable'},
+      {exam_title:'UH 2',score:85,is_passed:true,submitted_at:'2024-09-24',trend:'up'},
+      {exam_title:'UTS',score:95,is_passed:true,submitted_at:'2024-10-15',trend:'up'},
+      {exam_title:'UH 3',score:88,is_passed:true,submitted_at:'2024-11-05',trend:'down'},
+      {exam_title:'UH 4',score:92,is_passed:true,submitted_at:'2024-11-20',trend:'up'},
+    ]
+  },
+  item_analysis: {
+    kr20:0.81,
+    summary:{total:10,keep:5,review:2,revise:2,remove:1},
+    items:[
+      {question_id:1,question_text:'Hasil dari persamaan 2x + 5 = 11 adalah...',difficulty_index:0.82,discrimination_index:0.45,recommendation:'keep',difficulty:'easy'},
+      {question_id:2,question_text:'Nilai dari 3² + 4² adalah...',difficulty_index:0.78,discrimination_index:0.38,recommendation:'keep',difficulty:'easy'},
+      {question_id:3,question_text:'Jika f(x) = 2x² - 3x + 1, maka nilai f(2) adalah...',difficulty_index:0.56,discrimination_index:0.42,recommendation:'keep',difficulty:'medium'},
+      {question_id:4,question_text:'Faktorisasi dari x² - 5x + 6 adalah...',difficulty_index:0.48,discrimination_index:0.35,recommendation:'review',difficulty:'medium'},
+      {question_id:5,question_text:'Nilai dari ³√27 + ²√16 adalah...',difficulty_index:0.72,discrimination_index:0.41,recommendation:'keep',difficulty:'easy'},
+      {question_id:6,question_text:'Jika 3x - 7 = 2x + 4, maka nilai x adalah...',difficulty_index:0.65,discrimination_index:0.33,recommendation:'review',difficulty:'easy'},
+      {question_id:7,question_text:'Gradien garis y = 3x - 5 adalah...',difficulty_index:0.80,discrimination_index:0.28,recommendation:'revise',difficulty:'easy'},
+      {question_id:8,question_text:'Luas daerah yang dibatasi kurva y = x² dan y = x adalah...',difficulty_index:0.22,discrimination_index:0.18,recommendation:'revise',difficulty:'hard'},
+      {question_id:9,question_text:'Jika log 2 = 0,301, maka nilai log 8 adalah...',difficulty_index:0.45,discrimination_index:0.40,recommendation:'keep',difficulty:'medium'},
+      {question_id:10,question_text:'Deret aritmetika 2, 5, 8, 11, ... Suku ke-10 adalah...',difficulty_index:0.12,discrimination_index:0.08,recommendation:'remove',difficulty:'hard'},
+    ]
+  }
+};
+
+let activeTab     = 'rekap';
+let itemFilter    = 'all';
+let classSelected = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!requireAuth('guru')) return;
+  renderUser();
+  populateClassSelect();
+});
+
+function populateClassSelect() {
+  const sel = document.getElementById('sel-class');
+  DEMO.classes.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id; opt.textContent = `${c.name} — ${c.subject}`;
+    sel.appendChild(opt);
+  });
+}
+
+function switchTab(name, btn) {
+  activeTab = name;
+  document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+}
+
+function loadAll() {
+  const classId = document.getElementById('sel-class').value;
+  if (!classId) return;
+  classSelected = true;
+  renderStats();
+  renderTrend();
+  renderGradeDist();
+  renderRanking(DEMO.rankings);
+  populateStudentSelect();
+  renderItemAnalysis(DEMO.item_analysis);
+  renderKR20(DEMO.item_analysis.kr20);
+  renderItemSummary(DEMO.item_analysis.summary);
+}
+
+/* ── STATS ── */
+function renderStats() {
+  const s = DEMO.stats;
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-card" style="border-left-color:var(--navy)">
+      <div class="sc-label">Rata-rata Kelas</div>
+      <div class="sc-value">${s.avg}</div>
+      <div class="sc-sub">semua ujian</div>
+    </div>
+    <div class="stat-card" style="border-left-color:var(--green)">
+      <div class="sc-label">Persentase Lulus</div>
+      <div class="sc-value" style="color:var(--green)">${s.pass_pct}%</div>
+      <div class="sc-sub">di atas KKM 70</div>
+    </div>
+    <div class="stat-card" style="border-left-color:var(--orange)">
+      <div class="sc-label">Nilai Tertinggi</div>
+      <div class="sc-value">${s.highest.score}</div>
+      <div class="sc-sub">${s.highest.name}</div>
+    </div>
+    <div class="stat-card" style="border-left-color:var(--red)">
+      <div class="sc-label">Nilai Terendah</div>
+      <div class="sc-value" style="color:var(--red)">${s.lowest.score}</div>
+      <div class="sc-sub">${s.lowest.name}</div>
+    </div>`;
+}
+
+/* ── TREND ── */
+function renderTrend() {
+  const trends = DEMO.trends;
+  const max    = Math.max(...trends.map(t => t.average), 100);
+  const html   = trends.map(t => {
+    const pct   = (t.average / max * 100).toFixed(0);
+    const color = t.average >= 75 ? 'var(--green)' : t.average >= 70 ? 'var(--amber)' : 'var(--red)';
+    return `
+      <div class="bar-row">
+        <div class="bar-label">${t.exam_title}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+        <div class="bar-val">${t.average}</div>
+      </div>`;
+  }).join('');
+  document.getElementById('trend-chart').innerHTML = html;
+}
+
+/* ── GRADE DIST ── */
+function renderGradeDist() {
+  const d = DEMO.grade_dist;
+  const total = Object.values(d).reduce((a,b) => a+b, 0);
+  const grades = [
+    {g:'A',count:d.A,color:'var(--green)',bg:'var(--green-light)'},
+    {g:'B',count:d.B,color:'var(--sky)',bg:'var(--sky-light)'},
+    {g:'C',count:d.C,color:'var(--amber)',bg:'var(--amber-light)'},
+    {g:'D',count:d.D,color:'var(--orange)',bg:'var(--orange-light)'},
+    {g:'E',count:d.E,color:'var(--red)',bg:'var(--red-light)'},
+  ];
+  document.getElementById('grade-dist').innerHTML = grades.map(g => `
+    <div class="grade-box" style="background:${g.bg};border-color:${g.color}30">
+      <div class="grade-letter" style="color:${g.color}">${g.g}</div>
+      <div class="grade-count">${g.count} siswa<br>${(g.count/total*100).toFixed(0)}%</div>
+    </div>`).join('');
+}
+
+/* ── RANKING ── */
+function loadRanking(examId) { renderRanking(DEMO.rankings); }
+function renderRanking(data) {
+  const gradeColor = {A:'b-green',B:'b-navy',C:'b-amber',D:'b-orange',E:'b-red'};
+  document.getElementById('tbody-ranking').innerHTML = data.map(r => {
+    const rClass = r.rank <= 3 ? `rank-${r.rank}` : 'rank-n';
+    const trend  = r.trend === 'up' ? '<span class="trend-up">↑</span>' : r.trend === 'down' ? '<span class="trend-down">↓</span>' : '<span class="trend-stable">→</span>';
+    return `<tr>
+      <td><div class="rank-badge ${rClass}">#${r.rank}</div></td>
+      <td class="td-main">${r.name}</td>
+      <td><span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${r.avg>=75?'var(--green)':r.avg>=70?'var(--amber)':'var(--red)'}">${r.avg}</span></td>
+      <td><span class="badge ${gradeColor[r.grade]||'b-gray'}">${r.grade}</span></td>
+      <td style="font-family:'JetBrains Mono',monospace">${r.exams}</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:var(--green)">${r.passed}</td>
+      <td>${trend}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── STUDENT ── */
+function populateStudentSelect() {
+  const sel = document.getElementById('sel-student');
+  sel.innerHTML = '<option value="">— Pilih Siswa —</option>';
+  DEMO.students.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.id; opt.textContent = s.name;
+    sel.appendChild(opt);
+  });
+}
+
+function loadStudentReport() {
+  const id = document.getElementById('sel-student').value;
+  if (!id) return;
+  const r = DEMO.student_report;
+
+  document.getElementById('student-stats').innerHTML = `
+    <div class="bar-row" style="margin-bottom:12px"><div class="bar-label">Rata-rata</div><div class="bar-track"><div class="bar-fill" style="width:${r.avg}%;background:var(--navy)"></div></div><div class="bar-val">${r.avg}</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border)"><div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--orange)">${r.highest.score}</div><div style="font-size:11px;color:var(--ink3)">Nilai tertinggi</div></div>
+      <div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border)"><div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--green)">${r.passed}/${r.total_exams}</div><div style="font-size:11px;color:var(--ink3)">Ujian lulus</div></div>
+    </div>`;
+
+  const maxScore = Math.max(...r.history.map(h => h.score), 100);
+  document.getElementById('student-trend').innerHTML = r.history.map(h => {
+    const pct   = (h.score / maxScore * 100).toFixed(0);
+    const color = h.is_passed ? 'var(--green)' : 'var(--red)';
+    return `<div class="bar-row"><div class="bar-label">${h.exam_title}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div><div class="bar-val" style="color:${color}">${h.score}</div></div>`;
+  }).join('');
+
+  document.getElementById('student-history').innerHTML = `
+    <div style="padding:16px">
+      <div class="timeline">${r.history.map(h => {
+        const dotColor = h.is_passed ? 'var(--green)' : 'var(--red)';
+        const trend    = h.trend==='up'?'↑':h.trend==='down'?'↓':'→';
+        return `<div class="tl-item"><div class="tl-dot" style="background:${dotColor}"></div><div class="tl-content"><div class="tl-title">${h.exam_title} — <span style="font-family:'JetBrains Mono',monospace;color:${dotColor};font-weight:700">${h.score}</span> ${trend}</div><div class="tl-meta">${h.submitted_at} · ${h.is_passed?'<span style="color:var(--green)">Lulus</span>':'<span style="color:var(--red)">Tidak Lulus</span>'}</div></div></div>`;
+      }).join('')}</div>
+    </div>`;
+}
+
+/* ── ITEM ANALYSIS ── */
+function filterItems(filter, btn) {
+  itemFilter = filter;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderItemAnalysis(DEMO.item_analysis);
+}
+
+function renderItemAnalysis(data) {
+  const filtered = itemFilter === 'all' ? data.items : data.items.filter(i => i.recommendation === itemFilter);
+  const recMap   = {keep:{label:'Pertahankan',color:'var(--green)',bg:'var(--green-light)'},review:{label:'Review',color:'var(--amber)',bg:'var(--amber-light)'},revise:{label:'Revisi',color:'var(--orange)',bg:'var(--orange-light)'},remove:{label:'Hapus',color:'var(--red)',bg:'var(--red-light)'}};
+
+  document.getElementById('item-analysis-list').innerHTML = filtered.map((item, i) => {
+    const rec = recMap[item.recommendation] || recMap.review;
+    return `
+      <div class="item-card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px">
+          <div class="item-q"><span style="font-family:'JetBrains Mono',monospace;color:var(--ink3);font-size:11px;margin-right:6px">#${item.question_id}</span>${item.question_text.substring(0,80)}${item.question_text.length>80?'...':''}</div>
+          <span style="background:${rec.bg};color:${rec.color};font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:20px;flex-shrink:0;border:1px solid ${rec.color}30">${rec.label}</span>
+        </div>
+        <div class="item-metrics">
+          <div class="metric">
+            <div class="metric-label">Difficulty Index (P)</div>
+            <div class="metric-val">${item.difficulty_index.toFixed(2)}</div>
+            <div class="metric-bar"><div class="metric-fill" style="width:${(item.difficulty_index*100).toFixed(0)}%;background:${item.difficulty_index>=0.26&&item.difficulty_index<=0.75?'var(--green)':'var(--amber)'}"></div></div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Discrimination Index (D)</div>
+            <div class="metric-val">${item.discrimination_index.toFixed(2)}</div>
+            <div class="metric-bar"><div class="metric-fill" style="width:${(item.discrimination_index*100).toFixed(0)}%;background:${item.discrimination_index>=0.30?'var(--green)':item.discrimination_index>=0.20?'var(--amber)':'var(--red)'}"></div></div>
+          </div>
+        </div>
+      </div>`;
+  }).join('') || '<div style="text-align:center;color:var(--ink3);font-size:13px;padding:20px">Tidak ada soal dalam kategori ini</div>';
+}
+
+/* ── KR-20 ── */
+function renderKR20(kr20) {
+  const color = kr20 >= 0.7 ? 'var(--green)' : kr20 >= 0.5 ? 'var(--amber)' : 'var(--red)';
+  const label = kr20 >= 0.7 ? 'Reliabilitas Tinggi' : kr20 >= 0.5 ? 'Cukup Reliabel' : 'Perlu Perbaikan';
+  document.getElementById('kr20-wrap').innerHTML = `
+    <div class="kr20-val" style="color:${color}">${kr20.toFixed(2)}</div>
+    <div class="kr20-label">${label}</div>
+    <div class="kr20-bar"><div class="kr20-fill" style="width:${(kr20*100).toFixed(0)}%;background:${color}"></div></div>
+    <div class="kr20-desc">Reliabilitas &gt; 0.70 = baik</div>`;
+}
+
+function renderItemSummary(summary) {
+  const items = [
+    {label:'Total Soal',val:summary.total,color:'var(--ink)'},
+    {label:'Pertahankan',val:summary.keep,color:'var(--green)'},
+    {label:'Review',val:summary.review,color:'var(--amber)'},
+    {label:'Revisi',val:summary.revise,color:'var(--orange)'},
+    {label:'Hapus',val:summary.remove,color:'var(--red)'},
+  ];
+  document.getElementById('item-summary').innerHTML = items.map(it => `
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:13px;color:var(--ink2)">${it.label}</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${it.color}">${it.val}</span>
+    </div>`).join('').replace(/(<div[^>]*>.*<\/div>)<\/div>$/, '$1</div>'.replace('border-bottom:1px solid var(--border)','border-bottom:none'));
+}
+
+function exportCSV() {
+  if (!classSelected) { toast('Pilih kelas terlebih dahulu', 'warn'); return; }
+  const rows = [['Rank','Nama','Rata-rata','Grade','Ujian','Lulus']];
+  DEMO.rankings.forEach(r => rows.push([r.rank, r.name, r.avg, r.grade, r.exams, r.passed]));
+  const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const a   = document.createElement('a');
+  a.href    = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download= `rekap-nilai-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  toast('Data diekspor', 'ok');
+}
+</script>
+</body>
+</html>

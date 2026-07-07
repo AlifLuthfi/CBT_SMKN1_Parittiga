@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profil Siswa — ExamCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--navy:#1a3c6e;--navy-light:#e8eef7;--orange:#e8821a;--bg:#f0f2f5;--surface:#fff;--border:#e2e6ea;--ink:#1a2332;--ink2:#4a5568;--ink3:#9aa5b4;--green:#2e7d32;--green-light:#e8f5e9;--red:#c62828;--red-light:#ffebee;--amber:#f59e0b;--amber-light:#fffbeb;--sky:#0369a1;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+.topbar{height:60px;background:var(--navy);display:flex;align-items:center;padding:0 18px;gap:12px;position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;color:#fff;text-decoration:none}
+.brand-icon{width:34px;height:34px;background:rgba(255,255,255,.15);border-radius:8px;display:grid;place-items:center}
+.brand-icon svg{width:17px;height:17px;fill:#fff}
+.back-btn{display:flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:7px;cursor:pointer;font-size:12.5px;font-family:'Inter',sans-serif;font-weight:500;margin-left:auto}
+.main{max-width:720px;margin:0 auto;padding:20px 16px 60px}
+.page-title{font-size:18px;font-weight:700;margin-bottom:2px}
+.page-sub{font-size:13px;color:var(--ink3);margin-bottom:20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.card-head{padding:14px 18px;border-bottom:1px solid var(--border);background:#f7f9fc;display:flex;align-items:center;gap:8px}
+.card-head svg{width:15px;height:15px;color:var(--ink3)}
+.card-title{font-size:13.5px;font-weight:700;color:var(--ink)}
+.card-body{padding:18px}
+.avatar-section{text-align:center;padding:28px 18px 20px}
+.avatar-circle{width:88px;height:88px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:#fff;margin:0 auto 12px}
+.avatar-name{font-size:18px;font-weight:700;color:var(--ink)}
+.avatar-role{font-size:12px;color:var(--ink3);margin-top:2px}
+.avatar-nis{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink3);margin-top:4px}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 18px 16px;padding-top:16px;border-top:1px solid var(--border)}
+.stat-box{text-align:center}
+.stat-val{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--navy)}
+.stat-label{font-size:10.5px;color:var(--ink3);margin-top:2px}
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:5px;display:block}
+.form-label .opt{font-weight:400;color:var(--ink3);font-size:10.5px}
+.form-input{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;color:var(--ink);outline:none;transition:border-color .18s}
+.form-input:focus{border-color:var(--navy)}
+.form-input:disabled{background:var(--bg);color:var(--ink3);cursor:not-allowed}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pass-strength{margin-top:6px;display:none}
+.ps-track{height:5px;background:var(--bg);border-radius:3px;overflow:hidden;display:flex;gap:3px}
+.ps-seg{flex:1;height:100%;border-radius:3px;background:var(--border);transition:background .3s}
+.ps-text{font-size:11px;margin-top:3px}
+.info-tile{display:flex;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}
+.info-tile:last-child{border-bottom:none}
+.info-tile-icon{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;flex-shrink:0;margin-right:10px}
+.info-tile-icon svg{width:15px;height:15px}
+.info-tile-label{font-size:12px;color:var(--ink3)}
+.info-tile-value{font-size:13.5px;font-weight:500;color:var(--ink)}
+.badges-grid{display:flex;flex-wrap:wrap;gap:10px}
+.badge-item{display:flex;flex-direction:column;align-items:center;width:70px;gap:6px}
+.badge-icon{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-size:20px}
+.badge-label{font-size:10px;text-align:center;color:var(--ink3);line-height:1.3}
+.badge-locked{opacity:.35;filter:grayscale(1)}
+.alert{padding:11px 14px;border-radius:8px;font-size:13px;display:flex;align-items:flex-start;gap:9px;margin-bottom:14px}
+.alert-ok{background:var(--green-light);color:var(--green);border:1px solid rgba(46,125,50,.2)}
+.alert-err{background:var(--red-light);color:var(--red);border:1px solid rgba(198,40,40,.2)}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:7px;font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;border:1.5px solid;width:100%;justify-content:center}
+.btn-primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-primary:hover{background:#122a52}
+.btn-sky{background:var(--sky);color:#fff;border-color:var(--sky)}
+.btn-danger{background:var(--red-light);color:var(--red);border-color:rgba(198,40,40,.2)}
+.btn-danger:hover{background:var(--red);color:#fff}
+.btn svg{width:15px;height:15px}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a href="siswa-dashboard.html" class="brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg></div>
+    ExamCore
+  </a>
+  <button class="back-btn" onclick="history.back()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="15 18 9 12 15 6"/></svg>
+    Kembali
+  </button>
+</header>
+<main class="main">
+  <div class="page-title">Profil Saya</div>
+  <div class="page-sub">Kelola informasi akun dan keamanan</div>
+  <div id="alert-area"></div>
+  <div class="card">
+    <div class="avatar-section">
+      <div class="avatar-circle" id="avatar-circle">AN</div>
+      <div class="avatar-name" id="avatar-name">Ahmad Naufal</div>
+      <div class="avatar-role">Peserta Ujian</div>
+      <div class="avatar-nis" id="avatar-nis">NIS: 2024001</div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-val">8</div><div class="stat-label">Ujian Selesai</div></div>
+      <div class="stat-box"><div class="stat-val">82.5</div><div class="stat-label">Rata-rata</div></div>
+      <div class="stat-box"><div class="stat-val">88%</div><div class="stat-label">% Lulus</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <div class="card-title">Informasi Akun</div>
+    </div>
+    <div class="card-body">
+      <div id="save-alert"></div>
+      <div class="form-group"><label class="form-label">Nama Lengkap</label><input class="form-input" id="inp-name" value="Ahmad Naufal"></div>
+      <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="inp-email" type="email" value="ahmadnaufal@siswa.id"></div>
+      <div class="row2">
+        <div class="form-group"><label class="form-label">NIS <span class="opt">(tidak bisa diubah)</span></label><input class="form-input" value="2024001" disabled></div>
+        <div class="form-group"><label class="form-label">Kelas <span class="opt">(tidak bisa diubah)</span></label><input class="form-input" value="X IPA 1" disabled></div>
+      </div>
+      <button class="btn btn-primary" onclick="simpanProfil()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+        Simpan Perubahan
+      </button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <div class="card-title">Ganti Password</div>
+    </div>
+    <div class="card-body">
+      <div id="pass-alert"></div>
+      <div class="form-group">
+        <label class="form-label">Password Saat Ini</label>
+        <div style="position:relative">
+          <input class="form-input" id="pass-old" type="password" placeholder="Password aktif" style="padding-right:40px">
+          <button onclick="toggleVis('pass-old')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--ink3)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="form-group">
+          <label class="form-label">Password Baru</label>
+          <input class="form-input" id="pass-new" type="password" placeholder="Min. 8 karakter" oninput="checkStrength(this.value)">
+          <div class="pass-strength" id="pass-strength">
+            <div class="ps-track"><div class="ps-seg" id="ps1"></div><div class="ps-seg" id="ps2"></div><div class="ps-seg" id="ps3"></div><div class="ps-seg" id="ps4"></div></div>
+            <div class="ps-text" id="ps-text"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Konfirmasi</label>
+          <input class="form-input" id="pass-conf" type="password" placeholder="Ulangi password" oninput="checkConfirm()">
+          <div style="font-size:11px;margin-top:4px;display:none" id="conf-hint"></div>
+        </div>
+      </div>
+      <button class="btn btn-sky" onclick="gantiPassword()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Update Password
+      </button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div class="card-title">Informasi Akademik</div>
+    </div>
+    <div class="card-body">
+      <div class="info-tile">
+        <div class="info-tile-icon" style="background:var(--navy-light)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg></div>
+        <div><div class="info-tile-label">Tahun Ajaran</div><div class="info-tile-value">2024/2025 — Ganjil</div></div>
+      </div>
+      <div class="info-tile">
+        <div class="info-tile-icon" style="background:var(--amber-light)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <div><div class="info-tile-label">Sekolah</div><div class="info-tile-value">SMKN 1 Parittiga</div></div>
+      </div>
+      <div class="info-tile">
+        <div class="info-tile-icon" style="background:var(--sky-light)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--sky)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div><div class="info-tile-label">Bergabung</div><div class="info-tile-value">1 Juli 2024</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <div class="card-title">Pencapaian</div>
+    </div>
+    <div class="card-body">
+      <div class="badges-grid">
+        <div class="badge-item"><div class="badge-icon" style="background:var(--amber-light)">🏆</div><span class="badge-label">Nilai Sempurna</span></div>
+        <div class="badge-item"><div class="badge-icon" style="background:var(--amber-light)">🔥</div><span class="badge-label">5 Ujian Lulus</span></div>
+        <div class="badge-item"><div class="badge-icon" style="background:var(--amber-light)">⚡</div><span class="badge-label">Submit Cepat</span></div>
+        <div class="badge-item badge-locked"><div class="badge-icon" style="background:var(--bg)">🎯</div><span class="badge-label">Tanpa Pelanggaran</span></div>
+        <div class="badge-item badge-locked"><div class="badge-icon" style="background:var(--bg)">📚</div><span class="badge-label">10 Ujian</span></div>
+        <div class="badge-item badge-locked"><div class="badge-icon" style="background:var(--bg)">🌟</div><span class="badge-label">Top 3 Kelas</span></div>
+      </div>
+    </div>
+  </div>
+  <button class="btn btn-danger" onclick="logout()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    Logout
+  </button>
+</main>
+<script src="auth.js"></script>
+<script>
+function simpanProfil(){
+  const name=document.getElementById('inp-name').value.trim();
+  if(!name){showAlert('save-alert','Nama tidak boleh kosong','err');return;}
+  document.getElementById('avatar-circle').textContent=name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  document.getElementById('avatar-name').textContent=name;
+  showAlert('save-alert','Profil berhasil disimpan!','ok');
+}
+function gantiPassword(){
+  const oldP=document.getElementById('pass-old').value;
+  const newP=document.getElementById('pass-new').value;
+  const conf=document.getElementById('pass-conf').value;
+  if(!oldP){showAlert('pass-alert','Password lama wajib diisi','err');return;}
+  if(newP.length<8){showAlert('pass-alert','Minimal 8 karakter','err');return;}
+  if(newP!==conf){showAlert('pass-alert','Konfirmasi tidak cocok','err');return;}
+  document.getElementById('pass-old').value='';
+  document.getElementById('pass-new').value='';
+  document.getElementById('pass-conf').value='';
+  document.getElementById('pass-strength').style.display='none';
+  showAlert('pass-alert','Password berhasil diubah!','ok');
+}
+function checkStrength(p){
+  const w=document.getElementById('pass-strength');
+  if(!p){w.style.display='none';return;}
+  w.style.display='';
+  let s=0;
+  if(p.length>=8)s++;if(/[A-Z]/.test(p))s++;if(/[0-9]/.test(p))s++;if(/[^A-Za-z0-9]/.test(p))s++;
+  const c=['','var(--red)','var(--amber)','var(--orange)','var(--green)'];
+  const l=['','Lemah','Cukup','Baik','Kuat'];
+  for(let i=1;i<=4;i++)document.getElementById('ps'+i).style.background=i<=s?c[s]:'var(--border)';
+  const el=document.getElementById('ps-text');el.textContent=l[s];el.style.color=c[s];
+}
+function checkConfirm(){
+  const h=document.getElementById('conf-hint');
+  const np=document.getElementById('pass-new').value;
+  const cp=document.getElementById('pass-conf').value;
+  if(!cp){h.style.display='none';return;}
+  h.style.display='';
+  if(np===cp){h.textContent='✓ Cocok';h.style.color='var(--green)';}
+  else{h.textContent='✗ Tidak cocok';h.style.color='var(--red)';}
+}
+function toggleVis(id){const el=document.getElementById(id);el.type=el.type==='password'?'text':'password';}
+function showAlert(cid,msg,type){
+  const el=document.getElementById(cid);
+  el.innerHTML=`<div class="alert alert-${type}">${msg}</div>`;
+  setTimeout(()=>{el.innerHTML='';},4000);
+}
+</script>
+</body>
+</html>

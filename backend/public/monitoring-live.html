@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Monitor Ujian — ExamCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--navy:#1a3c6e;--navy-dark:#122a52;--navy-light:#e8eef7;--bg:#f0f2f5;--surface:#fff;--border:#e2e6ea;--ink:#1a2332;--ink2:#4a5568;--ink3:#9aa5b4;--green:#2e7d32;--green-light:#e8f5e9;--red:#c62828;--red-light:#ffebee;--amber:#f59e0b;--amber-light:#fffbeb;--sky:#0369a1;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+@keyframes blink{0%,100%{background:var(--green)}50%{background:#81c784}}
+.topbar{height:60px;background:var(--navy);display:flex;align-items:center;padding:0 18px;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.brand{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;color:#fff;text-decoration:none}
+.brand-icon{width:34px;height:34px;background:rgba(255,255,255,.15);border-radius:8px;display:grid;place-items:center}
+.brand-icon svg{width:17px;height:17px;fill:#fff}
+.topbar-mid{flex:1;display:flex;align-items:center;justify-content:center;gap:10px}
+.live-badge{display:flex;align-items:center;gap:7px;background:rgba(76,175,80,.2);border:1px solid rgba(76,175,80,.4);padding:5px 12px;border-radius:20px}
+.live-dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:blink 1.2s ease-in-out infinite}
+.live-text{font-size:12px;font-weight:700;color:#81c784}
+.last-upd{font-size:11px;color:rgba(255,255,255,.5)}
+.topbar-r{display:flex;gap:8px}
+.tb-btn{padding:7px 12px;background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:7px;cursor:pointer;font-size:12px;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:5px}
+.tb-btn:hover{background:rgba(255,255,255,.2)}
+.tb-btn.red{background:rgba(198,40,40,.3)}
+.tb-btn.amber{background:rgba(245,158,11,.3)}
+/* EXAM BAR */
+.exam-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.exam-sel{padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;outline:none;min-width:280px;background:var(--bg)}
+.exam-chip{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink3)}
+.exam-chip svg{width:13px;height:13px}
+/* STATS BAR */
+.stats-bar{display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border-bottom:1px solid var(--border)}
+.sb{padding:14px;text-align:center;border-right:1px solid var(--border);position:relative}
+.sb:last-child{border-right:none}
+.sb-val{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;line-height:1}
+.sb-label{font-size:10.5px;color:var(--ink3);margin-top:3px}
+.sb-bar{position:absolute;bottom:0;left:0;height:3px;transition:width .6s ease}
+/* PROGRESS */
+.prog-bar{background:var(--surface);padding:12px 18px;border-bottom:1px solid var(--border)}
+.prog-labels{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink3);margin-bottom:5px}
+.prog-track{height:8px;background:var(--border);border-radius:4px;overflow:hidden;display:flex}
+.ptrack-seg{height:100%;transition:width .6s ease}
+/* CONTENT */
+.content{max-width:1100px;margin:0 auto;padding:16px;display:grid;grid-template-columns:1fr 320px;gap:14px}
+/* STUDENT TABLE */
+.st-table{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.st-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#f7f9fc;flex-wrap:wrap;gap:8px}
+.st-title{font-size:13.5px;font-weight:700}
+.st-chips{display:flex;gap:6px}
+.st-chip{padding:4px 10px;border-radius:20px;font-size:11.5px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--bg);color:var(--ink3);transition:all .15s}
+.st-chip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.sr{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border);transition:background .15s}
+.sr:last-child{border-bottom:none}
+.sr:hover{background:#f9fafc}
+.sr.viol{background:var(--red-light)}
+.sr.sub{background:var(--green-light)}
+.sr-av{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;font-size:12px;font-weight:700;flex-shrink:0}
+.sr-info{flex:1;min-width:0}
+.sr-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sr-nis{font-size:11px;color:var(--ink3)}
+.sr-prog{width:90px;flex-shrink:0}
+.sr-prog-lbl{font-size:10px;color:var(--ink3);margin-bottom:2px;display:flex;justify-content:space-between}
+.sr-prog-track{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.sr-prog-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.sr-badge{padding:3px 8px;border-radius:20px;font-size:10.5px;font-weight:600;white-space:nowrap}
+.bdg-work{background:var(--navy-light);color:var(--navy)}
+.bdg-sub{background:var(--green-light);color:var(--green)}
+.bdg-viol{background:var(--red-light);color:var(--red)}
+.bdg-ns{background:var(--bg);color:var(--ink3);border:1px solid var(--border)}
+.sr-timer{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;min-width:45px;text-align:right;flex-shrink:0}
+/* RIGHT PANEL */
+.right-panel{display:flex;flex-direction:column;gap:14px}
+.panel-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.pc-head{padding:12px 14px;border-bottom:1px solid var(--border);background:#f7f9fc;font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px}
+.pc-head svg{width:14px;height:14px;color:var(--ink3)}
+.pc-body{padding:14px}
+.viol-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.viol-item:last-child{border-bottom:none}
+.viol-icon{width:30px;height:30px;border-radius:8px;background:var(--red-light);display:grid;place-items:center;flex-shrink:0}
+.viol-icon svg{width:14px;height:14px;color:var(--red)}
+.act-btn{display:flex;align-items:center;gap:8px;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:var(--ink2);background:var(--surface);width:100%;margin-bottom:8px;transition:all .15s}
+.act-btn:last-child{margin-bottom:0}
+.act-btn:hover{background:var(--bg)}
+.act-btn.red{color:var(--red)}.act-btn.red:hover{background:var(--red-light)}
+.act-btn.green{color:var(--green)}.act-btn.green:hover{background:var(--green-light)}
+.act-btn.amber{color:#92400e}.act-btn.amber:hover{background:var(--amber-light)}
+.act-btn svg{width:16px;height:16px;flex-shrink:0}
+.act-sub{font-size:10.5px;color:var(--ink3);margin-left:auto}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--ink);color:#fff;padding:11px 18px;border-radius:9px;font-size:13px;z-index:500;display:none;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.toast.show{display:block}
+@media(max-width:860px){.content{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a href="guru-dashboard.html" class="brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg></div>
+    ExamCore
+  </a>
+  <div class="topbar-mid">
+    <div class="live-badge"><div class="live-dot"></div><span class="live-text">LIVE</span></div>
+    <span class="last-upd" id="last-upd">—</span>
+  </div>
+  <div class="topbar-r">
+    <button class="tb-btn amber" onclick="pauseExam()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>Pause
+    </button>
+    <button class="tb-btn red" onclick="endExam()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Akhiri
+    </button>
+    <button class="tb-btn" onclick="refresh()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>Refresh
+    </button>
+  </div>
+</header>
+<div class="exam-bar">
+  <select class="exam-sel">
+    <option>UH 1 — Aljabar Dasar · X IPA 1</option>
+    <option>UAS Semester Ganjil · XI IPS 1</option>
+  </select>
+  <span class="exam-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>30 menit</span>
+  <span class="exam-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16"/></svg>10 soal</span>
+  <span class="exam-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5"/></svg>10 peserta</span>
+</div>
+<div class="stats-bar" id="stats-bar"></div>
+<div class="prog-bar">
+  <div class="prog-labels"><span>Progress Submit</span><span id="prog-text">0 / 10 (0%)</span></div>
+  <div class="prog-track" id="prog-track"></div>
+</div>
+<div class="content">
+  <div class="st-table">
+    <div class="st-head">
+      <div class="st-title">Daftar Peserta</div>
+      <div class="st-chips">
+        <span class="st-chip active" onclick="setF('all',this)">Semua</span>
+        <span class="st-chip" onclick="setF('working',this)">Berlangsung</span>
+        <span class="st-chip" onclick="setF('submitted',this)">Submit</span>
+        <span class="st-chip" onclick="setF('violation',this)">Langgar</span>
+      </div>
+    </div>
+    <div id="student-list"></div>
+  </div>
+  <div class="right-panel">
+    <div class="panel-card">
+      <div class="pc-head">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
+        Pelanggaran Terbaru
+        <span id="viol-badge" style="margin-left:auto;font-size:10.5px;background:var(--red-light);color:var(--red);padding:2px 7px;border-radius:10px;font-weight:600"></span>
+      </div>
+      <div class="pc-body" id="viol-feed"></div>
+    </div>
+    <div class="panel-card">
+      <div class="pc-head">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Aksi Cepat
+      </div>
+      <div class="pc-body">
+        <button class="act-btn amber" onclick="toast('Ujian dijeda')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          Pause Ujian<span class="act-sub">Bekukan sementara</span>
+        </button>
+        <button class="act-btn green" onclick="toast('+10 menit untuk semua')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Tambah Waktu<span class="act-sub">+10 menit semua</span>
+        </button>
+        <button class="act-btn" onclick="toast('Pesan terkirim')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3z"/></svg>
+          Broadcast Pesan<span class="act-sub">Kirim ke semua</span>
+        </button>
+        <button class="act-btn red" onclick="endExam()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+          Akhiri Ujian<span class="act-sub">Submit semua</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="auth.js"></script>
+<script>
+const STUDENTS=[
+  {id:1,name:'Ahmad Naufal',  nis:'2024001',answered:8, total:10,violations:0,status:'submitted', time:0},
+  {id:2,name:'Siti Rahayu',   nis:'2024002',answered:7, total:10,violations:1,status:'working',   time:742},
+  {id:3,name:'Dita Kusuma',   nis:'2024003',answered:5, total:10,violations:3,status:'violation', time:812},
+  {id:4,name:'Rizal Pratama', nis:'2024004',answered:9, total:10,violations:0,status:'submitted', time:0},
+  {id:5,name:'Eka Putri',     nis:'2024005',answered:3, total:10,violations:0,status:'working',   time:956},
+  {id:6,name:'Budiawan',      nis:'2024006',answered:0, total:10,violations:0,status:'notstarted',time:1800},
+  {id:7,name:'Citra Lestari', nis:'2024007',answered:10,total:10,violations:0,status:'submitted', time:0},
+  {id:8,name:'Hendra Gunawan',nis:'2024008',answered:6, total:10,violations:2,status:'working',   time:605},
+  {id:9,name:'Intan Permata', nis:'2024009',answered:8, total:10,violations:0,status:'submitted', time:0},
+  {id:10,name:'Joko Santoso', nis:'2024010',answered:4, total:10,violations:1,status:'working',   time:1100},
+];
+const VIOLS=[
+  {student:'Dita Kusuma',type:'Pindah Tab',count:3,time:'2 mnt lalu'},
+  {student:'Hendra Gunawan',type:'Keluar Layar',count:2,time:'5 mnt lalu'},
+  {student:'Siti Rahayu',type:'Keluar App',count:1,time:'8 mnt lalu'},
+  {student:'Joko Santoso',type:'Pindah Tab',count:1,time:'12 mnt lalu'},
+];
+let sfil='all';
+let autoRef=true;
+let timer;
+document.addEventListener('DOMContentLoaded',()=>{renderStats();renderStudents();renderViols();updateTime();startAuto();});
+function renderStats(){
+  const n=STUDENTS;
+  const tot=n.length,work=n.filter(s=>s.status==='working').length,sub=n.filter(s=>s.status==='submitted').length,viol=n.filter(s=>s.status==='violation').length,ns=n.filter(s=>s.status==='notstarted').length;
+  document.getElementById('stats-bar').innerHTML=[
+    {l:'Berlangsung',v:work,c:'var(--navy)',p:work/tot*100},
+    {l:'Submit',v:sub,c:'var(--green)',p:sub/tot*100},
+    {l:'Pelanggaran',v:viol,c:'var(--red)',p:viol/tot*100},
+    {l:'Belum Mulai',v:ns,c:'var(--amber)',p:ns/tot*100},
+    {l:'Total',v:tot,c:'var(--ink2)',p:0},
+  ].map(s=>`<div class="sb"><div class="sb-val" style="color:${s.c}">${s.v}</div><div class="sb-label">${s.l}</div><div class="sb-bar" style="width:${s.p}%;background:${s.c};opacity:.5"></div></div>`).join('');
+  const subPct=(sub/tot*100).toFixed(0);
+  const wPct=(work/tot*100).toFixed(0);
+  document.getElementById('prog-text').textContent=`${sub} / ${tot} submit (${subPct}%)`;
+  document.getElementById('prog-track').innerHTML=`<div class="ptrack-seg" style="width:${subPct}%;background:var(--green)"></div><div class="ptrack-seg" style="width:${wPct}%;background:var(--navy);opacity:.5"></div>`;
+}
+function renderStudents(){
+  const list=STUDENTS.filter(s=>sfil==='all'||s.status===sfil);
+  const cl={submitted:'#388e3c',working:var_navy(),violation:'#c62828',notstarted:'#9aa5b4'};
+  function var_navy(){return getComputedStyle(document.documentElement).getPropertyValue('--navy').trim()||'#1a3c6e';}
+  document.getElementById('student-list').innerHTML=list.map(s=>{
+    const pct=s.total>0?(s.answered/s.total*100).toFixed(0):0;
+    const rowCls=s.status==='violation'?'viol':s.status==='submitted'?'sub':'';
+    const avBg=s.status==='submitted'?'var(--green-light)':s.status==='violation'?'var(--red-light)':'var(--navy-light)';
+    const avCl=s.status==='submitted'?'var(--green)':s.status==='violation'?'var(--red)':'var(--navy)';
+    const bdgCls={working:'bdg-work',submitted:'bdg-sub',violation:'bdg-viol',notstarted:'bdg-ns'}[s.status]||'bdg-ns';
+    const bdgTxt={working:'Berlangsung',submitted:'Submit',violation:`⚠ ${s.violations}x`,notstarted:'Belum Mulai'}[s.status]||s.status;
+    const tc=s.time<300?'var(--red)':s.time<600?'var(--amber)':'var(--ink3)';
+    return `<div class="sr ${rowCls}">
+      <div class="sr-av" style="background:${avBg};color:${avCl}">${s.name[0]}</div>
+      <div class="sr-info"><div class="sr-name">${s.name}</div><div class="sr-nis">NIS: ${s.nis}</div></div>
+      <div class="sr-prog">
+        <div class="sr-prog-lbl"><span>${s.answered}/${s.total}</span><span>${pct}%</span></div>
+        <div class="sr-prog-track"><div class="sr-prog-fill" style="width:${pct}%;background:${avCl}"></div></div>
+      </div>
+      <span class="sr-badge ${bdgCls}">${bdgTxt}</span>
+      <div class="sr-timer" style="color:${tc}">${s.status!=='submitted'&&s.status!=='notstarted'?fmtTime(s.time):'—'}</div>
+    </div>`;
+  }).join('');
+}
+function renderViols(){
+  const total=VIOLS.reduce((a,b)=>a+b.count,0);
+  document.getElementById('viol-badge').textContent=`${total} total`;
+  document.getElementById('viol-feed').innerHTML=VIOLS.map(v=>`
+    <div class="viol-item">
+      <div class="viol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94"/><line x1="12" y1="9" x2="12" y2="13"/></svg></div>
+      <div style="flex:1"><div style="font-size:12.5px;font-weight:500">${v.student}</div><div style="font-size:11px;color:var(--ink3)">${v.type}</div></div>
+      <div style="text-align:right"><div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--red)">${v.count}×</div><div style="font-size:10.5px;color:var(--ink3)">${v.time}</div></div>
+    </div>`).join('');
+}
+function setF(f,el){sfil=f;document.querySelectorAll('.st-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');renderStudents();}
+function updateTime(){
+  const t=new Date();document.getElementById('last-upd').textContent=`Diperbarui: ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}:${String(t.getSeconds()).padStart(2,'0')}`;
+}
+function refresh(){
+  updateTime();
+  STUDENTS.forEach(s=>{if(s.status==='working'&&s.time>0){s.time=Math.max(0,s.time-30);if(Math.random()>.7)s.answered=Math.min(s.total,s.answered+1);}});
+  renderStats();renderStudents();toast('Data diperbarui');
+}
+function startAuto(){timer=setInterval(()=>{if(autoRef)refresh();},30000);}
+function pauseExam(){if(!confirm('Jeda ujian?'))return;toast('⏸ Ujian dijeda');}
+function endExam(){if(!confirm('Akhiri ujian? Semua siswa akan dikumpulkan otomatis.'))return;toast('⏹ Ujian diakhiri');}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3000);}
+function fmtTime(s){const m=Math.floor(s/60),ss=s%60;return `${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;}
+</script>
+</body>
+</html>

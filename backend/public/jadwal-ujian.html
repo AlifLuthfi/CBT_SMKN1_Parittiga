@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jadwal Ujian — ExamCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#1a3c6e;--navy-dark:#122a52;--navy-light:#e8eef7;
+  --orange:#e8821a;--orange-light:#fff4e8;
+  --bg:#f0f2f5;--surface:#ffffff;--border:#e2e6ea;--border2:#d1d8e0;
+  --ink:#1a2332;--ink2:#4a5568;--ink3:#9aa5b4;--ink4:#c9d3dc;
+  --green:#2e7d32;--green-light:#e8f5e9;
+  --red:#c62828;--red-light:#ffebee;
+  --amber:#f59e0b;--amber-light:#fffbeb;
+  --sky:#0369a1;--sky-light:#e0f2fe;
+  --sidebar-w:220px;--topbar-h:60px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex}
+@keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+.sk{background:linear-gradient(90deg,#e8ebef 25%,#f4f6f8 50%,#e8ebef 75%);background-size:600px 100%;animation:shimmer 1.4s ease-in-out infinite;border-radius:6px}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;z-index:100;display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-brand{display:flex;align-items:center;gap:11px;padding:0 18px;height:var(--topbar-h);border-bottom:1px solid var(--border);flex-shrink:0}
+.brand-icon{width:36px;height:36px;background:var(--navy);border-radius:8px;display:grid;place-items:center;flex-shrink:0}
+.brand-icon svg{width:18px;height:18px;fill:white}
+.brand-name{font-size:15px;font-weight:700;color:var(--ink)}
+.brand-sub{font-size:9.5px;font-weight:500;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+.nav-section{padding:16px 10px 0}
+.nav-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);padding:0 8px;margin-bottom:5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;font-size:13px;font-weight:500;color:var(--ink2);cursor:pointer;transition:all .15s;border:none;background:transparent;width:100%;text-align:left;font-family:'Inter',sans-serif;margin-bottom:1px;text-decoration:none}
+.nav-item:hover{background:var(--bg);color:var(--ink)}
+.nav-item.active{background:var(--navy-light);color:var(--navy);font-weight:600}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.nav-badge{margin-left:auto;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:var(--red);color:#fff}
+.sidebar-footer{margin-top:auto;border-top:1px solid var(--border);padding:14px;flex-shrink:0}
+.user-card{display:flex;align-items:center;gap:9px;padding:8px;border-radius:8px;cursor:pointer}
+.user-avatar{width:32px;height:32px;background:var(--navy);border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.user-name{font-size:13px;font-weight:600;color:var(--ink)}
+.user-role{font-size:11px;color:var(--ink3)}
+.logout-btn{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;font-size:12px;color:var(--ink3);cursor:pointer;transition:all .15s;border:none;background:transparent;width:100%;margin-top:2px;font-family:'Inter',sans-serif}
+.logout-btn:hover{background:var(--red-light);color:var(--red)}
+
+/* MAIN */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column}
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:15px;font-weight:700;color:var(--ink)}
+.topbar-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;border:1.5px solid}
+.btn-primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-primary:hover{background:var(--navy-dark)}
+.btn-ghost{background:transparent;color:var(--ink2);border-color:var(--border)}
+.btn-ghost:hover{background:var(--bg);color:var(--ink)}
+.btn-green{background:var(--green);color:#fff;border-color:var(--green)}
+.btn-green:hover{background:#256929}
+.btn svg{width:14px;height:14px}
+.icon-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--ink3);cursor:pointer;display:grid;place-items:center;transition:all .15s}
+.icon-btn svg{width:13px;height:13px}
+.icon-btn:hover{background:var(--bg);color:var(--ink)}
+.icon-btn.danger:hover{background:var(--red-light);color:var(--red);border-color:rgba(198,40,40,.25)}
+.content{padding:22px 24px;flex:1}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
+.page-title{font-size:20px;font-weight:700;color:var(--ink)}
+.page-sub{font-size:13px;color:var(--ink3);margin-top:2px}
+
+/* VIEW TOGGLE */
+.view-toggle{display:flex;background:var(--bg);border-radius:8px;padding:3px;gap:3px}
+.vt-btn{padding:7px 14px;border-radius:6px;border:none;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:500;color:var(--ink3);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;background:transparent}
+.vt-btn svg{width:14px;height:14px}
+.vt-btn.active{background:var(--surface);color:var(--navy);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:1fr 300px;gap:18px;align-items:start}
+
+/* CALENDAR */
+.calendar{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.cal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);background:#f7f9fc}
+.cal-month{font-size:15px;font-weight:700;color:var(--ink)}
+.cal-nav{display:flex;gap:5px}
+.cal-nav-btn{width:30px;height:30px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--ink2);cursor:pointer;display:grid;place-items:center;transition:all .15s}
+.cal-nav-btn:hover{background:var(--bg);color:var(--ink)}
+.cal-nav-btn svg{width:14px;height:14px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-day-label{padding:10px 0;text-align:center;font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border)}
+.cal-day{min-height:80px;padding:6px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;vertical-align:top}
+.cal-day:nth-child(7n){border-right:none}
+.cal-day:nth-last-child(-n+7){border-bottom:none}
+.cal-day:hover{background:#fafbfc}
+.cal-day.other-month{background:#fafbfc}
+.cal-day.other-month .cal-date{color:var(--ink4)}
+.cal-day.today{background:var(--navy-light)}
+.cal-day.today .cal-date{background:var(--navy);color:#fff}
+.cal-date{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:4px}
+.cal-event{font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.ev-active{background:var(--green-light);color:var(--green)}
+.ev-scheduled{background:var(--amber-light);color:#92400e}
+.ev-ended{background:var(--bg);color:var(--ink3)}
+.ev-draft{background:var(--navy-light);color:var(--navy)}
+
+/* LIST VIEW */
+.list-view{display:none}
+.list-group{margin-bottom:18px}
+.list-group-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--ink3);margin-bottom:8px;padding-left:2px}
+.exam-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:8px;display:flex;align-items:flex-start;gap:14px;transition:box-shadow .2s}
+.exam-item:hover{box-shadow:0 4px 14px rgba(0,0,0,.07)}
+.exam-date-box{width:48px;flex-shrink:0;text-align:center;background:var(--bg);border-radius:9px;padding:8px 6px;border:1px solid var(--border)}
+.edb-day{font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--navy);line-height:1}
+.edb-month{font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3);letter-spacing:.4px}
+.exam-info{flex:1}
+.exam-title{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:3px}
+.exam-meta{font-size:12px;color:var(--ink3);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.exam-meta span{display:flex;align-items:center;gap:4px}
+.exam-meta svg{width:12px;height:12px}
+.exam-actions{display:flex;gap:6px;flex-shrink:0}
+
+/* BADGE */
+.badge{display:inline-flex;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.b-green{background:var(--green-light);color:var(--green)}
+.b-red{background:var(--red-light);color:var(--red)}
+.b-navy{background:var(--navy-light);color:var(--navy)}
+.b-amber{background:var(--amber-light);color:#92400e}
+.b-gray{background:var(--bg);color:var(--ink3)}
+.b-sky{background:var(--sky-light);color:var(--sky)}
+
+/* SIDE PANEL */
+.side-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.side-head{padding:14px 16px;border-bottom:1px solid var(--border);background:#f7f9fc;font-size:14px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px}
+.side-head svg{width:15px;height:15px;color:var(--ink3)}
+.side-body{padding:14px 16px}
+.upcoming-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.upcoming-item:last-child{border-bottom:none}
+.up-date{width:34px;height:34px;border-radius:8px;background:var(--navy-light);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}
+.up-day{font-size:14px;font-weight:700;color:var(--navy);line-height:1}
+.up-mon{font-size:9px;text-transform:uppercase;color:var(--ink3)}
+.up-title{font-size:13px;font-weight:500;color:var(--ink)}
+.up-meta{font-size:11px;color:var(--ink3);margin-top:1px}
+
+/* QUICK SCHEDULE FORM */
+.form-group{margin-bottom:12px}
+.form-group:last-child{margin-bottom:0}
+.form-label{display:block;font-size:11.5px;font-weight:600;color:var(--ink2);margin-bottom:4px}
+.form-input,.form-select{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:12.5px;color:var(--ink);outline:none;transition:border-color .18s}
+.form-input:focus,.form-select:focus{border-color:var(--navy)}
+.toggle-wrap{display:flex;align-items:center;justify-content:space-between;padding:8px 0}
+.toggle-label{font-size:12.5px;color:var(--ink2)}
+.toggle{width:38px;height:20px;border-radius:10px;background:var(--border2);position:relative;cursor:pointer;transition:background .2s;border:none;outline:none}
+.toggle.on{background:var(--navy)}
+.toggle::after{content:'';width:14px;height:14px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;transition:left .2s}
+.toggle.on::after{left:21px}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);backdrop-filter:blur(3px);z-index:500;display:none;place-items:center;padding:20px}
+.overlay.open{display:grid}
+.modal{background:var(--surface);border-radius:12px;border:1px solid var(--border);width:100%;max-width:500px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.15);animation:mi .2s ease}
+@keyframes mi{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#f7f9fc}
+.modal-title{font-size:15px;font-weight:700;color:var(--ink)}
+.modal-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--ink3);cursor:pointer;display:grid;place-items:center;font-size:14px}
+.modal-close:hover{background:var(--bg)}
+.modal-body{padding:20px}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:#f7f9fc}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* EVENT DETAIL */
+.ev-detail{padding:14px}
+.ev-detail-title{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.ev-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2);margin-bottom:7px}
+.ev-row svg{width:14px;height:14px;color:var(--ink3);flex-shrink:0}
+.ev-actions{display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+
+/* TABLE for list */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:#f7f9fc}
+th{padding:10px 14px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--ink3);border-bottom:1.5px solid var(--border);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--ink2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#f9fafc}
+.td-main{color:var(--ink);font-weight:500}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+@media(max-width:1000px){.layout{grid-template-columns:1fr}}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg></div>
+    <div><div class="brand-name">ExamCore</div><div class="brand-sub">Exam Management</div></div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Menu Utama</div>
+    <a class="nav-item" href="guru-dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</a>
+    <a class="nav-item" href="manajemen-kelas.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Manajemen Kelas</a>
+    <a class="nav-item" href="input-soal.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Input Soal</a>
+    <a class="nav-item active" href="jadwal-ujian.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Jadwal Ujian</a>
+    <div class="nav-label" style="margin-top:12px">Laporan</div>
+    <a class="nav-item" href="rekap-nilai.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Rekap Nilai</a>
+    <a class="nav-item" href="import-arsip.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Import & Arsip</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" data-user-avatar>G</div>
+      <div><div class="user-name" data-user-name>Guru</div><div class="user-role" data-user-role>guru</div></div>
+    </div>
+    <button class="logout-btn" onclick="logout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-title">Jadwal Ujian</div>
+    <div class="topbar-r">
+      <div class="view-toggle">
+        <button class="vt-btn active" id="btn-cal" onclick="setView('calendar')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Kalender
+        </button>
+        <button class="vt-btn" id="btn-list" onclick="setView('list')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Daftar
+        </button>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('modal-new-exam')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Ujian Baru
+      </button>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="page-head">
+      <div><div class="page-title">Jadwal Ujian</div><div class="page-sub">Atur dan pantau jadwal semua ujian</div></div>
+    </div>
+
+    <!-- CALENDAR VIEW -->
+    <div id="calendar-view">
+      <div class="layout">
+        <!-- Calendar -->
+        <div>
+          <div class="calendar">
+            <div class="cal-header">
+              <button class="cal-nav-btn" onclick="prevMonth()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+              <div class="cal-month" id="cal-month-label">—</div>
+              <button class="cal-nav-btn" onclick="nextMonth()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+            </div>
+            <div class="cal-grid" id="cal-grid-header">
+              <div class="cal-day-label">Min</div><div class="cal-day-label">Sen</div><div class="cal-day-label">Sel</div>
+              <div class="cal-day-label">Rab</div><div class="cal-day-label">Kam</div><div class="cal-day-label">Jum</div><div class="cal-day-label">Sab</div>
+            </div>
+            <div class="cal-grid" id="cal-grid"></div>
+          </div>
+
+          <!-- Legend -->
+          <div style="display:flex;gap:14px;margin-top:12px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink3)"><div style="width:10px;height:10px;border-radius:3px;background:var(--green-light);border:1px solid var(--green)"></div>Aktif</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink3)"><div style="width:10px;height:10px;border-radius:3px;background:var(--amber-light);border:1px solid var(--amber)"></div>Terjadwal</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink3)"><div style="width:10px;height:10px;border-radius:3px;background:var(--bg);border:1px solid var(--border2)"></div>Selesai</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink3)"><div style="width:10px;height:10px;border-radius:3px;background:var(--navy-light);border:1px solid rgba(26,60,110,.3)"></div>Draft</div>
+          </div>
+        </div>
+
+        <!-- Side panel -->
+        <div>
+          <!-- Ujian mendatang -->
+          <div class="side-card">
+            <div class="side-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Ujian Mendatang</div>
+            <div class="side-body" id="upcoming-list">
+              <div class="sk" style="height:50px;border-radius:8px;margin-bottom:8px"></div>
+              <div class="sk" style="height:50px;border-radius:8px;margin-bottom:8px"></div>
+              <div class="sk" style="height:50px;border-radius:8px"></div>
+            </div>
+          </div>
+
+          <!-- Quick schedule form -->
+          <div class="side-card">
+            <div class="side-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Jadwal Cepat</div>
+            <div class="side-body">
+              <div class="form-group"><label class="form-label">Ujian</label>
+                <select class="form-select" id="qs-exam"><option value="">— Pilih Ujian Draft —</option></select>
+              </div>
+              <div class="form-group"><label class="form-label">Tanggal Mulai</label>
+                <input class="form-input" type="datetime-local" id="qs-start">
+              </div>
+              <div class="form-group"><label class="form-label">Tanggal Selesai</label>
+                <input class="form-input" type="datetime-local" id="qs-end">
+              </div>
+              <div class="toggle-wrap">
+                <span class="toggle-label">Aktifkan Otomatis</span>
+                <button class="toggle on" id="qs-auto" onclick="this.classList.toggle('on')"></button>
+              </div>
+              <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="jadwalkanCepat()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Simpan Jadwal
+              </button>
+            </div>
+          </div>
+
+          <!-- Event detail panel -->
+          <div class="side-card" id="event-detail" style="display:none">
+            <div class="side-head" style="justify-content:space-between">
+              <span>Detail Ujian</span>
+              <button class="icon-btn" onclick="document.getElementById('event-detail').style.display='none'">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div id="event-detail-body"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIST VIEW -->
+    <div id="list-view" style="display:none">
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="btn btn-ghost active-filter" data-filter="all" onclick="filterList('all',this)" style="font-size:12px">Semua</button>
+        <button class="btn btn-ghost" data-filter="active" onclick="filterList('active',this)" style="font-size:12px">Aktif</button>
+        <button class="btn btn-ghost" data-filter="scheduled" onclick="filterList('scheduled',this)" style="font-size:12px">Terjadwal</button>
+        <button class="btn btn-ghost" data-filter="ended" onclick="filterList('ended',this)" style="font-size:12px">Selesai</button>
+        <button class="btn btn-ghost" data-filter="draft" onclick="filterList('draft',this)" style="font-size:12px">Draft</button>
+      </div>
+      <div id="exam-list"></div>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL: NEW EXAM -->
+<div class="overlay" id="modal-new-exam">
+  <div class="modal">
+    <div class="modal-head"><span class="modal-title">Buat Ujian Baru</span><button class="modal-close" onclick="closeModal('modal-new-exam')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label" style="font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:5px">Judul Ujian *</label><input class="form-input" id="ne-title" placeholder="Contoh: UH 1 — Aljabar Dasar"></div>
+      <div class="row2">
+        <div class="form-group"><label class="form-label" style="font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:5px">Kelas *</label>
+          <select class="form-select" id="ne-class"><option value="">— Pilih —</option></select>
+        </div>
+        <div class="form-group"><label class="form-label" style="font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:5px">Durasi (menit)</label>
+          <input class="form-input" type="number" id="ne-duration" value="90" min="5" max="300">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="form-group"><label class="form-label" style="font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:5px">Tanggal Mulai</label><input class="form-input" type="datetime-local" id="ne-start"></div>
+        <div class="form-group"><label class="form-label" style="font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:5px">Tanggal Selesai</label><input class="form-input" type="datetime-local" id="ne-end"></div>
+      </div>
+      <div class="row2">
+        <div class="form-group"><label class="form-label" style="font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:5px">Passing Grade</label><input class="form-input" type="number" id="ne-pg" value="70" min="0" max="100"></div>
+        <div class="form-group"><label class="form-label" style="font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:5px">Maks. Pelanggaran</label><input class="form-input" type="number" id="ne-viol" value="5" min="1" max="20"></div>
+      </div>
+      <div style="display:flex;gap:16px">
+        <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink2);cursor:pointer">
+          <input type="checkbox" id="ne-random" checked style="accent-color:var(--navy)"> Acak soal
+        </label>
+        <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink2);cursor:pointer">
+          <input type="checkbox" id="ne-auto" style="accent-color:var(--navy)"> Aktifkan otomatis
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-new-exam')">Batal</button>
+      <button class="btn btn-primary" onclick="buatUjian()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/></svg>Buat Ujian</button>
+    </div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script>
+const DEMO_EXAMS = [
+  {id:1,title:'UH Aljabar',class_name:'X IPA 1',status:'active',   start:'2026-05-08T08:00',end:'2026-05-08T09:30',duration:90,peserta:30,passing_grade:70},
+  {id:2,title:'UH Ekonomi Mikro',class_name:'XI IPS 1',status:'active',start:'2026-05-08T10:00',end:'2026-05-08T11:30',duration:90,peserta:28,passing_grade:70},
+  {id:3,title:'UTS Fisika',class_name:'XI IPA 1',status:'ended',   start:'2026-05-01T08:00',end:'2026-05-01T10:00',duration:120,peserta:31,passing_grade:70},
+  {id:4,title:'UH Kimia Organik',class_name:'XII IPA 1',status:'scheduled',start:'2026-05-15T08:00',end:'2026-05-15T09:30',duration:90,peserta:29,passing_grade:70},
+  {id:5,title:'UAS Matematika',class_name:'X IPA 2',status:'scheduled',start:'2026-05-20T07:30',end:'2026-05-20T09:30',duration:120,peserta:30,passing_grade:70},
+  {id:6,title:'UH Geografi',class_name:'XII IPS 1',status:'ended', start:'2026-04-28T09:00',end:'2026-04-28T10:00',duration:60,peserta:27,passing_grade:70},
+  {id:7,title:'UH Biologi',class_name:'X IPA 1',status:'draft',    start:null,end:null,duration:90,peserta:0,passing_grade:70},
+];
+const DEMO_CLASSES = [{id:1,name:'X IPA 1'},{id:2,name:'XI IPS 1'},{id:3,name:'XI IPA 1'},{id:4,name:'X IPA 2'}];
+
+let currentView  = 'calendar';
+let currentMonth = new Date().getMonth();
+let currentYear  = new Date().getFullYear();
+let listFilter   = 'all';
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!requireAuth('guru')) return;
+  renderUser();
+  renderCalendar();
+  renderUpcoming();
+  renderListView();
+  populateExamSelects();
+});
+
+/* ── VIEW TOGGLE ── */
+function setView(v) {
+  currentView = v;
+  document.getElementById('calendar-view').style.display = v === 'calendar' ? '' : 'none';
+  document.getElementById('list-view').style.display     = v === 'list'     ? '' : 'none';
+  document.getElementById('btn-cal').classList.toggle('active',  v === 'calendar');
+  document.getElementById('btn-list').classList.toggle('active', v === 'list');
+}
+
+/* ── CALENDAR ── */
+function renderCalendar() {
+  const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  document.getElementById('cal-month-label').textContent = `${months[currentMonth]} ${currentYear}`;
+
+  const first   = new Date(currentYear, currentMonth, 1);
+  const lastDay = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const startDay= first.getDay();
+  const today   = new Date();
+
+  let html = '';
+  // Fill leading blanks
+  for (let i = 0; i < startDay; i++) {
+    const prevDate = new Date(currentYear, currentMonth, 1 - (startDay - i));
+    html += `<div class="cal-day other-month"><div class="cal-date">${prevDate.getDate()}</div></div>`;
+  }
+
+  for (let d = 1; d <= lastDay; d++) {
+    const isToday  = today.getDate() === d && today.getMonth() === currentMonth && today.getFullYear() === currentYear;
+    const dateStr  = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayExams = DEMO_EXAMS.filter(e => e.start && e.start.startsWith(dateStr));
+
+    const eventsHtml = dayExams.map(e => {
+      const cls = {active:'ev-active',scheduled:'ev-scheduled',ended:'ev-ended',draft:'ev-draft'}[e.status] || 'ev-draft';
+      return `<div class="cal-event ${cls}" onclick="showEvent(${e.id})" title="${e.title}">${e.title}</div>`;
+    }).join('');
+
+    html += `<div class="cal-day ${isToday ? 'today' : ''}">
+      <div class="cal-date">${d}</div>
+      ${eventsHtml}
+    </div>`;
+  }
+
+  // Fill trailing blanks
+  const totalCells = startDay + lastDay;
+  const trailing   = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for (let i = 1; i <= trailing; i++) {
+    html += `<div class="cal-day other-month"><div class="cal-date">${i}</div></div>`;
+  }
+
+  document.getElementById('cal-grid').innerHTML = html;
+}
+
+function prevMonth() {
+  currentMonth--;
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  renderCalendar();
+}
+function nextMonth() {
+  currentMonth++;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  renderCalendar();
+}
+
+/* ── UPCOMING ── */
+function renderUpcoming() {
+  const now  = new Date();
+  const list = DEMO_EXAMS
+    .filter(e => e.start && new Date(e.start) >= now && e.status !== 'ended')
+    .sort((a,b) => new Date(a.start) - new Date(b.start))
+    .slice(0,4);
+
+  document.getElementById('upcoming-list').innerHTML = list.length
+    ? list.map(e => {
+        const d = new Date(e.start);
+        const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+        const statusColors = {active:'var(--green)',scheduled:'var(--amber)',draft:'var(--navy-light)'};
+        return `<div class="upcoming-item">
+          <div class="up-date" style="background:${statusColors[e.status]||'var(--bg)'}1a"><div class="up-day">${d.getDate()}</div><div class="up-mon">${months[d.getMonth()]}</div></div>
+          <div style="flex:1">
+            <div class="up-title">${e.title}</div>
+            <div class="up-meta">${e.class_name} · ${d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</div>
+          </div>
+        </div>`;
+      }).join('')
+    : '<div style="text-align:center;color:var(--ink3);font-size:12.5px;padding:10px">Tidak ada ujian mendatang</div>';
+}
+
+/* ── SHOW EVENT ── */
+function showEvent(id) {
+  const e  = DEMO_EXAMS.find(x => x.id === id);
+  if (!e) return;
+  const statusMap = {active:{l:'Aktif',c:'b-green'},scheduled:{l:'Terjadwal',c:'b-amber'},ended:{l:'Selesai',c:'b-navy'},draft:{l:'Draft',c:'b-gray'}};
+  const s = statusMap[e.status] || statusMap.draft;
+
+  document.getElementById('event-detail-body').innerHTML = `
+    <div class="ev-detail">
+      <div class="ev-detail-title">${e.title}</div>
+      <span class="badge ${s.c}" style="margin-bottom:12px">${s.l}</span>
+      <div class="ev-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>${e.class_name}</div>
+      ${e.start ? `<div class="ev-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${formatDatetime(e.start)} — ${formatDatetime(e.end)}</div>` : ''}
+      <div class="ev-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${e.duration} menit · KKM ${e.passing_grade}</div>
+      <div class="ev-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>${e.peserta} peserta</div>
+      <div class="ev-actions">
+        ${e.status === 'scheduled' || e.status === 'draft' ? `<button class="btn btn-green" style="flex:1;justify-content:center;font-size:12px" onclick="aktivasiUjian(${e.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><polygon points="5 3 19 12 5 21 5 3"/></svg>Aktifkan</button>` : ''}
+        ${e.status === 'active' ? `<button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:12px" onclick="pauseUjian(${e.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>Pause</button>` : ''}
+        ${e.status === 'active' ? `<button class="btn btn-danger" style="flex:1;justify-content:center;font-size:12px" onclick="akhiriUjian(${e.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Akhiri</button>` : ''}
+      </div>
+    </div>`;
+  document.getElementById('event-detail').style.display = '';
+}
+
+/* ── LIST VIEW ── */
+function renderListView() {
+  const filtered = listFilter === 'all' ? DEMO_EXAMS : DEMO_EXAMS.filter(e => e.status === listFilter);
+  const grouped  = {};
+  filtered.forEach(e => {
+    const key = e.start ? e.start.substring(0,7) : 'draft';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(e);
+  });
+
+  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+  const statusMap = {active:{l:'Aktif',c:'b-green'},scheduled:{l:'Terjadwal',c:'b-amber'},ended:{l:'Selesai',c:'b-sky'},draft:{l:'Draft',c:'b-gray'}};
+
+  document.getElementById('exam-list').innerHTML = Object.entries(grouped).sort().reverse().map(([key, exams]) => {
+    const label = key === 'draft' ? 'Belum Dijadwalkan' : (() => {
+      const [y,m] = key.split('-');
+      return `${months[parseInt(m)-1]} ${y}`;
+    })();
+    return `<div class="list-group">
+      <div class="list-group-title">${label}</div>
+      ${exams.map(e => {
+        const s = statusMap[e.status] || statusMap.draft;
+        const d = e.start ? new Date(e.start) : null;
+        return `<div class="exam-item">
+          ${d ? `<div class="exam-date-box"><div class="edb-day">${d.getDate()}</div><div class="edb-month">${months[d.getMonth()]}</div></div>` : '<div class="exam-date-box" style="opacity:.3"><div class="edb-day">—</div><div class="edb-month">TBD</div></div>'}
+          <div class="exam-info">
+            <div class="exam-title">${e.title}</div>
+            <div class="exam-meta">
+              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>${e.class_name}</span>
+              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${e.duration} mnt</span>
+              ${d ? `<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</span>` : ''}
+            </div>
+          </div>
+          <div class="exam-actions">
+            <span class="badge ${s.c}">${s.l}</span>
+            ${e.status === 'draft' || e.status === 'scheduled' ? `<button class="btn btn-green" style="font-size:11.5px;padding:6px 12px" onclick="aktivasiUjian(${e.id})">Aktifkan</button>` : ''}
+            ${e.status === 'active' ? `<button class="btn btn-ghost" style="font-size:11.5px;padding:6px 12px" onclick="akhiriUjian(${e.id})">Akhiri</button>` : ''}
+            <button class="icon-btn danger" onclick="hapusUjian(${e.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('') || '<div style="text-align:center;padding:40px;color:var(--ink3)">Tidak ada ujian ditemukan</div>';
+}
+
+function filterList(filter, btn) {
+  listFilter = filter;
+  document.querySelectorAll('[data-filter]').forEach(b => {
+    b.style.fontWeight = b.dataset.filter === filter ? '600' : '400';
+    b.style.borderColor= b.dataset.filter === filter ? 'var(--navy)' : 'var(--border)';
+    b.style.color      = b.dataset.filter === filter ? 'var(--navy)' : 'var(--ink2)';
+  });
+  renderListView();
+}
+
+/* ── ACTIONS ── */
+async function aktivasiUjian(id) {
+  const e = DEMO_EXAMS.find(x => x.id === id);
+  if (!e) return;
+  confirm(`Aktifkan ujian "${e.title}" sekarang?`, async () => {
+    try { await api('PATCH', `/guru/exams/${id}/activate`); } catch(_) {}
+    e.status = 'active';
+    renderCalendar(); renderUpcoming(); renderListView();
+    document.getElementById('event-detail').style.display = 'none';
+    toast('Ujian diaktifkan', 'ok');
+  });
+}
+
+async function pauseUjian(id) {
+  try { await api('PATCH', `/guru/exams/${id}/pause`); } catch(_) {}
+  const e = DEMO_EXAMS.find(x => x.id === id);
+  if (e) e.status = 'scheduled';
+  renderCalendar(); renderListView();
+  document.getElementById('event-detail').style.display = 'none';
+  toast('Ujian dijeda', 'ok');
+}
+
+async function akhiriUjian(id) {
+  const e = DEMO_EXAMS.find(x => x.id === id);
+  confirm(`Akhiri ujian "${e?.title}"? Semua siswa yang belum submit akan dikumpulkan otomatis.`, async () => {
+    try { await api('PATCH', `/guru/exams/${id}/end`); } catch(_) {}
+    if (e) e.status = 'ended';
+    renderCalendar(); renderUpcoming(); renderListView();
+    document.getElementById('event-detail').style.display = 'none';
+    toast('Ujian diakhiri', 'ok');
+  });
+}
+
+function hapusUjian(id) {
+  const e = DEMO_EXAMS.find(x => x.id === id);
+  if (e?.status === 'active') { toast('Ujian aktif tidak dapat dihapus', 'err'); return; }
+  confirm(`Hapus ujian "${e?.title}"?`, async () => {
+    try { await api('DELETE', `/guru/exams/${id}`); } catch(_) {}
+    const idx = DEMO_EXAMS.findIndex(x => x.id === id);
+    if (idx > -1) DEMO_EXAMS.splice(idx, 1);
+    renderCalendar(); renderListView();
+    toast('Ujian dihapus', 'ok');
+  });
+}
+
+/* ── BUAT UJIAN ── */
+async function buatUjian() {
+  const title = document.getElementById('ne-title').value.trim();
+  const cls   = document.getElementById('ne-class').value;
+  if (!title || !cls) { toast('Judul dan kelas wajib diisi', 'err'); return; }
+  const clsName = DEMO_CLASSES.find(c => c.id == cls)?.name || '—';
+  try {
+    await api('POST', '/guru/exams', {
+      title, class_id: cls,
+      duration_minutes: parseInt(document.getElementById('ne-duration').value) || 90,
+      passing_grade:    parseInt(document.getElementById('ne-pg').value) || 70,
+      max_violations:   parseInt(document.getElementById('ne-viol').value) || 5,
+      start_time:       document.getElementById('ne-start').value || null,
+      end_time:         document.getElementById('ne-end').value   || null,
+      auto_activate:    document.getElementById('ne-auto').checked,
+      randomize_questions: document.getElementById('ne-random').checked,
+    });
+  } catch(_) {}
+  DEMO_EXAMS.push({id:Date.now(),title,class_name:clsName,status: document.getElementById('ne-start').value ? 'scheduled' : 'draft',start:document.getElementById('ne-start').value||null,end:document.getElementById('ne-end').value||null,duration:parseInt(document.getElementById('ne-duration').value)||90,peserta:0,passing_grade:parseInt(document.getElementById('ne-pg').value)||70});
+  closeModal('modal-new-exam');
+  renderCalendar(); renderUpcoming(); renderListView(); populateExamSelects();
+  toast('Ujian berhasil dibuat', 'ok');
+}
+
+/* ── JADWAL CEPAT ── */
+async function jadwalkanCepat() {
+  const examId = document.getElementById('qs-exam').value;
+  const start  = document.getElementById('qs-start').value;
+  const end    = document.getElementById('qs-end').value;
+  if (!examId || !start || !end) { toast('Pilih ujian dan isi jadwal', 'err'); return; }
+  const auto = document.getElementById('qs-auto').classList.contains('on');
+  try {
+    await api('PATCH', `/guru/exams/${examId}/schedule`, {start_time:start,end_time:end,auto_activate:auto});
+  } catch(_) {}
+  const e = DEMO_EXAMS.find(x => x.id == examId);
+  if (e) { e.start = start; e.end = end; e.status = 'scheduled'; }
+  renderCalendar(); renderUpcoming(); renderListView();
+  toast('Jadwal berhasil disimpan', 'ok');
+}
+
+/* ── POPULATE SELECTS ── */
+function populateExamSelects() {
+  const neClass = document.getElementById('ne-class');
+  neClass.innerHTML = '<option value="">— Pilih Kelas —</option>';
+  DEMO_CLASSES.forEach(c => { const o = document.createElement('option'); o.value=c.id; o.textContent=c.name; neClass.appendChild(o); });
+
+  const qsExam = document.getElementById('qs-exam');
+  qsExam.innerHTML = '<option value="">— Pilih Ujian Draft —</option>';
+  DEMO_EXAMS.filter(e => e.status === 'draft').forEach(e => { const o = document.createElement('option'); o.value=e.id; o.textContent=e.title; qsExam.appendChild(o); });
+}
+
+function formatDatetime(str) {
+  if (!str) return '—';
+  return new Date(str).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+</script>
+</body>
+</html>

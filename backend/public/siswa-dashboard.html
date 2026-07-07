@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Siswa — ExamCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#1a3c6e;--navy-dark:#122a52;--navy-light:#e8eef7;
+  --orange:#e8821a;--orange-light:#fff4e8;
+  --bg:#f0f2f5;--surface:#ffffff;--border:#e2e6ea;--border2:#d1d8e0;
+  --ink:#1a2332;--ink2:#4a5568;--ink3:#9aa5b4;--ink4:#c9d3dc;
+  --green:#2e7d32;--green-light:#e8f5e9;
+  --red:#c62828;--red-light:#ffebee;
+  --amber:#f59e0b;--amber-light:#fffbeb;
+  --sky:#0369a1;--sky-light:#e0f2fe;
+  --topbar-h:60px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+@keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+.sk{background:linear-gradient(90deg,#e8ebef 25%,#f4f6f8 50%,#e8ebef 75%);background-size:600px 100%;animation:shimmer 1.4s ease-in-out infinite;border-radius:6px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.pulse{animation:pulse 1.5s ease-in-out infinite}
+
+/* TOPBAR */
+.topbar{height:var(--topbar-h);background:var(--navy);display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.brand{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700;color:#fff}
+.brand-icon{width:34px;height:34px;background:rgba(255,255,255,.15);border-radius:8px;display:grid;place-items:center}
+.brand-icon svg{width:18px;height:18px;fill:white}
+.topbar-r{margin-left:auto;display:flex;align-items:center;gap:6px}
+.tb-btn{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,.1);border:none;color:#fff;cursor:pointer;display:grid;place-items:center;transition:background .15s;position:relative}
+.tb-btn:hover{background:rgba(255,255,255,.2)}
+.tb-btn svg{width:17px;height:17px}
+.notif-dot{width:8px;height:8px;background:var(--red);border-radius:50%;position:absolute;top:6px;right:6px;border:2px solid var(--navy)}
+.user-pill{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 4px;background:rgba(255,255,255,.1);border-radius:25px;cursor:pointer;transition:background .15s;border:none;color:#fff;font-family:'Inter',sans-serif}
+.user-pill:hover{background:rgba(255,255,255,.18)}
+.user-av{width:28px;height:28px;border-radius:50%;background:var(--orange);display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.user-info{text-align:left}
+.user-name{font-size:12.5px;font-weight:600;line-height:1.2}
+.user-role{font-size:10px;color:rgba(255,255,255,.6);text-transform:capitalize}
+
+/* MAIN */
+.main{max-width:960px;margin:0 auto;padding:20px 16px 60px}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-dark) 100%);border-radius:14px;padding:24px;margin-bottom:20px;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;right:-40px;top:-40px;width:200px;height:200px;background:rgba(255,255,255,.04);border-radius:50%}
+.hero::before{content:'';position:absolute;right:60px;bottom:-60px;width:140px;height:140px;background:rgba(255,255,255,.03);border-radius:50%}
+.hero-greeting{font-size:13px;color:rgba(255,255,255,.6);margin-bottom:4px}
+.hero-name{font-size:22px;font-weight:700;color:#fff;margin-bottom:12px}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.hero-stat{background:rgba(255,255,255,.08);border-radius:9px;padding:10px 12px;border:1px solid rgba(255,255,255,.08)}
+.hero-stat-val{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:#fff;line-height:1}
+.hero-stat-label{font-size:10.5px;color:rgba(255,255,255,.55);margin-top:3px}
+
+/* SECTION */
+.section-title{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.section-link{font-size:12px;font-weight:500;color:var(--navy);text-decoration:none}
+.section-link:hover{text-decoration:underline}
+
+/* EXAM CARD */
+.exam-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px;transition:box-shadow .2s,transform .2s}
+.exam-card:hover{box-shadow:0 4px 18px rgba(0,0,0,.08);transform:translateY(-1px)}
+.exam-card.active-session{border-color:var(--green);border-width:1.5px}
+.ec-head{background:var(--navy);padding:14px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.ec-title{font-size:14px;font-weight:600;color:#fff;margin-bottom:2px}
+.ec-sub{font-size:11.5px;color:rgba(255,255,255,.6)}
+.ec-badge{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;flex-shrink:0}
+.badge-active{background:var(--green);color:#fff}
+.badge-resume{background:var(--amber);color:#fff}
+.badge-done{background:rgba(255,255,255,.15);color:rgba(255,255,255,.8)}
+.ec-body{padding:14px 16px}
+.ec-chips{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.ec-chip{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink3)}
+.ec-chip svg{width:13px;height:13px}
+.ec-btn{width:100%;padding:10px;border-radius:8px;border:none;font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:7px}
+.ec-btn svg{width:16px;height:16px}
+.ec-btn-start{background:var(--navy);color:#fff}
+.ec-btn-start:hover{background:var(--navy-dark)}
+.ec-btn-resume{background:var(--green);color:#fff}
+.ec-btn-resume:hover{background:#256929}
+.ec-btn-result{background:transparent;color:var(--navy);border:1.5px solid var(--border)}
+.ec-btn-result:hover{background:var(--navy-light)}
+
+/* SCHEDULE CARD */
+.schedule-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:8px}
+.sc-head{display:flex;gap:12px;padding:13px 14px;align-items:center}
+.sc-date{width:44px;flex-shrink:0;text-align:center;background:var(--navy-light);border-radius:9px;padding:7px 5px}
+.sc-day{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--navy);line-height:1}
+.sc-mon{font-size:9.5px;font-weight:600;color:var(--ink3);text-transform:uppercase}
+.sc-info{flex:1}
+.sc-title{font-size:13.5px;font-weight:600;color:var(--ink);margin-bottom:2px}
+.sc-meta{font-size:11.5px;color:var(--ink3)}
+.sc-status{flex-shrink:0}
+
+/* NILAI CARD */
+.nilai-table{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.nilai-row{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border)}
+.nilai-row:last-child{border-bottom:none}
+.nilai-row:hover{background:#f9fafc}
+.nr-rank{width:26px;height:26px;border-radius:6px;background:var(--bg);border:1px solid var(--border);display:grid;place-items:center;font-size:10.5px;font-weight:700;color:var(--ink3);font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.nr-info{flex:1}
+.nr-title{font-size:13px;font-weight:500;color:var(--ink)}
+.nr-date{font-size:11px;color:var(--ink3)}
+.nr-score{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700}
+.nr-badge{display:inline-flex;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;margin-left:6px}
+.nr-pass{background:var(--green-light);color:var(--green)}
+.nr-fail{background:var(--red-light);color:var(--red)}
+
+/* PROGRESS */
+.prog-wrap{margin-top:8px}
+.prog-label{display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);margin-bottom:4px}
+.prog-track{height:7px;background:var(--border);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;border-radius:4px;transition:width .6s ease}
+
+/* STAT MINI */
+.stat-mini-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+.stat-mini{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;border-left:4px solid}
+.sm-val{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;color:var(--ink);line-height:1;margin-bottom:3px}
+.sm-label{font-size:11px;color:var(--ink3)}
+
+/* EMPTY */
+.empty{text-align:center;padding:32px 16px;color:var(--ink3)}
+.empty svg{width:48px;height:48px;opacity:.3;margin-bottom:10px}
+.empty-title{font-size:14px;font-weight:600;color:var(--ink3);margin-bottom:4px}
+.empty-sub{font-size:12px}
+
+/* NOTIF DROPDOWN */
+.notif-dropdown{position:fixed;top:68px;right:16px;width:320px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.12);z-index:200;display:none}
+.notif-dropdown.open{display:block}
+.nd-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.nd-title{font-size:13.5px;font-weight:700;color:var(--ink)}
+.nd-clear{font-size:11.5px;color:var(--navy);cursor:pointer;background:none;border:none;font-family:'Inter',sans-serif}
+.nd-item{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;gap:10px;cursor:pointer;transition:background .15s}
+.nd-item:last-child{border-bottom:none}
+.nd-item:hover{background:#f9fafc}
+.nd-item.unread{background:var(--navy-light)}
+.nd-icon{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;flex-shrink:0}
+.nd-icon svg{width:15px;height:15px}
+.nd-text{font-size:12.5px;color:var(--ink2);line-height:1.5}
+.nd-time{font-size:10.5px;color:var(--ink3);margin-top:2px}
+
+/* PROFILE DROPDOWN */
+.profile-dropdown{position:fixed;top:68px;right:16px;width:220px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.12);z-index:200;display:none}
+.profile-dropdown.open{display:block}
+.pd-header{padding:14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.pd-av{width:40px;height:40px;border-radius:10px;background:var(--navy);display:grid;place-items:center;font-size:15px;font-weight:700;color:#fff}
+.pd-name{font-size:13.5px;font-weight:600;color:var(--ink)}
+.pd-nis{font-size:11px;color:var(--ink3)}
+.pd-item{display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:13px;color:var(--ink2);cursor:pointer;transition:background .15s;border:none;background:none;width:100%;font-family:'Inter',sans-serif}
+.pd-item:hover{background:var(--bg);color:var(--ink)}
+.pd-item.danger:hover{background:var(--red-light);color:var(--red)}
+.pd-item svg{width:15px;height:15px}
+.pd-divider{height:1px;background:var(--border);margin:4px 0}
+
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg></div>
+    ExamCore
+  </div>
+  <div class="topbar-r">
+    <button class="tb-btn" id="btn-notif" onclick="toggleNotif()" title="Notifikasi">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="notif-dot" id="notif-dot"></span>
+    </button>
+    <button class="user-pill" onclick="toggleProfile()">
+      <div class="user-av" id="user-av">S</div>
+      <div class="user-info">
+        <div class="user-name" id="user-name">Siswa</div>
+        <div class="user-role">Peserta Ujian</div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-left:2px"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- NOTIFIKASI DROPDOWN -->
+<div class="notif-dropdown" id="notif-dropdown">
+  <div class="nd-head">
+    <span class="nd-title">Notifikasi</span>
+    <button class="nd-clear" onclick="markAllRead()">Tandai semua terbaca</button>
+  </div>
+  <div id="notif-list"></div>
+</div>
+
+<!-- PROFILE DROPDOWN -->
+<div class="profile-dropdown" id="profile-dropdown">
+  <div class="pd-header">
+    <div class="pd-av" id="pd-av">S</div>
+    <div>
+      <div class="pd-name" id="pd-name">Siswa</div>
+      <div class="pd-nis" id="pd-nis">NIS: —</div>
+    </div>
+  </div>
+  <button class="pd-item" onclick="window.location.href='profil-siswa.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profil Saya
+  </button>
+  <button class="pd-item" onclick="window.location.href='riwayat-ujian.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Riwayat Ujian
+  </button>
+  <div class="pd-divider"></div>
+  <button class="pd-item danger" onclick="logout()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout
+  </button>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HERO -->
+  <div class="hero" id="hero">
+    <div class="hero-greeting" id="hero-greeting">Selamat Datang</div>
+    <div class="hero-name" id="hero-name">Memuat...</div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-val sk" style="height:22px;width:40px;background:rgba(255,255,255,.15)" id="hs-ujian">—</div><div class="hero-stat-label">Ujian Selesai</div></div>
+      <div class="hero-stat"><div class="hero-stat-val sk" style="height:22px;width:40px;background:rgba(255,255,255,.15)" id="hs-rata">—</div><div class="hero-stat-label">Nilai Rata-rata</div></div>
+      <div class="hero-stat"><div class="hero-stat-val sk" style="height:22px;width:40px;background:rgba(255,255,255,.15)" id="hs-lulus">—</div><div class="hero-stat-label">% Lulus</div></div>
+    </div>
+  </div>
+
+  <!-- STAT MINI -->
+  <div class="stat-mini-grid">
+    <div class="stat-mini" style="border-left-color:var(--green)">
+      <div class="sm-val" id="sm-best">—</div>
+      <div class="sm-label">Nilai Tertinggi</div>
+    </div>
+    <div class="stat-mini" style="border-left-color:var(--navy)">
+      <div class="sm-val" id="sm-kelas">—</div>
+      <div class="sm-label">Kelas Aktif</div>
+    </div>
+  </div>
+
+  <!-- UJIAN TERSEDIA -->
+  <div class="section-title">
+    Ujian Tersedia
+    <span id="active-count" style="font-size:11px;background:var(--green);color:#fff;padding:2px 8px;border-radius:20px;font-weight:600">0</span>
+  </div>
+  <div id="exam-list">
+    <div class="exam-card">
+      <div class="ec-head"><div class="sk" style="height:14px;width:180px;background:rgba(255,255,255,.2);border-radius:5px"></div></div>
+      <div class="ec-body"><div class="sk" style="height:10px;width:100%;margin-bottom:10px"></div><div class="sk" style="height:38px;border-radius:8px"></div></div>
+    </div>
+  </div>
+
+  <!-- JADWAL MENDATANG -->
+  <div style="margin-top:22px">
+    <div class="section-title">Jadwal Mendatang</div>
+    <div id="schedule-list">
+      <div class="sk" style="height:70px;border-radius:12px;margin-bottom:8px"></div>
+      <div class="sk" style="height:70px;border-radius:12px"></div>
+    </div>
+  </div>
+
+  <!-- RIWAYAT NILAI -->
+  <div style="margin-top:22px">
+    <div class="section-title">
+      Riwayat Nilai
+      <a href="riwayat-ujian.html" class="section-link">Lihat Semua →</a>
+    </div>
+    <div class="nilai-table" id="nilai-table">
+      <div style="padding:20px;text-align:center"><div class="sk" style="height:40px;border-radius:8px;margin-bottom:8px"></div><div class="sk" style="height:40px;border-radius:8px;margin-bottom:8px"></div><div class="sk" style="height:40px;border-radius:8px"></div></div>
+    </div>
+  </div>
+
+  <!-- PERKEMBANGAN NILAI -->
+  <div style="margin-top:22px">
+    <div class="section-title">Perkembangan Nilai</div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px" id="progress-chart">
+      <div class="sk" style="height:100px;border-radius:8px"></div>
+    </div>
+  </div>
+
+</main>
+
+<script src="auth.js"></script>
+<script>
+/* ── Demo Data ── */
+const DEMO = {
+  user: { name:'Ahmad Naufal', nis:'2024001', email:'ahmadnaufal@siswa.id', role:'siswa' },
+  stats: { total_exams:8, average_score:82.5, pass_rate:87.5, best_score:97, active_classes:2 },
+  exams: [
+    { id:1, title:'UH 1 — Aljabar Dasar', subject:'Matematika', class_name:'X IPA 1', duration_minutes:30, passing_grade:70, total_questions:10, max_violations:5, session_status:'in_progress', session_id:101, can_start:true, randomize_questions:true },
+    { id:2, title:'UAS Semester Ganjil', subject:'Ekonomi', class_name:'XI IPS 1', duration_minutes:120, passing_grade:75, total_questions:40, max_violations:5, session_status:null, can_start:true, randomize_questions:true },
+    { id:3, title:'UH 2 — Geometri', subject:'Matematika', class_name:'X IPA 1', duration_minutes:45, passing_grade:70, total_questions:15, max_violations:5, session_status:'submitted', session_id:99, can_start:false, randomize_questions:false },
+  ],
+  schedule: [
+    { id:4, title:'UTS Fisika', subject:'Fisika', class_name:'X IPA 1', start:'2026-06-10T08:00', duration_minutes:120, status:'scheduled' },
+    { id:5, title:'UH Kimia Organik', subject:'Kimia', class_name:'X IPA 1', start:'2026-06-15T09:00', duration_minutes:90, status:'scheduled' },
+    { id:6, title:'UAS Matematika', subject:'Matematika', class_name:'X IPA 1', start:'2026-06-20T07:30', duration_minutes:120, status:'scheduled' },
+  ],
+  history: [
+    { id:1, title:'UH Aljabar', subject:'Matematika', score:88, passing_grade:70, submitted_at:'2026-05-10' },
+    { id:2, title:'UH Ekonomi Mikro', subject:'Ekonomi', score:92, passing_grade:70, submitted_at:'2026-05-08' },
+    { id:3, title:'UTS Fisika Dasar', subject:'Fisika', score:74, passing_grade:75, submitted_at:'2026-04-28' },
+    { id:4, title:'UH Kimia', subject:'Kimia', score:97, passing_grade:70, submitted_at:'2026-04-20' },
+    { id:5, title:'UH Geografi', subject:'Geografi', score:65, passing_grade:70, submitted_at:'2026-04-15' },
+  ],
+  notifications: [
+    { id:1, title:'Ujian Baru Tersedia', message:'UAS Semester Ganjil telah diaktifkan oleh Guru Budi', type:'info', read:false, created_at:'5 menit lalu' },
+    { id:2, title:'Hasil Ujian Tersedia', message:'Nilai UH Aljabar Dasar sudah bisa dilihat', type:'ok', read:false, created_at:'1 jam lalu' },
+    { id:3, title:'Jadwal Diperbarui', message:'UTS Fisika dijadwalkan ulang ke 10 Juni 2026', type:'warn', read:true, created_at:'2 hari lalu' },
+  ]
+};
+
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded', () => {
+  // Skip auth check untuk demo, aktifkan di production:
+  // if (!requireAuth('siswa')) return;
+
+  const user = DEMO.user;
+  initTopbar(user);
+  renderHero(user, DEMO.stats);
+  renderExams(DEMO.exams);
+  renderSchedule(DEMO.schedule);
+  renderHistory(DEMO.history);
+  renderProgressChart(DEMO.history);
+  renderNotifications(DEMO.notifications);
+});
+
+/* ── Topbar ── */
+function initTopbar(user) {
+  const init = user.name.charAt(0).toUpperCase();
+  document.getElementById('user-av').textContent   = init;
+  document.getElementById('user-name').textContent = user.name.split(' ')[0];
+  document.getElementById('pd-av').textContent     = init;
+  document.getElementById('pd-name').textContent   = user.name;
+  document.getElementById('pd-nis').textContent    = 'NIS: ' + user.nis;
+}
+
+/* ── Hero ── */
+function renderHero(user, stats) {
+  const hour   = new Date().getHours();
+  const salam  = hour < 11 ? 'Selamat Pagi' : hour < 15 ? 'Selamat Siang' : 'Selamat Sore';
+  document.getElementById('hero-greeting').textContent = salam + ',';
+  document.getElementById('hero-name').textContent     = user.name;
+  document.getElementById('hs-ujian').textContent  = stats.total_exams;
+  document.getElementById('hs-rata').textContent   = stats.average_score;
+  document.getElementById('hs-lulus').textContent  = stats.pass_rate + '%';
+  document.getElementById('sm-best').textContent   = stats.best_score;
+  document.getElementById('sm-kelas').textContent  = stats.active_classes;
+  // Remove skeleton styles
+  ['hs-ujian','hs-rata','hs-lulus'].forEach(id => {
+    document.getElementById(id).classList.remove('sk');
+    document.getElementById(id).style.cssText = '';
+  });
+}
+
+/* ── Exams ── */
+function renderExams(exams) {
+  const activeExams = exams.filter(e => e.session_status !== 'submitted' && e.session_status !== 'timeout');
+  document.getElementById('active-count').textContent = activeExams.length;
+
+  if (!exams.length) {
+    document.getElementById('exam-list').innerHTML = `
+      <div class="empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/></svg>
+        <div class="empty-title">Tidak ada ujian aktif</div>
+        <div class="empty-sub">Ujian akan muncul di sini ketika guru mengaktifkan</div>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('exam-list').innerHTML = exams.map(e => {
+    const done       = e.session_status === 'submitted' || e.session_status === 'timeout' || e.session_status === 'force_submitted';
+    const inProgress = e.session_status === 'in_progress';
+    let badgeHtml = '';
+    if (inProgress)   badgeHtml = '<span class="ec-badge badge-resume">BERLANGSUNG</span>';
+    else if (!done)   badgeHtml = '<span class="ec-badge badge-active">AKTIF</span>';
+    else              badgeHtml = '<span class="ec-badge badge-done">SELESAI</span>';
+
+    let btnHtml = '';
+    if (done) {
+      btnHtml = `<button class="ec-btn ec-btn-result" onclick="window.location.href='ujian-siswa.html?session_id=${e.session_id}&result=1'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Lihat Hasil</button>`;
+    } else if (inProgress) {
+      btnHtml = `<button class="ec-btn ec-btn-resume" onclick="window.location.href='ujian-siswa.html?exam_id=${e.id}'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Lanjutkan Ujian</button>`;
+    } else {
+      btnHtml = `<button class="ec-btn ec-btn-start" onclick="window.location.href='ujian-siswa.html?exam_id=${e.id}'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Mulai Ujian</button>`;
+    }
+
+    const shuffleChip = e.randomize_questions
+      ? `<span class="ec-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>Soal Diacak</span>`
+      : '';
+
+    return `
+      <div class="exam-card ${inProgress ? 'active-session' : ''}">
+        <div class="ec-head">
+          <div>
+            <div class="ec-title">${e.title}</div>
+            <div class="ec-sub">${e.subject} · ${e.class_name}</div>
+          </div>
+          ${badgeHtml}
+        </div>
+        <div class="ec-body">
+          <div class="ec-chips">
+            <span class="ec-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${e.duration_minutes} menit</span>
+            <span class="ec-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>${e.total_questions} soal</span>
+            <span class="ec-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>KKM ${e.passing_grade}</span>
+            ${shuffleChip}
+          </div>
+          ${btnHtml}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ── Schedule ── */
+function renderSchedule(schedules) {
+  if (!schedules.length) {
+    document.getElementById('schedule-list').innerHTML = `
+      <div class="empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+        <div class="empty-title">Tidak ada jadwal mendatang</div>
+      </div>`;
+    return;
+  }
+  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+  document.getElementById('schedule-list').innerHTML = schedules.map(s => {
+    const d     = new Date(s.start);
+    const time  = `${d.getHours().toString().padLeft ? String(d.getHours()).padStart(2,'0') : d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const days  = Math.ceil((d - new Date()) / (1000 * 60 * 60 * 24));
+    const soon  = days <= 3;
+    return `
+      <div class="schedule-card">
+        <div class="sc-head">
+          <div class="sc-date" style="background:${soon?'#fff4e8':'var(--navy-light)'}">
+            <div class="sc-day" style="color:${soon?'var(--orange)':'var(--navy)'}">${d.getDate()}</div>
+            <div class="sc-mon">${months[d.getMonth()]}</div>
+          </div>
+          <div class="sc-info">
+            <div class="sc-title">${s.title}</div>
+            <div class="sc-meta">${s.subject} · ${s.class_name} · ${time} · ${s.duration_minutes} mnt${soon ? ' <span style="color:var(--orange);font-weight:600">— Segera!</span>' : ''}</div>
+          </div>
+          <div class="sc-status">
+            ${soon ? '<span style="background:var(--amber-light);color:#92400e;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:600">' + days + ' hari lagi</span>' : ''}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ── History / Nilai ── */
+function renderHistory(history) {
+  if (!history.length) {
+    document.getElementById('nilai-table').innerHTML = `<div class="empty"><div class="empty-title">Belum ada riwayat ujian</div></div>`;
+    return;
+  }
+  document.getElementById('nilai-table').innerHTML = history.map((h, i) => {
+    const pass  = h.score >= h.passing_grade;
+    const color = h.score >= 85 ? 'var(--green)' : h.score >= 70 ? 'var(--navy)' : 'var(--red)';
+    return `
+      <div class="nilai-row">
+        <div class="nr-rank">${i+1}</div>
+        <div class="nr-info">
+          <div class="nr-title">${h.title}</div>
+          <div class="nr-date">${h.subject} · ${h.submitted_at}</div>
+        </div>
+        <div>
+          <span class="nr-score" style="color:${color}">${h.score}</span>
+          <span class="nr-badge ${pass ? 'nr-pass' : 'nr-fail'}">${pass ? 'Lulus' : 'Gagal'}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ── Progress Chart (bar chart sederhana) ── */
+function renderProgressChart(history) {
+  if (!history.length) return;
+  const reversed = [...history].reverse();
+  const max      = Math.max(...reversed.map(h => h.score), 100);
+  const html     = reversed.map(h => {
+    const pct   = (h.score / max * 100).toFixed(0);
+    const color = h.score >= h.passing_grade ? 'var(--green)' : 'var(--red)';
+    return `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="font-size:11px;color:var(--ink3);width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0">${h.title.substring(0,14)}...</div>
+        <div style="flex:1;height:8px;background:var(--bg);border-radius:4px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${color};border-radius:4px;transition:width .6s ease"></div></div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${color};width:28px;text-align:right;flex-shrink:0">${h.score}</div>
+      </div>`;
+  }).join('');
+  document.getElementById('progress-chart').innerHTML = html;
+}
+
+/* ── Notifications ── */
+function renderNotifications(notifs) {
+  const unread = notifs.filter(n => !n.read).length;
+  document.getElementById('notif-dot').style.display = unread > 0 ? '' : 'none';
+
+  const typeIcon = {
+    info: {bg:'var(--sky-light)',   color:'var(--sky)',   icon:'ℹ'},
+    ok:   {bg:'var(--green-light)', color:'var(--green)', icon:'✓'},
+    warn: {bg:'var(--amber-light)', color:'var(--amber)', icon:'⚠'},
+    err:  {bg:'var(--red-light)',   color:'var(--red)',   icon:'✗'},
+  };
+
+  if (!notifs.length) {
+    document.getElementById('notif-list').innerHTML = `<div class="empty" style="padding:20px"><div class="empty-title">Tidak ada notifikasi</div></div>`;
+    return;
+  }
+
+  document.getElementById('notif-list').innerHTML = notifs.map(n => {
+    const t = typeIcon[n.type] || typeIcon.info;
+    return `
+      <div class="nd-item ${n.read ? '' : 'unread'}" onclick="markRead(${n.id})">
+        <div class="nd-icon" style="background:${t.bg}"><span style="font-size:13px;font-weight:700;color:${t.color}">${t.icon}</span></div>
+        <div style="flex:1">
+          <div style="font-size:12.5px;font-weight:${n.read?'400':'600'};color:var(--ink)">${n.title}</div>
+          <div class="nd-text">${n.message}</div>
+          <div class="nd-time">${n.created_at}</div>
+        </div>
+        ${!n.read ? '<div style="width:7px;height:7px;border-radius:50%;background:var(--navy);flex-shrink:0;margin-top:4px"></div>' : ''}
+      </div>`;
+  }).join('');
+}
+
+function markRead(id) {
+  const notif = DEMO.notifications.find(n => n.id === id);
+  if (notif) { notif.read = true; renderNotifications(DEMO.notifications); }
+}
+
+function markAllRead() {
+  DEMO.notifications.forEach(n => n.read = true);
+  renderNotifications(DEMO.notifications);
+}
+
+/* ── Toggles ── */
+let notifOpen   = false;
+let profileOpen = false;
+
+function toggleNotif() {
+  notifOpen = !notifOpen;
+  profileOpen = false;
+  document.getElementById('notif-dropdown').classList.toggle('open', notifOpen);
+  document.getElementById('profile-dropdown').classList.remove('open');
+}
+
+function toggleProfile() {
+  profileOpen = !profileOpen;
+  notifOpen = false;
+  document.getElementById('profile-dropdown').classList.toggle('open', profileOpen);
+  document.getElementById('notif-dropdown').classList.remove('open');
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#notif-dropdown') && !e.target.closest('#btn-notif')) {
+    document.getElementById('notif-dropdown').classList.remove('open');
+    notifOpen = false;
+  }
+  if (!e.target.closest('#profile-dropdown') && !e.target.closest('.user-pill')) {
+    document.getElementById('profile-dropdown').classList.remove('open');
+    profileOpen = false;
+  }
+});
+</script>
+</body>
+</html>

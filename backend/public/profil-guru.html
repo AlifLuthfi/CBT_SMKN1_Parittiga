@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profil Guru — ExamCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#1a3c6e;--navy-dark:#122a52;--navy-light:#e8eef7;
+  --orange:#e8821a;--orange-light:#fff4e8;
+  --bg:#f0f2f5;--surface:#ffffff;--border:#e2e6ea;--border2:#d1d8e0;
+  --ink:#1a2332;--ink2:#4a5568;--ink3:#9aa5b4;--ink4:#c9d3dc;
+  --green:#2e7d32;--green-light:#e8f5e9;
+  --red:#c62828;--red-light:#ffebee;
+  --amber:#f59e0b;--amber-light:#fffbeb;
+  --sky:#0369a1;--sky-light:#e0f2fe;
+  --sidebar-w:220px;--topbar-h:60px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex}
+@keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+.sk{background:linear-gradient(90deg,#e8ebef 25%,#f4f6f8 50%,#e8ebef 75%);background-size:600px 100%;animation:shimmer 1.4s ease-in-out infinite;border-radius:6px}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;z-index:100;display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-brand{display:flex;align-items:center;gap:11px;padding:0 18px;height:var(--topbar-h);border-bottom:1px solid var(--border);flex-shrink:0}
+.brand-icon{width:36px;height:36px;background:var(--navy);border-radius:8px;display:grid;place-items:center;flex-shrink:0}
+.brand-icon svg{width:18px;height:18px;fill:white}
+.brand-name{font-size:15px;font-weight:700;color:var(--ink)}
+.brand-sub{font-size:9.5px;font-weight:500;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+.nav-section{padding:16px 10px 0}
+.nav-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);padding:0 8px;margin-bottom:5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;font-size:13px;font-weight:500;color:var(--ink2);cursor:pointer;transition:all .15s;border:none;background:transparent;width:100%;text-align:left;font-family:'Inter',sans-serif;margin-bottom:1px;text-decoration:none}
+.nav-item:hover{background:var(--bg);color:var(--ink)}
+.nav-item.active{background:var(--navy-light);color:var(--navy);font-weight:600}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.sidebar-footer{margin-top:auto;border-top:1px solid var(--border);padding:14px;flex-shrink:0}
+.user-card{display:flex;align-items:center;gap:9px;padding:8px;border-radius:8px;cursor:pointer}
+.user-avatar{width:32px;height:32px;background:var(--navy);border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.user-name{font-size:13px;font-weight:600;color:var(--ink)}
+.user-role{font-size:11px;color:var(--ink3)}
+.logout-btn{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;font-size:12px;color:var(--ink3);cursor:pointer;transition:all .15s;border:none;background:transparent;width:100%;margin-top:2px;font-family:'Inter',sans-serif}
+.logout-btn:hover{background:var(--red-light);color:var(--red)}
+
+/* MAIN */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column}
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:15px;font-weight:700;color:var(--ink)}
+.topbar-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;border:1.5px solid}
+.btn-primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-primary:hover{background:var(--navy-dark)}
+.btn-primary:disabled{background:var(--ink3);border-color:var(--ink3);cursor:not-allowed}
+.btn-ghost{background:transparent;color:var(--ink2);border-color:var(--border)}
+.btn-ghost:hover{background:var(--bg);color:var(--ink)}
+.btn-danger{background:var(--red-light);color:var(--red);border-color:rgba(198,40,40,.2)}
+.btn-danger:hover{background:var(--red);color:#fff}
+.btn svg{width:14px;height:14px}
+.content{padding:22px 24px;flex:1}
+.page-title{font-size:20px;font-weight:700;color:var(--ink);margin-bottom:2px}
+.page-sub{font-size:13px;color:var(--ink3);margin-bottom:22px}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.card:last-child{margin-bottom:0}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);background:#f7f9fc}
+.card-title{font-size:14px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px}
+.card-title svg{width:15px;height:15px;color:var(--ink3)}
+.card-body{padding:18px}
+
+/* AVATAR SECTION */
+.avatar-wrap{text-align:center;padding:28px 18px}
+.avatar-circle{width:90px;height:90px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:#fff;margin:0 auto 12px;position:relative;cursor:pointer;border:4px solid var(--surface);box-shadow:0 0 0 2px var(--border)}
+.avatar-edit{position:absolute;bottom:0;right:0;width:26px;height:26px;background:var(--orange);border-radius:50%;display:grid;place-items:center;border:2px solid var(--surface)}
+.avatar-edit svg{width:12px;height:12px;color:#fff}
+.avatar-name{font-size:17px;font-weight:700;color:var(--ink)}
+.avatar-role{font-size:12px;color:var(--ink3);text-transform:capitalize;margin-top:2px}
+.avatar-nip{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3);margin-top:5px}
+
+/* STATS MINI */
+.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 18px;padding-top:14px;border-top:1px solid var(--border)}
+.ps-item{text-align:center}
+.ps-val{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--navy)}
+.ps-label{font-size:10px;color:var(--ink3)}
+
+/* FORM */
+.form-group{margin-bottom:14px}
+.form-group:last-child{margin-bottom:0}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:5px}
+.form-label .req{color:var(--red)}
+.form-label .opt{color:var(--ink3);font-weight:400;font-size:10.5px}
+.form-input,.form-select,.form-textarea{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;color:var(--ink);background:var(--surface);outline:none;transition:border-color .18s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--navy)}
+.form-input:disabled,.form-select:disabled{background:var(--bg);color:var(--ink3);cursor:not-allowed}
+.form-textarea{resize:vertical;min-height:90px;line-height:1.6}
+.form-hint{font-size:11px;color:var(--ink3);margin-top:4px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+/* PASSWORD STRENGTH */
+.pass-strength{margin-top:6px}
+.ps-track{height:5px;background:var(--bg);border-radius:3px;overflow:hidden;display:flex;gap:3px}
+.ps-seg{flex:1;height:100%;border-radius:3px;transition:background .3s}
+.ps-text{font-size:11px;margin-top:4px}
+
+/* TOGGLE */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-label{font-size:13px;color:var(--ink2)}
+.toggle-sub{font-size:11px;color:var(--ink3);margin-top:1px}
+.toggle{width:40px;height:22px;border-radius:11px;background:var(--border2);position:relative;cursor:pointer;transition:background .2s;border:none;outline:none;flex-shrink:0}
+.toggle.on{background:var(--navy)}
+.toggle::after{content:'';width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on::after{left:21px}
+
+/* ACTIVITY LOG */
+.activity-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.activity-item:last-child{border-bottom:none}
+.activity-icon{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex-shrink:0}
+.activity-icon svg{width:14px;height:14px}
+.activity-text{font-size:13px;color:var(--ink2)}
+.activity-time{font-size:11px;color:var(--ink3);margin-top:2px}
+
+/* ALERT */
+.alert{padding:12px 14px;border-radius:8px;font-size:13px;display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
+.alert svg{width:16px;height:16px;flex-shrink:0;margin-top:1px}
+.alert-success{background:var(--green-light);color:var(--green);border:1px solid rgba(46,125,50,.2)}
+.alert-warn{background:var(--amber-light);color:#92400e;border:1px solid rgba(245,158,11,.2)}
+.alert-err{background:var(--red-light);color:var(--red);border:1px solid rgba(198,40,40,.2)}
+
+/* SESSION DEVICES */
+.device-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
+.device-item:last-child{border-bottom:none}
+.device-icon{width:36px;height:36px;border-radius:9px;background:var(--bg);border:1px solid var(--border);display:grid;place-items:center;flex-shrink:0}
+.device-icon svg{width:16px;height:16px;color:var(--ink3)}
+.device-name{font-size:13px;font-weight:500;color:var(--ink)}
+.device-meta{font-size:11px;color:var(--ink3);margin-top:1px}
+.device-current{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;background:var(--green-light);color:var(--green)}
+
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}.layout{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg></div>
+    <div><div class="brand-name">ExamCore</div><div class="brand-sub">Exam Management</div></div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Menu Utama</div>
+    <a class="nav-item" href="guru-dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</a>
+    <a class="nav-item" href="manajemen-kelas.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Manajemen Kelas</a>
+    <a class="nav-item" href="input-soal.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Input Soal</a>
+    <a class="nav-item" href="jadwal-ujian.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Jadwal Ujian</a>
+    <div class="nav-label" style="margin-top:12px">Laporan</div>
+    <a class="nav-item" href="rekap-nilai.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Rekap Nilai</a>
+    <a class="nav-item" href="import-arsip.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Import & Arsip</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" data-user-avatar>G</div>
+      <div><div class="user-name" data-user-name>Guru</div><div class="user-role">guru</div></div>
+    </div>
+    <button class="logout-btn" onclick="logout()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout
+    </button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-title">Profil Saya</div>
+    <div class="topbar-r">
+      <button class="btn btn-ghost" onclick="resetForm()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>Reset
+      </button>
+      <button class="btn btn-primary" id="btn-save" onclick="simpanProfil()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+        <span id="btn-save-text">Simpan Perubahan</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="page-title">Profil Guru</div>
+    <div class="page-sub">Kelola informasi akun, keamanan, dan preferensi mengajar</div>
+
+    <!-- Alert area -->
+    <div id="alert-area"></div>
+
+    <div class="layout">
+      <!-- LEFT: Avatar + Stats -->
+      <div>
+        <div class="card">
+          <div class="avatar-wrap">
+            <div class="avatar-circle" id="avatar-circle" onclick="document.getElementById('avatar-input').click()">
+              <span id="avatar-initials">BS</span>
+              <div class="avatar-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+            </div>
+            <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="previewAvatar(this)">
+            <div class="avatar-name" id="avatar-name">Budi Santoso</div>
+            <div class="avatar-role">Guru / Pengajar</div>
+            <div class="avatar-nip" id="avatar-nip">NIP: 198501012010011001</div>
+          </div>
+          <div class="profile-stats">
+            <div class="ps-item"><div class="ps-val" id="ps-exams">12</div><div class="ps-label">Ujian</div></div>
+            <div class="ps-item"><div class="ps-val" id="ps-questions">148</div><div class="ps-label">Soal</div></div>
+            <div class="ps-item"><div class="ps-val" id="ps-students">64</div><div class="ps-label">Siswa</div></div>
+          </div>
+        </div>
+
+        <!-- Device sessions -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>Sesi Aktif</div>
+            <button class="btn btn-danger" style="font-size:11px;padding:5px 10px" onclick="logoutAllDevices()">Keluarkan Semua</button>
+          </div>
+          <div class="card-body">
+            <div id="devices-list">
+              <div class="device-item">
+                <div class="device-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
+                <div style="flex:1">
+                  <div class="device-name">Chrome — Windows</div>
+                  <div class="device-meta">192.168.1.5 · Sekarang</div>
+                </div>
+                <span class="device-current">Aktif</span>
+              </div>
+              <div class="device-item">
+                <div class="device-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
+                <div style="flex:1">
+                  <div class="device-name">ExamCore Mobile — Android</div>
+                  <div class="device-meta">192.168.1.8 · 2 jam lalu</div>
+                </div>
+                <button onclick="logoutDevice(2)" style="font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;padding:3px 7px;border-radius:5px" onmouseover="this.style.background='var(--red-light)'" onmouseout="this.style.background='none'">Keluarkan</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Aktivitas terbaru -->
+        <div class="card">
+          <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Aktivitas Terbaru</div></div>
+          <div class="card-body" id="activity-list">
+            <div class="activity-item">
+              <div class="activity-icon" style="background:var(--green-light)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div>
+              <div><div class="activity-text">Membuat ujian "UH 1 Aljabar"</div><div class="activity-time">5 menit lalu</div></div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon" style="background:var(--navy-light)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+              <div><div class="activity-text">Menambah 3 siswa ke kelas X IPA 1</div><div class="activity-time">1 jam lalu</div></div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon" style="background:var(--amber-light)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/></svg></div>
+              <div><div class="activity-text">Menambah 10 soal baru</div><div class="activity-time">3 jam lalu</div></div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon" style="background:var(--sky-light)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--sky)" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div>
+              <div><div class="activity-text">Login dari Chrome — Windows</div><div class="activity-time">5 jam lalu</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Forms -->
+      <div>
+        <!-- INFO DASAR -->
+        <div class="card">
+          <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Informasi Dasar</div></div>
+          <div class="card-body">
+            <div class="row2">
+              <div class="form-group">
+                <label class="form-label">Nama Lengkap <span class="req">*</span></label>
+                <input class="form-input" id="inp-name" value="Budi Santoso" placeholder="Nama lengkap">
+              </div>
+              <div class="form-group">
+                <label class="form-label">NIP <span class="opt">(opsional)</span></label>
+                <input class="form-input" id="inp-nip" value="198501012010011001" placeholder="Nomor Induk Pegawai">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email <span class="req">*</span></label>
+              <input class="form-input" id="inp-email" type="email" value="guru@examcore.id">
+            </div>
+            <div class="row2">
+              <div class="form-group">
+                <label class="form-label">Mata Pelajaran Utama</label>
+                <input class="form-input" id="inp-subject" value="Matematika" placeholder="Cth: Matematika">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Gelar <span class="opt">(opsional)</span></label>
+                <input class="form-input" id="inp-title" value="S.Pd" placeholder="Cth: S.Pd, M.Pd">
+              </div>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="form-label">Bio / Tentang Saya <span class="opt">(opsional)</span></label>
+              <textarea class="form-textarea" id="inp-bio" placeholder="Tulis sedikit tentang diri Anda..." rows="3">Guru Matematika di SMKN 1 Parittiga dengan pengalaman 10 tahun mengajar.</textarea>
+              <div class="form-hint">Maksimal 300 karakter</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KEAMANAN AKUN -->
+        <div class="card">
+          <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Keamanan Akun</div></div>
+          <div class="card-body">
+            <div id="password-alert"></div>
+            <div class="form-group">
+              <label class="form-label">Password Saat Ini <span class="req">*</span></label>
+              <div style="position:relative">
+                <input class="form-input" id="inp-pass-current" type="password" placeholder="Password yang sedang aktif" style="padding-right:40px">
+                <button onclick="togglePass('inp-pass-current',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--ink3);display:grid;place-items:center">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="row2">
+              <div class="form-group">
+                <label class="form-label">Password Baru</label>
+                <div style="position:relative">
+                  <input class="form-input" id="inp-pass-new" type="password" placeholder="Min. 8 karakter" oninput="checkStrength(this.value)" style="padding-right:40px">
+                  <button onclick="togglePass('inp-pass-new',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--ink3);display:grid;place-items:center">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
+                <div class="pass-strength" id="pass-strength" style="display:none">
+                  <div class="ps-track">
+                    <div class="ps-seg" id="ps1"></div>
+                    <div class="ps-seg" id="ps2"></div>
+                    <div class="ps-seg" id="ps3"></div>
+                    <div class="ps-seg" id="ps4"></div>
+                  </div>
+                  <div class="ps-text" id="ps-text"></div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Konfirmasi Password</label>
+                <input class="form-input" id="inp-pass-confirm" type="password" placeholder="Ulangi password baru" oninput="checkConfirm()">
+                <div class="form-hint" id="confirm-hint" style="display:none"></div>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="gantiPassword()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Update Password
+            </button>
+          </div>
+        </div>
+
+        <!-- PREFERENSI UJIAN -->
+        <div class="card">
+          <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Preferensi Ujian</div></div>
+          <div class="card-body">
+            <div class="row3">
+              <div class="form-group">
+                <label class="form-label">Durasi Default (menit)</label>
+                <input class="form-input" id="pref-duration" type="number" value="90" min="5" max="300">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Passing Grade Default</label>
+                <input class="form-input" id="pref-pg" type="number" value="70" min="0" max="100">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Maks. Pelanggaran</label>
+                <input class="form-input" id="pref-violations" type="number" value="5" min="1" max="20">
+              </div>
+            </div>
+            <div id="toggles">
+              <div class="toggle-row">
+                <div><div class="toggle-label">Acak Soal Otomatis</div><div class="toggle-sub">Setiap ujian baru akan mengacak soal secara default (LCG)</div></div>
+                <button class="toggle on" id="tog-random" onclick="this.classList.toggle('on')"></button>
+              </div>
+              <div class="toggle-row">
+                <div><div class="toggle-label">Acak Opsi Jawaban</div><div class="toggle-sub">Opsi A/B/C/D diacak berbeda tiap siswa</div></div>
+                <button class="toggle on" id="tog-shuffle-opts" onclick="this.classList.toggle('on')"></button>
+              </div>
+              <div class="toggle-row">
+                <div><div class="toggle-label">Tampilkan Hasil Langsung</div><div class="toggle-sub">Siswa langsung lihat nilai dan pembahasan setelah submit</div></div>
+                <button class="toggle on" id="tog-show-result" onclick="this.classList.toggle('on')"></button>
+              </div>
+              <div class="toggle-row">
+                <div><div class="toggle-label">Izinkan Review Jawaban</div><div class="toggle-sub">Siswa bisa melihat ulang pembahasan soal</div></div>
+                <button class="toggle on" id="tog-allow-review" onclick="this.classList.toggle('on')"></button>
+              </div>
+              <div class="toggle-row">
+                <div><div class="toggle-label">Notifikasi Submit Siswa</div><div class="toggle-sub">Terima notifikasi setiap siswa mengumpulkan ujian</div></div>
+                <button class="toggle" id="tog-notif-submit" onclick="this.classList.toggle('on')"></button>
+              </div>
+              <div class="toggle-row">
+                <div><div class="toggle-label">Notifikasi Pelanggaran</div><div class="toggle-sub">Terima notifikasi saat ada pelanggaran terdeteksi</div></div>
+                <button class="toggle on" id="tog-notif-viol" onclick="this.classList.toggle('on')"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAHUN AJARAN -->
+        <div class="card">
+          <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Tahun Ajaran Aktif</div></div>
+          <div class="card-body">
+            <div class="row2">
+              <div class="form-group">
+                <label class="form-label">Tahun Ajaran</label>
+                <select class="form-select" id="pref-year">
+                  <option value="2024/2025" selected>2024/2025</option>
+                  <option value="2025/2026">2025/2026</option>
+                  <option value="2023/2024">2023/2024</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Semester</label>
+                <select class="form-select" id="pref-semester">
+                  <option value="Ganjil" selected>Ganjil</option>
+                  <option value="Genap">Genap</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="form-label">Sekolah / Institusi</label>
+              <input class="form-input" id="inp-school" value="SMKN 1 Parittiga" placeholder="Nama sekolah">
+            </div>
+          </div>
+        </div>
+
+        <!-- ZONA BAHAYA -->
+        <div class="card">
+          <div class="card-head" style="background:var(--red-light)"><div class="card-title" style="color:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Zona Bahaya</div></div>
+          <div class="card-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+              <div>
+                <div style="font-size:13px;font-weight:500;color:var(--ink)">Hapus semua soal saya</div>
+                <div style="font-size:11.5px;color:var(--ink3)">Menghapus seluruh bank soal yang Anda buat</div>
+              </div>
+              <button class="btn btn-danger" style="font-size:12px;padding:7px 12px" onclick="hapusSemua('soal')">Hapus Soal</button>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0">
+              <div>
+                <div style="font-size:13px;font-weight:500;color:var(--ink)">Hapus akun saya</div>
+                <div style="font-size:11.5px;color:var(--ink3)">Tindakan ini tidak dapat dibatalkan</div>
+              </div>
+              <button class="btn btn-danger" style="font-size:12px;padding:7px 12px" onclick="hapusSemua('akun')">Hapus Akun</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="auth.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (!requireAuth('guru')) return;
+  renderUser();
+  loadProfile();
+});
+
+/* ── Load Profile ── */
+async function loadProfile() {
+  try {
+    const data = await api('GET', '/auth/me');
+    const user = data.user || {};
+    fillForm(user);
+  } catch(_) {
+    // Demo data
+    fillForm({ name:'Budi Santoso', email:'guru@examcore.id', nip:'198501012010011001' });
+  }
+}
+
+function fillForm(user) {
+  document.getElementById('inp-name').value   = user.name   || '';
+  document.getElementById('inp-email').value  = user.email  || '';
+  document.getElementById('inp-nip').value    = user.nip    || '';
+  document.getElementById('avatar-name').textContent = user.name || '';
+  document.getElementById('avatar-nip').textContent  = 'NIP: ' + (user.nip || '—');
+  const initials = (user.name||'G').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  document.getElementById('avatar-initials').textContent = initials;
+  document.querySelector('[data-user-name]').textContent = (user.name||'Guru').split(' ')[0];
+  document.querySelector('[data-user-avatar]').textContent = initials[0];
+}
+
+/* ── Simpan Profil ── */
+async function simpanProfil() {
+  const btn = document.getElementById('btn-save');
+  const txt = document.getElementById('btn-save-text');
+  btn.disabled = true; txt.textContent = 'Menyimpan...';
+
+  const payload = {
+    name:    document.getElementById('inp-name').value.trim(),
+    email:   document.getElementById('inp-email').value.trim(),
+    nip:     document.getElementById('inp-nip').value.trim() || null,
+    preferences: {
+      default_duration:       parseInt(document.getElementById('pref-duration').value) || 90,
+      default_passing_grade:  parseInt(document.getElementById('pref-pg').value) || 70,
+      default_max_violations: parseInt(document.getElementById('pref-violations').value) || 5,
+      randomize_by_default:   document.getElementById('tog-random').classList.contains('on'),
+      randomize_options:      document.getElementById('tog-shuffle-opts').classList.contains('on'),
+      show_result_immediately:document.getElementById('tog-show-result').classList.contains('on'),
+      allow_review:           document.getElementById('tog-allow-review').classList.contains('on'),
+      notify_submit:          document.getElementById('tog-notif-submit').classList.contains('on'),
+      notify_violation:       document.getElementById('tog-notif-viol').classList.contains('on'),
+      academic_year:          document.getElementById('pref-year').value,
+      semester:               document.getElementById('pref-semester').value,
+      school:                 document.getElementById('inp-school').value,
+    }
+  };
+
+  if (!payload.name) { showAlert('Nama tidak boleh kosong', 'err'); btn.disabled=false; txt.textContent='Simpan Perubahan'; return; }
+  if (!payload.email.includes('@')) { showAlert('Email tidak valid', 'err'); btn.disabled=false; txt.textContent='Simpan Perubahan'; return; }
+
+  try {
+    await api('PUT', '/guru/profile', payload);
+    showAlert('Profil berhasil disimpan!', 'ok');
+    fillForm(payload);
+  } catch(e) {
+    // Demo
+    showAlert('Profil berhasil disimpan (mode demo)', 'ok');
+  } finally {
+    btn.disabled = false; txt.textContent = 'Simpan Perubahan';
+  }
+}
+
+/* ── Ganti Password ── */
+async function gantiPassword() {
+  const current = document.getElementById('inp-pass-current').value;
+  const newPass  = document.getElementById('inp-pass-new').value;
+  const confirm  = document.getElementById('inp-pass-confirm').value;
+
+  if (!current)         { showPassAlert('Password saat ini wajib diisi', 'err'); return; }
+  if (newPass.length < 8){ showPassAlert('Password baru minimal 8 karakter', 'err'); return; }
+  if (newPass !== confirm){ showPassAlert('Konfirmasi password tidak cocok', 'err'); return; }
+
+  try {
+    await api('PATCH', '/auth/password', { current_password: current, password: newPass, password_confirmation: confirm });
+    showPassAlert('Password berhasil diubah!', 'ok');
+    document.getElementById('inp-pass-current').value = '';
+    document.getElementById('inp-pass-new').value     = '';
+    document.getElementById('inp-pass-confirm').value = '';
+  } catch(e) {
+    showPassAlert(e.message || 'Gagal mengubah password', 'err');
+  }
+}
+
+/* ── Password Strength ── */
+function checkStrength(pass) {
+  const wrap = document.getElementById('pass-strength');
+  if (!pass) { wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+
+  let score = 0;
+  if (pass.length >= 8)              score++;
+  if (/[A-Z]/.test(pass))            score++;
+  if (/[0-9]/.test(pass))            score++;
+  if (/[^A-Za-z0-9]/.test(pass))     score++;
+
+  const colors = ['','var(--red)','var(--amber)','var(--orange)','var(--green)'];
+  const labels = ['','Lemah','Cukup','Baik','Kuat'];
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById('ps'+i).style.background = i <= score ? colors[score] : 'var(--border)';
+  }
+  const el = document.getElementById('ps-text');
+  el.textContent = labels[score];
+  el.style.color = colors[score];
+}
+
+function checkConfirm() {
+  const np = document.getElementById('inp-pass-new').value;
+  const cp = document.getElementById('inp-pass-confirm').value;
+  const hint = document.getElementById('confirm-hint');
+  if (!cp) { hint.style.display = 'none'; return; }
+  hint.style.display = '';
+  if (np === cp) { hint.textContent = '✓ Password cocok'; hint.style.color = 'var(--green)'; }
+  else           { hint.textContent = '✗ Tidak cocok';    hint.style.color = 'var(--red)'; }
+}
+
+/* ── Avatar Preview ── */
+function previewAvatar(input) {
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const circle = document.getElementById('avatar-circle');
+    circle.style.backgroundImage = `url(${e.target.result})`;
+    circle.style.backgroundSize  = 'cover';
+    circle.style.backgroundPosition = 'center';
+    document.getElementById('avatar-initials').style.display = 'none';
+  };
+  reader.readAsDataURL(input.files[0]);
+  toast('Foto dipilih. Klik Simpan Perubahan untuk menyimpan.', 'ok');
+}
+
+/* ── Toggle Password Visibility ── */
+function togglePass(id, btn) {
+  const inp = document.getElementById(id);
+  inp.type  = inp.type === 'password' ? 'text' : 'password';
+}
+
+/* ── Device Management ── */
+function logoutDevice(id) {
+  confirm('Keluarkan perangkat ini dari sesi?', async () => {
+    try { await api('DELETE', `/auth/sessions/${id}`); }
+    catch(_) {}
+    toast('Perangkat dikeluarkan', 'ok');
+  });
+}
+
+function logoutAllDevices() {
+  confirm('Keluarkan semua sesi aktif kecuali sesi ini?', async () => {
+    try { await api('POST', '/auth/logout-all'); }
+    catch(_) {}
+    toast('Semua sesi lain dikeluarkan', 'ok');
+  });
+}
+
+/* ── Zona Bahaya ── */
+function hapusSemua(type) {
+  if (type === 'soal') {
+    confirm('Hapus SEMUA soal yang Anda buat? Tindakan ini tidak dapat dibatalkan.', async () => {
+      try { await api('DELETE', '/guru/questions/all'); }
+      catch(_) {}
+      toast('Semua soal dihapus', 'ok');
+    });
+  } else {
+    confirm('Hapus akun Anda? Semua data akan hilang permanen.', () => {
+      toast('Fitur hapus akun memerlukan persetujuan admin', 'warn');
+    });
+  }
+}
+
+/* ── Alert Helpers ── */
+function showAlert(msg, type) {
+  const types = { ok:'alert-success', warn:'alert-warn', err:'alert-err' };
+  const icons = { ok:'✓', warn:'⚠', err:'✗' };
+  document.getElementById('alert-area').innerHTML = `
+    <div class="alert ${types[type]}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px">
+        ${type==='ok' ? '<polyline points="20 6 9 17 4 12"/>' : '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'}
+      </svg>
+      ${msg}
+    </div>`;
+  setTimeout(() => { document.getElementById('alert-area').innerHTML = ''; }, 4000);
+}
+
+function showPassAlert(msg, type) {
+  const types = { ok:'alert-success', err:'alert-err' };
+  document.getElementById('password-alert').innerHTML = `<div class="alert ${types[type]}">${msg}</div>`;
+  setTimeout(() => { document.getElementById('password-alert').innerHTML = ''; }, 4000);
+}
+
+function resetForm() {
+  loadProfile();
+  toast('Form direset ke data terkini', 'ok');
+}
+</script>
+</body>
+</html>

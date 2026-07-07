@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — ExamCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#1a3c6e;
+  --navy-hover:#15326 0;
+  --orange:#e8821a;
+  --orange-light:#fff4e8;
+  --bg:#f0f2f5;
+  --surface:#ffffff;
+  --border:#e2e6ea;
+  --ink:#1a2332;
+  --ink2:#4a5568;
+  --ink3:#9aa5b4;
+  --green:#2e7d32;
+  --green-light:#e8f5e9;
+  --red:#c62828;
+  --red-light:#ffebee;
+}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+/* ── CARD ── */
+.login-card{
+  background:var(--surface);
+  border-radius:12px;
+  box-shadow:0 2px 12px rgba(0,0,0,.08),0 0 0 1px var(--border);
+  width:100%;max-width:440px;
+  overflow:hidden;
+}
+
+/* HEADER */
+.card-header{
+  background:var(--navy);
+  padding:28px 32px 24px;
+  display:flex;align-items:center;gap:14px;
+}
+.header-icon{
+  width:44px;height:44px;
+  background:rgba(255,255,255,.15);
+  border-radius:8px;
+  display:grid;place-items:center;
+  flex-shrink:0;
+}
+.header-icon svg{width:22px;height:22px;fill:white}
+.header-title{
+  font-size:18px;font-weight:700;color:#fff;
+  line-height:1.2;
+}
+.header-sub{
+  font-size:12px;color:rgba(255,255,255,.6);
+  margin-top:2px;font-weight:400;
+  text-transform:uppercase;letter-spacing:.5px;
+}
+
+/* BODY */
+.card-body{padding:28px 32px 32px}
+
+.welcome{
+  font-size:22px;font-weight:700;color:var(--ink);
+  margin-bottom:4px;
+}
+.welcome-sub{
+  font-size:13px;color:var(--ink3);
+  margin-bottom:24px;
+}
+
+/* ROLE TABS */
+.role-tabs{
+  display:flex;
+  background:var(--bg);
+  border-radius:8px;
+  padding:4px;
+  gap:4px;
+  margin-bottom:22px;
+}
+.role-tab{
+  flex:1;padding:8px 12px;
+  border-radius:6px;border:none;
+  background:transparent;
+  font-family:'Inter',sans-serif;
+  font-size:12px;font-weight:500;
+  color:var(--ink3);cursor:pointer;
+  transition:all .18s;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.role-tab.active{
+  background:var(--surface);
+  color:var(--navy);
+  box-shadow:0 1px 4px rgba(0,0,0,.1);
+  font-weight:600;
+}
+.role-tab svg{width:14px;height:14px}
+
+/* FORM */
+.form-group{margin-bottom:16px}
+.form-label{
+  display:block;font-size:12px;
+  font-weight:600;color:var(--ink2);
+  margin-bottom:6px;letter-spacing:.2px;
+}
+.input-wrap{position:relative}
+.input-icon{
+  position:absolute;left:12px;top:50%;
+  transform:translateY(-50%);
+  color:var(--ink3);
+}
+.input-icon svg{width:16px;height:16px}
+.form-input{
+  width:100%;padding:10px 12px 10px 38px;
+  border:1.5px solid var(--border);
+  border-radius:8px;
+  font-family:'Inter',sans-serif;
+  font-size:13px;color:var(--ink);
+  background:var(--surface);outline:none;
+  transition:border-color .18s,box-shadow .18s;
+}
+.form-input:focus{
+  border-color:var(--navy);
+  box-shadow:0 0 0 3px rgba(26,60,110,.1);
+}
+.form-input::placeholder{color:var(--ink3)}
+.pw-toggle{
+  position:absolute;right:12px;top:50%;
+  transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;
+  color:var(--ink3);padding:2px;
+}
+.pw-toggle svg{width:16px;height:16px}
+.pw-toggle:hover{color:var(--ink2)}
+
+/* REMEMBER ROW */
+.form-row{
+  display:flex;align-items:center;
+  justify-content:space-between;
+  margin-bottom:20px;
+}
+.checkbox-label{
+  display:flex;align-items:center;gap:7px;
+  font-size:12.5px;color:var(--ink2);cursor:pointer;
+}
+.checkbox-label input{accent-color:var(--navy);width:14px;height:14px}
+.forgot{font-size:12.5px;color:var(--navy);text-decoration:none}
+.forgot:hover{text-decoration:underline}
+
+/* SUBMIT BTN */
+.btn-submit{
+  width:100%;padding:12px;
+  background:var(--navy);color:#fff;
+  border:none;border-radius:8px;
+  font-family:'Inter',sans-serif;
+  font-size:14px;font-weight:600;
+  cursor:pointer;transition:background .18s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  letter-spacing:.2px;
+}
+.btn-submit:hover{background:#15326e}
+.btn-submit:disabled{background:#9aa5b4;cursor:not-allowed}
+.spinner{
+  width:16px;height:16px;
+  border:2.5px solid rgba(255,255,255,.3);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:spin .7s linear infinite;
+  display:none;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* DIVIDER */
+.divider{
+  display:flex;align-items:center;gap:10px;
+  margin:18px 0;font-size:11px;color:var(--ink3);
+}
+.divider::before,.divider::after{
+  content:'';flex:1;height:1px;background:var(--border);
+}
+
+/* DEMO ACCOUNTS */
+.demo-label{
+  font-size:11px;font-weight:600;
+  color:var(--ink3);text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:8px;
+}
+.demo-list{display:flex;flex-direction:column;gap:6px}
+.demo-btn{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 12px;border-radius:8px;
+  border:1.5px solid var(--border);
+  background:transparent;cursor:pointer;
+  font-family:'Inter',sans-serif;
+  font-size:12.5px;color:var(--ink2);
+  transition:all .15s;text-align:left;width:100%;
+}
+.demo-btn:hover{
+  border-color:var(--navy);
+  background:rgba(26,60,110,.04);
+  color:var(--navy);
+}
+.demo-avatar{
+  width:28px;height:28px;border-radius:6px;
+  display:grid;place-items:center;
+  font-size:11px;font-weight:700;flex-shrink:0;
+  color:#fff;
+}
+.da-navy{background:var(--navy)}
+.da-orange{background:var(--orange)}
+.da-teal{background:#0f766e}
+.demo-info{flex:1}
+.demo-name{font-size:12.5px;font-weight:600;color:var(--ink)}
+.demo-email{font-size:11px;color:var(--ink3)}
+.demo-arrow{font-size:11px;color:var(--ink3)}
+
+/* ALERT */
+.alert{
+  display:none;
+  padding:10px 13px;border-radius:8px;
+  font-size:13px;margin-bottom:14px;
+  align-items:center;gap:8px;
+  border:1.5px solid;
+}
+.alert.show{display:flex}
+.alert-err{background:var(--red-light);border-color:rgba(198,40,40,.2);color:var(--red)}
+.alert-ok{background:var(--green-light);border-color:rgba(46,125,50,.2);color:var(--green)}
+.alert svg{width:14px;height:14px;flex-shrink:0}
+
+/* SERVER STATUS */
+.server-status{
+  text-align:center;margin-top:16px;
+  font-size:11px;color:var(--ink3);
+  display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.status-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--ink3);
+}
+.status-dot.ok{background:#2e7d32}
+.status-dot.err{background:var(--red)}
+
+/* REDIRECT OVERLAY */
+.overlay{
+  position:fixed;inset:0;
+  background:rgba(240,242,245,.9);
+  backdrop-filter:blur(4px);
+  z-index:999;display:none;
+  flex-direction:column;
+  align-items:center;justify-content:center;gap:16px;
+}
+.overlay.show{display:flex}
+.overlay-logo{
+  font-size:22px;font-weight:700;color:var(--navy);
+}
+.overlay-msg{font-size:13px;color:var(--ink3)}
+.overlay-bar{
+  width:200px;height:3px;
+  background:var(--border);border-radius:2px;overflow:hidden;
+}
+.overlay-fill{
+  height:100%;background:var(--navy);
+  width:0;transition:width 1.4s ease;border-radius:2px;
+}
+</style>
+</head>
+<body>
+
+<div class="login-card">
+
+  <!-- HEADER -->
+  <div class="card-header">
+    <div class="header-icon">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/>
+      </svg>
+    </div>
+    <div>
+      <div class="header-title">ExamCore</div>
+      <div class="header-sub">Exam Management System</div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="card-body">
+    <div class="welcome">Selamat Datang</div>
+    <div class="welcome-sub">Masuk ke akun Anda untuk melanjutkan</div>
+
+    <!-- ROLE TABS -->
+    <div class="role-tabs">
+      <button class="role-tab active" onclick="setRole('guru',this)">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.06 15.94 0 13.36 0c-1.31 0-2.5.55-3.36 1.43C9.14.55 7.95 0 6.64 0 4.06 0 2 2.06 2 4.64c0 .48.11.92.18 1.36H0v14h20V6zm-9.5 11.08L5 12.96l1.41-1.41 4.09 4.09 7.09-7.09 1.41 1.41-8.5 8.12z"/></svg>
+        Guru
+      </button>
+      <button class="role-tab" onclick="setRole('siswa',this)">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        Siswa
+      </button>
+      <button class="role-tab" onclick="setRole('admin',this)">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+        Admin
+      </button>
+    </div>
+
+    <!-- ALERT -->
+    <div class="alert alert-err" id="alert-err">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+      <span id="alert-err-msg">Email atau password salah.</span>
+    </div>
+    <div class="alert alert-ok" id="alert-ok">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14l-4-4 1.41-1.41L10 13.17l6.59-6.59L18 8l-8 8z"/></svg>
+      <span id="alert-ok-msg">Login berhasil!</span>
+    </div>
+
+    <!-- FORM -->
+    <div class="form-group">
+      <label class="form-label">Alamat Email</label>
+      <div class="input-wrap">
+        <span class="input-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+        </span>
+        <input class="form-input" id="email" type="email" placeholder="nama@sekolah.id" autocomplete="email">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <div class="input-wrap">
+        <span class="input-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </span>
+        <input class="form-input" id="password" type="password" placeholder="••••••••" autocomplete="current-password">
+        <button class="pw-toggle" onclick="togglePw()" type="button" id="pw-toggle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="eye-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label class="checkbox-label">
+        <input type="checkbox" checked id="remember"> Ingat saya
+      </label>
+      <a class="forgot" href="#">Lupa password?</a>
+    </div>
+
+    <button class="btn-submit" id="btn-submit" onclick="doLogin()">
+      <div class="spinner" id="spinner"></div>
+      <span id="btn-text">Masuk ke Sistem</span>
+    </button>
+
+    <!-- DEMO ACCOUNTS -->
+    <div class="divider">Akun Demo</div>
+    <div class="demo-list">
+      <button class="demo-btn" onclick="fillDemo('guru@examcore.id','password123','guru')">
+        <div class="demo-avatar da-navy">G</div>
+        <div class="demo-info">
+          <div class="demo-name">Budi Santoso</div>
+          <div class="demo-email">guru@examcore.id · Guru</div>
+        </div>
+        <span class="demo-arrow">→</span>
+      </button>
+      <button class="demo-btn" onclick="fillDemo('ahmadnaufal@siswa.id','password123','siswa')">
+        <div class="demo-avatar da-orange">S</div>
+        <div class="demo-info">
+          <div class="demo-name">Ahmad Naufal</div>
+          <div class="demo-email">ahmadnaufal@siswa.id · Siswa</div>
+        </div>
+        <span class="demo-arrow">→</span>
+      </button>
+      <button class="demo-btn" onclick="fillDemo('admin@examcore.id','password123','admin')">
+        <div class="demo-avatar da-teal">A</div>
+        <div class="demo-info">
+          <div class="demo-name">Administrator</div>
+          <div class="demo-email">admin@examcore.id · Admin</div>
+        </div>
+        <span class="demo-arrow">→</span>
+      </button>
+    </div>
+
+    <!-- SERVER STATUS -->
+    <div class="server-status">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">Memeriksa server...</span>
+    </div>
+  </div>
+</div>
+
+<!-- REDIRECT OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="overlay-logo">ExamCore</div>
+  <div class="overlay-msg" id="overlay-msg">Mengarahkan ke dashboard...</div>
+  <div class="overlay-bar"><div class="overlay-fill" id="overlay-fill"></div></div>
+</div>
+
+<script>
+// ── CONFIG ──
+const API_BASE = localStorage.getItem('ec_base') || 'http://127.0.0.1:8000/api';
+const ROLE_PAGES = { guru:'guru-dashboard.html', siswa:'ujian-siswa.html', admin:'admin-dashboard.html' };
+let selectedRole = 'guru';
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Cek token tersimpan
+  const token = localStorage.getItem('ec_token');
+  const role  = localStorage.getItem('ec_role');
+  if (token && role) { cekToken(token, role); return; }
+  cekServer();
+  document.getElementById('password').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+});
+
+async function cekToken(token, role) {
+  try {
+    const res = await fetch(API_BASE + '/auth/me', {
+      headers: { 'Authorization':'Bearer '+token, 'Accept':'application/json' }
+    });
+    if (res.ok) redirect(role);
+  } catch(_) {}
+}
+
+async function cekServer() {
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+  try {
+    await fetch(API_BASE + '/auth/login', { method:'HEAD' });
+    dot.className = 'status-dot ok';
+    txt.textContent = 'Server aktif';
+  } catch(_) {
+    dot.className = 'status-dot err';
+    txt.textContent = 'Server tidak terjangkau';
+  }
+}
+
+function setRole(role, btn) {
+  selectedRole = role;
+  document.querySelectorAll('.role-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function fillDemo(email, password, role) {
+  document.getElementById('email').value    = email;
+  document.getElementById('password').value = password;
+  const idx = {guru:0,siswa:1,admin:2};
+  document.querySelectorAll('.role-tab').forEach((b,i) => b.classList.toggle('active', i===idx[role]));
+  selectedRole = role;
+  hideAlerts();
+}
+
+function togglePw() {
+  const inp = document.getElementById('password');
+  const ico = document.getElementById('eye-icon');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    ico.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+  } else {
+    inp.type = 'password';
+    ico.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  }
+}
+
+function hideAlerts() {
+  document.getElementById('alert-err').classList.remove('show');
+  document.getElementById('alert-ok').classList.remove('show');
+}
+
+function setLoading(on) {
+  document.getElementById('btn-submit').disabled    = on;
+  document.getElementById('spinner').style.display  = on ? 'block' : 'none';
+  document.getElementById('btn-text').textContent   = on ? 'Memproses...' : 'Masuk ke Sistem';
+}
+
+async function doLogin() {
+  const email = document.getElementById('email').value.trim();
+  const pass  = document.getElementById('password').value;
+  hideAlerts();
+  if (!email || !pass) {
+    document.getElementById('alert-err-msg').textContent = 'Email dan password wajib diisi.';
+    document.getElementById('alert-err').classList.add('show');
+    return;
+  }
+  setLoading(true);
+  try {
+    const res  = await fetch(API_BASE + '/auth/login', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body: JSON.stringify({ email, password:pass }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      document.getElementById('alert-err-msg').textContent = data.message || 'Email atau password salah.';
+      document.getElementById('alert-err').classList.add('show');
+      setLoading(false); return;
+    }
+    localStorage.setItem('ec_token', data.token);
+    localStorage.setItem('ec_user',  JSON.stringify(data.user));
+    localStorage.setItem('ec_role',  data.user?.role || selectedRole);
+    localStorage.setItem('ec_base',  API_BASE);
+    document.getElementById('alert-ok-msg').textContent = 'Halo, ' + (data.user?.name || email) + '!';
+    document.getElementById('alert-ok').classList.add('show');
+    redirect(data.user?.role || selectedRole);
+  } catch(_) {
+    document.getElementById('alert-err-msg').textContent = 'Tidak dapat terhubung ke server.';
+    document.getElementById('alert-err').classList.add('show');
+    setLoading(false);
+  }
+}
+
+function redirect(role) {
+  const ov = document.getElementById('overlay');
+  document.getElementById('overlay-msg').textContent = role === 'siswa' ? 'Mengarahkan ke halaman ujian...' : 'Mengarahkan ke dashboard...';
+  ov.classList.add('show');
+  setTimeout(() => { document.getElementById('overlay-fill').style.width = '100%'; }, 50);
+  setTimeout(() => { window.location.href = ROLE_PAGES[role] || 'guru-dashboard.html'; }, 1500);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riwayat Ujian — ExamCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--navy:#1a3c6e;--navy-dark:#122a52;--navy-light:#e8eef7;--bg:#f0f2f5;--surface:#fff;--border:#e2e6ea;--ink:#1a2332;--ink2:#4a5568;--ink3:#9aa5b4;--green:#2e7d32;--green-light:#e8f5e9;--red:#c62828;--red-light:#ffebee;--amber:#f59e0b;--amber-light:#fffbeb;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+.topbar{height:60px;background:var(--navy);display:flex;align-items:center;padding:0 18px;gap:10px;position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;color:#fff;text-decoration:none}
+.brand-icon{width:34px;height:34px;background:rgba(255,255,255,.15);border-radius:8px;display:grid;place-items:center}
+.brand-icon svg{width:17px;height:17px;fill:#fff}
+.topbar-r{margin-left:auto;display:flex;gap:8px}
+.tb-btn{padding:7px 12px;background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:7px;cursor:pointer;font-size:12.5px;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:5px}
+.hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-dark) 100%);padding:20px 18px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.hs{background:rgba(255,255,255,.09);border-radius:10px;padding:12px;text-align:center;border:1px solid rgba(255,255,255,.1)}
+.hs-val{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;color:#fff}
+.hs-label{font-size:10.5px;color:rgba(255,255,255,.55);margin-top:3px}
+.filter-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chip{padding:5px 14px;border-radius:20px;font-size:12.5px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:var(--bg);color:var(--ink3);transition:all .15s}
+.chip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.sort-sel{padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:12.5px;outline:none;margin-left:auto}
+.content{max-width:960px;margin:0 auto;padding:18px 16px 60px}
+.sec-title{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.cnt{font-size:11px;background:var(--navy-light);color:var(--navy);padding:2px 9px;border-radius:20px;font-weight:600}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px;cursor:pointer;transition:box-shadow .2s}
+.card:hover{box-shadow:0 6px 20px rgba(0,0,0,.08)}
+.card.passed{border-left:4px solid var(--green)}
+.card.failed{border-left:4px solid var(--red)}
+.card.timeout{border-left:4px solid var(--amber)}
+.c-head{display:flex;gap:14px;padding:14px 16px;border-bottom:1px solid var(--border);align-items:flex-start}
+.score-circle{width:56px;height:56px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;border:3px solid}
+.score-val{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700}
+.score-lbl{font-size:9px}
+.c-title{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:3px}
+.c-sub{font-size:12px;color:var(--ink3)}
+.badges{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.bdg{padding:2px 9px;border-radius:20px;font-size:10.5px;font-weight:600}
+.bdg-pass{background:var(--green-light);color:var(--green)}
+.bdg-fail{background:var(--red-light);color:var(--red)}
+.bdg-to{background:var(--amber-light);color:#92400e}
+.bdg-subj{background:var(--navy-light);color:var(--navy)}
+.c-body{padding:12px 16px}
+.rc-stats{display:flex;gap:18px;font-size:12px;color:var(--ink2);margin-bottom:8px;flex-wrap:wrap}
+.rc-stat{display:flex;align-items:center;gap:5px}
+.rc-stat svg{width:13px;height:13px}
+.rc-bar{height:7px;background:var(--border);border-radius:4px;overflow:hidden;display:flex}
+.rc-bar-seg{height:100%}
+.c-footer{display:flex;align-items:center;justify-content:space-between;padding:9px 16px;background:#f9fafc;border-top:1px solid var(--border);font-size:12px;color:var(--ink3)}
+.empty{text-align:center;padding:48px;color:var(--ink3)}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a href="siswa-dashboard.html" class="brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg></div>
+    ExamCore
+  </a>
+  <div class="topbar-r">
+    <button class="tb-btn" onclick="location.href='siswa-dashboard.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="15 18 9 12 15 6"/></svg>Dashboard</button>
+    <button class="tb-btn" onclick="location.href='profil-siswa.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profil</button>
+  </div>
+</header>
+<div class="hero">
+  <div class="hs"><div class="hs-val" id="hs-total">8</div><div class="hs-label">Total Ujian</div></div>
+  <div class="hs"><div class="hs-val" id="hs-pass">7</div><div class="hs-label">Lulus</div></div>
+  <div class="hs"><div class="hs-val" id="hs-avg">82.5</div><div class="hs-label">Rata-rata</div></div>
+  <div class="hs"><div class="hs-val" id="hs-best">97</div><div class="hs-label">Terbaik</div></div>
+</div>
+<div class="filter-bar">
+  <span class="chip active" onclick="setFilter('all',this)">Semua</span>
+  <span class="chip" onclick="setFilter('pass',this)">Lulus</span>
+  <span class="chip" onclick="setFilter('fail',this)">Tidak Lulus</span>
+  <span class="chip" onclick="setFilter('timeout',this)">Timeout</span>
+  <select class="sort-sel" id="sort-sel" onchange="render()">
+    <option value="date-desc">Terbaru</option>
+    <option value="date-asc">Terlama</option>
+    <option value="score-desc">Nilai Tinggi</option>
+    <option value="score-asc">Nilai Rendah</option>
+  </select>
+</div>
+<div class="content">
+  <div class="sec-title">Daftar Riwayat <span class="cnt" id="cnt-badge">0 ujian</span></div>
+  <div id="riwayat-list"></div>
+</div>
+<script src="auth.js"></script>
+<script>
+const DATA=[
+  {id:101,title:'UH 1 — Aljabar Dasar',subject:'Matematika',class_name:'X IPA 1',score:88,passing_grade:70,is_passed:true,status:'submitted',correct:8,wrong:1,unanswered:1,total:10,duration:1245,date:'2026-05-10T09:15'},
+  {id:99, title:'UH Ekonomi Mikro',    subject:'Ekonomi',   class_name:'X IPA 1',score:92,passing_grade:70,is_passed:true,status:'submitted',correct:36,wrong:2,unanswered:2,total:40,duration:3840,date:'2026-05-08T10:30'},
+  {id:95, title:'UTS Fisika Dasar',    subject:'Fisika',    class_name:'X IPA 1',score:64,passing_grade:75,is_passed:false,status:'timeout',correct:16,wrong:6,unanswered:3,total:25,duration:5400,date:'2026-04-28T08:40'},
+  {id:90, title:'UH Kimia Organik',   subject:'Kimia',     class_name:'X IPA 1',score:97,passing_grade:70,is_passed:true,status:'submitted',correct:29,wrong:1,unanswered:0,total:30,duration:2100,date:'2026-04-20T11:00'},
+  {id:85, title:'UH Geografi',        subject:'Geografi',  class_name:'X IPA 1',score:65,passing_grade:70,is_passed:false,status:'submitted',correct:13,wrong:7,unanswered:0,total:20,duration:2700,date:'2026-04-15T09:00'},
+  {id:80, title:'UH Sejarah',         subject:'Sejarah',   class_name:'X IPA 1',score:78,passing_grade:70,is_passed:true,status:'submitted',correct:19,wrong:4,unanswered:2,total:25,duration:3200,date:'2026-04-05T10:00'},
+  {id:75, title:'UTS B. Indonesia',   subject:'B.Indonesia',class_name:'X IPA 1',score:83,passing_grade:70,is_passed:true,status:'submitted',correct:33,wrong:5,unanswered:2,total:40,duration:4200,date:'2026-03-25T08:00'},
+  {id:70, title:'UH Matematika Wajib',subject:'Matematika',class_name:'X IPA 1',score:71,passing_grade:70,is_passed:true,status:'submitted',correct:14,wrong:4,unanswered:2,total:20,duration:1800,date:'2026-03-10T10:00'},
+];
+let filter='all';
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('hs-total').textContent=DATA.length;
+  document.getElementById('hs-pass').textContent=DATA.filter(r=>r.is_passed).length;
+  document.getElementById('hs-avg').textContent=(DATA.reduce((a,b)=>a+b.score,0)/DATA.length).toFixed(1);
+  document.getElementById('hs-best').textContent=Math.max(...DATA.map(r=>r.score));
+  render();
+});
+function setFilter(f,el){filter=f;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');render();}
+function render(){
+  const sort=document.getElementById('sort-sel').value;
+  let list=DATA.filter(r=>{
+    if(filter==='pass'&&!r.is_passed)return false;
+    if(filter==='fail'&&(r.is_passed||r.status==='timeout'))return false;
+    if(filter==='timeout'&&r.status!=='timeout')return false;
+    return true;
+  }).sort((a,b)=>{
+    if(sort==='date-desc')return new Date(b.date)-new Date(a.date);
+    if(sort==='date-asc') return new Date(a.date)-new Date(b.date);
+    if(sort==='score-desc')return b.score-a.score;
+    return a.score-b.score;
+  });
+  document.getElementById('cnt-badge').textContent=`${list.length} ujian`;
+  if(!list.length){document.getElementById('riwayat-list').innerHTML='<div class="empty">Tidak ada riwayat ujian untuk filter ini</div>';return;}
+  document.getElementById('riwayat-list').innerHTML=list.map(r=>{
+    const pass=r.is_passed;const to=r.status==='timeout';
+    const c=pass?'var(--green)':to?'var(--amber)':'var(--red)';
+    const bg=pass?'var(--green-light)':to?'var(--amber-light)':'var(--red-light)';
+    const cls=pass?'passed':to?'timeout':'failed';
+    const pct=r.total>0?(r.correct/r.total*100).toFixed(0):0;
+    const wp=r.total>0?(r.wrong/r.total*100).toFixed(0):0;
+    const up=r.total>0?(r.unanswered/r.total*100).toFixed(0):0;
+    const d=new Date(r.date);
+    const ds=`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const dur=`${Math.floor(r.duration/60)} mnt ${r.duration%60} dtk`;
+    return `<div class="card ${cls}" onclick="location.href='hasil-ujian.html?session_id=${r.id}'">
+      <div class="c-head">
+        <div class="score-circle" style="color:${c};background:${bg};border-color:${c}">
+          <span class="score-val" style="color:${c}">${r.score}</span><span class="score-lbl" style="color:${c}">nilai</span>
+        </div>
+        <div style="flex:1">
+          <div class="c-title">${r.title}</div>
+          <div class="c-sub">${r.class_name}</div>
+          <div class="badges">
+            <span class="bdg bdg-subj">${r.subject}</span>
+            <span class="bdg ${pass?'bdg-pass':to?'bdg-to':'bdg-fail'}">${pass?'✓ LULUS':to?'⏱ TIMEOUT':'✗ GAGAL'}</span>
+            <span style="font-size:10.5px;color:var(--ink3)">KKM ${r.passing_grade}</span>
+          </div>
+        </div>
+      </div>
+      <div class="c-body">
+        <div class="rc-stats">
+          <span class="rc-stat" style="color:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>${r.correct} benar</span>
+          <span class="rc-stat" style="color:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>${r.wrong} salah</span>
+          <span class="rc-stat" style="color:var(--amber)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>${r.unanswered} kosong</span>
+          <span class="rc-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${dur}</span>
+        </div>
+        <div class="rc-bar">
+          <div class="rc-bar-seg" style="width:${pct}%;background:var(--green)"></div>
+          <div class="rc-bar-seg" style="width:${wp}%;background:var(--red)"></div>
+          <div class="rc-bar-seg" style="width:${up}%;background:var(--amber)"></div>
+        </div>
+      </div>
+      <div class="c-footer"><span>${ds}</span><span style="color:var(--navy);font-weight:500">Lihat Hasil →</span></div>
+    </div>`;
+  }).join('');
+}
+</script>
+</body>
+</html>

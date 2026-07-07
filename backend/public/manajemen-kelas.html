@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manajemen Kelas — ExamCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#1a3c6e;--navy-dark:#122a52;--navy-light:#e8eef7;
+  --orange:#e8821a;--orange-light:#fff4e8;
+  --bg:#f0f2f5;--surface:#ffffff;--border:#e2e6ea;--border2:#d1d8e0;
+  --ink:#1a2332;--ink2:#4a5568;--ink3:#9aa5b4;--ink4:#c9d3dc;
+  --green:#2e7d32;--green-light:#e8f5e9;
+  --red:#c62828;--red-light:#ffebee;
+  --amber:#f59e0b;--amber-light:#fffbeb;
+  --sidebar-w:220px;--topbar-h:60px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex}
+@keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+.sk{background:linear-gradient(90deg,#e8ebef 25%,#f4f6f8 50%,#e8ebef 75%);background-size:600px 100%;animation:shimmer 1.4s ease-in-out infinite;border-radius:6px}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;z-index:100;display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-brand{display:flex;align-items:center;gap:11px;padding:0 18px;height:var(--topbar-h);border-bottom:1px solid var(--border);flex-shrink:0}
+.brand-icon{width:36px;height:36px;background:var(--navy);border-radius:8px;display:grid;place-items:center;flex-shrink:0}
+.brand-icon svg{width:18px;height:18px;fill:white}
+.brand-name{font-size:15px;font-weight:700;color:var(--ink)}
+.brand-sub{font-size:9.5px;font-weight:500;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+.nav-section{padding:16px 10px 0}
+.nav-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);padding:0 8px;margin-bottom:5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;font-size:13px;font-weight:500;color:var(--ink2);cursor:pointer;transition:all .15s;border:none;background:transparent;width:100%;text-align:left;font-family:'Inter',sans-serif;margin-bottom:1px;text-decoration:none}
+.nav-item:hover{background:var(--bg);color:var(--ink)}
+.nav-item.active{background:var(--navy-light);color:var(--navy);font-weight:600}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.sidebar-footer{margin-top:auto;border-top:1px solid var(--border);padding:14px;flex-shrink:0}
+.user-card{display:flex;align-items:center;gap:9px;padding:8px;border-radius:8px;cursor:pointer}
+.user-avatar{width:32px;height:32px;background:var(--navy);border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.user-name{font-size:13px;font-weight:600;color:var(--ink)}
+.user-role{font-size:11px;color:var(--ink3)}
+.logout-btn{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;font-size:12px;color:var(--ink3);cursor:pointer;transition:all .15s;border:none;background:transparent;width:100%;margin-top:2px;font-family:'Inter',sans-serif}
+.logout-btn:hover{background:var(--red-light);color:var(--red)}
+
+/* MAIN */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column}
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:15px;font-weight:700;color:var(--ink)}
+.topbar-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;border:1.5px solid}
+.btn-primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-primary:hover{background:var(--navy-dark)}
+.btn-ghost{background:transparent;color:var(--ink2);border-color:var(--border)}
+.btn-ghost:hover{background:var(--bg);color:var(--ink)}
+.btn-danger{background:var(--red-light);color:var(--red);border-color:rgba(198,40,40,.2)}
+.btn-danger:hover{background:var(--red);color:#fff}
+.btn svg{width:14px;height:14px}
+.icon-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--ink3);cursor:pointer;display:grid;place-items:center;transition:all .15s}
+.icon-btn svg{width:13px;height:13px}
+.icon-btn:hover{background:var(--bg);color:var(--ink)}
+.icon-btn.danger:hover{background:var(--red-light);color:var(--red);border-color:rgba(198,40,40,.25)}
+.content{padding:22px 24px;flex:1}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
+.page-title{font-size:20px;font-weight:700;color:var(--ink)}
+.page-sub{font-size:13px;color:var(--ink3);margin-top:2px}
+
+/* CLASS GRID */
+.class-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:20px}
+.class-card{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;transition:all .2s}
+.class-card:hover{border-color:var(--navy-light);box-shadow:0 4px 18px rgba(0,0,0,.08);transform:translateY(-1px)}
+.class-card.selected{border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,60,110,.12)}
+.class-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.class-icon{width:40px;height:40px;border-radius:9px;background:var(--navy-light);display:grid;place-items:center;flex-shrink:0}
+.class-icon svg{width:20px;height:20px;color:var(--navy)}
+.class-menu{opacity:0;transition:opacity .15s}
+.class-card:hover .class-menu{opacity:1}
+.class-name{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:3px}
+.class-subject{font-size:12px;color:var(--ink3)}
+.class-stats{display:flex;gap:14px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.cs-item{text-align:center}
+.cs-val{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--navy)}
+.cs-label{font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px}
+
+/* DETAIL PANEL */
+.detail-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.detail-tabs{display:flex;border-bottom:1.5px solid var(--border);padding:0 18px}
+.detail-tab{padding:10px 14px;font-size:13px;font-weight:500;color:var(--ink3);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none;font-family:'Inter',sans-serif}
+.detail-tab:hover{color:var(--ink)}
+.detail-tab.active{color:var(--navy);border-bottom-color:var(--navy)}
+.detail-view{display:none;padding:16px 18px}
+.detail-view.active{display:block}
+
+/* SEARCH */
+.search-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);background:#f7f9fc}
+.search-bar svg{width:14px;height:14px;color:var(--ink3);flex-shrink:0}
+.search-bar input{border:none;background:transparent;outline:none;font-family:'Inter',sans-serif;font-size:13px;color:var(--ink);flex:1}
+.search-bar input::placeholder{color:var(--ink3)}
+
+/* TABLE */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:#f7f9fc}
+th{padding:10px 14px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--ink3);border-bottom:1.5px solid var(--border);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--ink2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#f9fafc}
+.td-main{color:var(--ink);font-weight:500}
+
+/* BADGE */
+.badge{display:inline-flex;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.b-green{background:var(--green-light);color:var(--green)}
+.b-red{background:var(--red-light);color:var(--red)}
+.b-navy{background:var(--navy-light);color:var(--navy)}
+.b-amber{background:var(--amber-light);color:#92400e}
+.b-gray{background:var(--bg);color:var(--ink3)}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);backdrop-filter:blur(3px);z-index:500;display:none;place-items:center;padding:20px}
+.overlay.open{display:grid}
+.modal{background:var(--surface);border-radius:12px;border:1px solid var(--border);width:100%;max-width:480px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.15);animation:mi .2s ease}
+@keyframes mi{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#f7f9fc}
+.modal-title{font-size:15px;font-weight:700;color:var(--ink)}
+.modal-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--ink3);cursor:pointer;display:grid;place-items:center;font-size:14px}
+.modal-close:hover{background:var(--bg)}
+.modal-body{padding:20px}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:#f7f9fc}
+.form-group{margin-bottom:14px}
+.form-group:last-child{margin-bottom:0}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:5px}
+.form-label .req{color:var(--red)}
+.form-input,.form-select{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;color:var(--ink);outline:none;transition:border-color .18s}
+.form-input:focus,.form-select:focus{border-color:var(--navy)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* PAGER */
+.pager{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--ink3)}
+.pager-btns{display:flex;gap:3px}
+.pager-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--ink2);cursor:pointer;display:grid;place-items:center;font-size:12px;font-family:'JetBrains Mono',monospace;transition:all .15s}
+.pager-btn:hover{background:var(--bg)}
+.pager-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.pager-btn:disabled{opacity:.35;cursor:not-allowed}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}.class-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg></div>
+    <div><div class="brand-name">ExamCore</div><div class="brand-sub">Exam Management</div></div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Menu Utama</div>
+    <a class="nav-item" href="guru-dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</a>
+    <a class="nav-item active" href="manajemen-kelas.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Manajemen Kelas</a>
+    <a class="nav-item" href="input-soal.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Input Soal</a>
+    <a class="nav-item" href="jadwal-ujian.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Jadwal Ujian</a>
+    <div class="nav-label" style="margin-top:12px">Laporan</div>
+    <a class="nav-item" href="rekap-nilai.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Rekap Nilai</a>
+    <a class="nav-item" href="import-arsip.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Import & Arsip</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" data-user-avatar>G</div>
+      <div><div class="user-name" data-user-name>Guru</div><div class="user-role" data-user-role>guru</div></div>
+    </div>
+    <button class="logout-btn" onclick="logout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-title">Manajemen Kelas</div>
+    <div class="topbar-r">
+      <button class="btn btn-primary" onclick="openModal('modal-kelas')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Buat Kelas
+      </button>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="page-head">
+      <div><div class="page-title">Manajemen Kelas</div><div class="page-sub">Kelola kelas, daftar siswa, dan ujian per kelas</div></div>
+    </div>
+
+    <!-- CLASS GRID -->
+    <div class="class-grid" id="class-grid">
+      <!-- skeleton -->
+      <div class="class-card"><div class="sk" style="height:40px;width:40px;border-radius:9px;margin-bottom:12px"></div><div class="sk" style="height:16px;width:120px;margin-bottom:6px"></div><div class="sk" style="height:12px;width:80px;margin-bottom:16px"></div><div style="display:flex;gap:14px"><div class="sk" style="height:30px;width:50px;border-radius:6px"></div><div class="sk" style="height:30px;width:50px;border-radius:6px"></div><div class="sk" style="height:30px;width:50px;border-radius:6px"></div></div></div>
+      <div class="class-card"><div class="sk" style="height:40px;width:40px;border-radius:9px;margin-bottom:12px"></div><div class="sk" style="height:16px;width:120px;margin-bottom:6px"></div><div class="sk" style="height:12px;width:80px;margin-bottom:16px"></div><div style="display:flex;gap:14px"><div class="sk" style="height:30px;width:50px;border-radius:6px"></div><div class="sk" style="height:30px;width:50px;border-radius:6px"></div><div class="sk" style="height:30px;width:50px;border-radius:6px"></div></div></div>
+    </div>
+
+    <!-- DETAIL PANEL -->
+    <div class="detail-panel" id="detail-panel" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);background:#f7f9fc">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--ink)" id="detail-title">—</div>
+          <div style="font-size:12px;color:var(--ink3)" id="detail-sub">—</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost" style="font-size:12px" onclick="openModal('modal-add-siswa')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>Tambah Siswa
+          </button>
+          <button class="btn btn-danger" style="font-size:12px" onclick="hapusKelas()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>Hapus Kelas
+          </button>
+          <button class="icon-btn" onclick="document.getElementById('detail-panel').style.display='none'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="detail-tabs">
+        <button class="detail-tab active" onclick="switchDetailTab('siswa',this)">Daftar Siswa</button>
+        <button class="detail-tab" onclick="switchDetailTab('ujian',this)">Ujian Kelas</button>
+      </div>
+
+      <!-- SISWA TAB -->
+      <div class="detail-view active" id="dtab-siswa">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Cari nama atau NIS..." oninput="cariSiswa(this.value)">
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nama Siswa</th><th>NIS</th><th>Email</th><th>Rata-rata</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="tbody-siswa"></tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <span id="siswa-info">— data —</span>
+          <div class="pager-btns" id="siswa-pager"></div>
+        </div>
+      </div>
+
+      <!-- UJIAN TAB -->
+      <div class="detail-view" id="dtab-ujian">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Judul Ujian</th><th>Tanggal</th><th>Peserta</th><th>Rata-rata</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="tbody-ujian"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL: BUAT KELAS -->
+<div class="overlay" id="modal-kelas">
+  <div class="modal">
+    <div class="modal-head"><span class="modal-title">Buat Kelas Baru</span><button class="modal-close" onclick="closeModal('modal-kelas')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Nama Kelas <span class="req">*</span></label><input class="form-input" id="kls-name" placeholder="Contoh: X IPA 1"></div>
+      <div class="form-group"><label class="form-label">Mata Pelajaran <span class="req">*</span></label><input class="form-input" id="kls-subject" placeholder="Contoh: Matematika"></div>
+      <div class="row2">
+        <div class="form-group"><label class="form-label">Tahun Ajaran</label><input class="form-input" id="kls-year" placeholder="2024/2025" value="2024/2025"></div>
+        <div class="form-group"><label class="form-label">Semester</label>
+          <select class="form-select" id="kls-semester"><option value="Ganjil">Ganjil</option><option value="Genap">Genap</option></select>
+        </div>
+      </div>
+      <div class="form-group" style="margin:0"><label class="form-label">Deskripsi</label><input class="form-input" id="kls-desc" placeholder="Opsional"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-kelas')">Batal</button>
+      <button class="btn btn-primary" onclick="buatKelas()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/></svg>Buat Kelas</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: TAMBAH SISWA -->
+<div class="overlay" id="modal-add-siswa">
+  <div class="modal">
+    <div class="modal-head"><span class="modal-title">Tambah Siswa ke Kelas</span><button class="modal-close" onclick="closeModal('modal-add-siswa')">✕</button></div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="btn btn-ghost active-tab" id="tab-nis" onclick="switchAddTab('nis')" style="flex:1;justify-content:center">Cari NIS</button>
+        <button class="btn btn-ghost" id="tab-bulk" onclick="switchAddTab('bulk')" style="flex:1;justify-content:center">Masukkan Massal</button>
+      </div>
+      <div id="add-nis">
+        <div class="form-group"><label class="form-label">Cari Siswa</label>
+          <input class="form-input" id="search-siswa-add" placeholder="Ketik nama atau NIS..." oninput="searchSiswaAdd(this.value)">
+        </div>
+        <div id="siswa-search-results" style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:7px;display:none"></div>
+      </div>
+      <div id="add-bulk" style="display:none">
+        <div class="form-group" style="margin:0"><label class="form-label">Daftar NIS (satu per baris)</label>
+          <textarea class="form-input" id="bulk-nis" rows="6" placeholder="2024001&#10;2024002&#10;2024003" style="resize:vertical;min-height:120px"></textarea>
+          <div style="font-size:11px;color:var(--ink3);margin-top:4px">Masukkan NIS siswa, satu NIS per baris</div>
+        </div>
+      </div>
+      <div id="selected-students" style="margin-top:12px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-siswa')">Batal</button>
+      <button class="btn btn-primary" onclick="tambahSiswa()">Tambah ke Kelas</button>
+    </div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script>
+const DEMO_CLASSES = [
+  {id:1,name:'X IPA 1',subject:'Matematika',academic_year:'2024/2025',semester:'Ganjil',student_count:10,exam_count:3,avg:76.4},
+  {id:2,name:'XI IPS 1',subject:'Ekonomi',academic_year:'2024/2025',semester:'Ganjil',student_count:8,exam_count:2,avg:74.1},
+  {id:3,name:'X IPA 2',subject:'Fisika',academic_year:'2024/2025',semester:'Ganjil',student_count:12,exam_count:1,avg:0},
+];
+const DEMO_STUDENTS = [
+  {id:1,name:'Ahmad Naufal',nis:'2024001',email:'ahmadnaufal@siswa.id',avg:88.0,status:'active'},
+  {id:2,name:'Siti Rahayu',nis:'2024002',email:'sitirahayu@siswa.id',avg:92.5,status:'active'},
+  {id:3,name:'Dita Kusuma',nis:'2024003',email:'ditakusuma@siswa.id',avg:74.6,status:'active'},
+  {id:4,name:'Rizal Pratama',nis:'2024004',email:'rizalpratama@siswa.id',avg:52.3,status:'inactive'},
+  {id:5,name:'Eka Putri',nis:'2024005',email:'ekaputri@siswa.id',avg:83.5,status:'active'},
+  {id:6,name:'Fajar Nugroho',nis:'2024006',email:'fajarnugroho@siswa.id',avg:71.0,status:'active'},
+  {id:7,name:'Gita Andriani',nis:'2024007',email:'gitaandriani@siswa.id',avg:79.2,status:'active'},
+  {id:8,name:'Hendra Wijaya',nis:'2024008',email:'hendrawijaya@siswa.id',avg:68.5,status:'active'},
+  {id:9,name:'Indah Lestari',nis:'2024009',email:'indahlestari@siswa.id',avg:64.2,status:'active'},
+  {id:10,name:'Budi Saputra',nis:'2024010',email:'budisaputra@siswa.id',avg:58.0,status:'active'},
+];
+const DEMO_EXAMS = [
+  {id:1,title:'UH 1 — Aljabar Dasar',date:'2024-09-10',peserta:10,avg:72.1,status:'ended'},
+  {id:2,title:'UH 2 — Geometri',date:'2024-09-24',peserta:10,avg:74.5,status:'ended'},
+  {id:3,title:'UTS Semester Ganjil',date:'2024-10-15',peserta:10,avg:76.4,status:'ended'},
+];
+
+let selectedClassId = null;
+let siswaPage       = 1;
+const PER_PAGE      = 6;
+let siswaData       = [...DEMO_STUDENTS];
+let selectedToAdd   = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!requireAuth('guru')) return;
+  renderUser();
+  loadClasses();
+});
+
+async function loadClasses() {
+  try {
+    const data = await api('GET', '/guru/classes');
+    renderClasses(data.data || DEMO_CLASSES);
+  } catch(_) { renderClasses(DEMO_CLASSES); }
+}
+
+function renderClasses(classes) {
+  document.getElementById('class-grid').innerHTML = classes.map(c => `
+    <div class="class-card ${selectedClassId === c.id ? 'selected' : ''}" onclick="selectClass(${c.id})" id="cc-${c.id}">
+      <div class="class-card-header">
+        <div class="class-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+        <div class="class-menu">
+          <button class="icon-btn" onclick="event.stopPropagation();editKelas(${c.id})" title="Edit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="class-name">${c.name}</div>
+      <div class="class-subject">${c.subject} · ${c.academic_year}</div>
+      <div class="class-stats">
+        <div class="cs-item"><div class="cs-val">${c.student_count}</div><div class="cs-label">Siswa</div></div>
+        <div class="cs-item"><div class="cs-val">${c.exam_count}</div><div class="cs-label">Ujian</div></div>
+        <div class="cs-item"><div class="cs-val" style="color:${c.avg>=70?'var(--green)':'var(--red)'}">${c.avg||'—'}</div><div class="cs-label">Avg</div></div>
+      </div>
+    </div>`).join('');
+}
+
+function selectClass(id) {
+  selectedClassId = id;
+  document.querySelectorAll('.class-card').forEach(c => c.classList.toggle('selected', c.id === `cc-${id}`));
+  const kelas = DEMO_CLASSES.find(c => c.id === id) || {name:'—',subject:'—'};
+  document.getElementById('detail-title').textContent = kelas.name;
+  document.getElementById('detail-sub').textContent   = `${kelas.subject} · ${kelas.academic_year}`;
+  document.getElementById('detail-panel').style.display = '';
+  siswaData = [...DEMO_STUDENTS];
+  siswaPage = 1;
+  renderSiswaTable();
+  renderUjianTable();
+}
+
+function switchDetailTab(tab, btn) {
+  document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.detail-view').forEach(v => v.classList.remove('active'));
+  document.getElementById('dtab-' + tab).classList.add('active');
+}
+
+/* ── SISWA TABLE ── */
+function renderSiswaTable() {
+  const start  = (siswaPage - 1) * PER_PAGE;
+  const paged  = siswaData.slice(start, start + PER_PAGE);
+  const total  = siswaData.length;
+
+  document.getElementById('siswa-info').textContent = `${Math.min(start+1,total)}–${Math.min(start+PER_PAGE,total)} dari ${total} siswa`;
+  document.getElementById('tbody-siswa').innerHTML = paged.map(s => `
+    <tr>
+      <td><div style="display:flex;align-items:center;gap:9px">
+        <div style="width:30px;height:30px;border-radius:7px;background:var(--navy-light);color:var(--navy);display:grid;place-items:center;font-size:11px;font-weight:700;flex-shrink:0">${s.name.charAt(0)}</div>
+        <div class="td-main">${s.name}</div>
+      </div></td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:12px">${s.nis}</td>
+      <td style="font-size:12px;color:var(--ink3)">${s.email}</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:${s.avg>=70?'var(--green)':'var(--red)';font-weight:600">${s.avg||'—'}</td>
+      <td><span class="badge ${s.status==='active'?'b-green':'b-gray'}">${s.status==='active'?'Aktif':'Non-aktif'}</span></td>
+      <td><div style="display:flex;gap:5px">
+        <button class="icon-btn danger" onclick="keluarkanSiswa(${s.id},'${s.name}')" title="Keluarkan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div></td>
+    </tr>`).join('') || `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--ink3)">Tidak ada siswa ditemukan</td></tr>`;
+
+  // Pager
+  const pages = Math.ceil(total / PER_PAGE);
+  let pagerHtml = `<button class="pager-btn" onclick="goSiswaPage(${siswaPage-1})" ${siswaPage<=1?'disabled':''}>‹</button>`;
+  for (let p = Math.max(1,siswaPage-1); p <= Math.min(pages,siswaPage+2); p++) {
+    pagerHtml += `<button class="pager-btn ${p===siswaPage?'active':''}" onclick="goSiswaPage(${p})">${p}</button>`;
+  }
+  pagerHtml += `<button class="pager-btn" onclick="goSiswaPage(${siswaPage+1})" ${siswaPage>=pages?'disabled':''}>›</button>`;
+  document.getElementById('siswa-pager').innerHTML = pagerHtml;
+}
+
+function goSiswaPage(p) { if (p < 1) return; siswaPage = p; renderSiswaTable(); }
+
+function cariSiswa(q) {
+  siswaPage = 1;
+  siswaData = q.trim()
+    ? DEMO_STUDENTS.filter(s => s.name.toLowerCase().includes(q.toLowerCase()) || s.nis.includes(q))
+    : [...DEMO_STUDENTS];
+  renderSiswaTable();
+}
+
+/* ── UJIAN TABLE ── */
+function renderUjianTable() {
+  const sm = {ended:{l:'Selesai',c:'b-navy'},active:{l:'Aktif',c:'b-green'},scheduled:{l:'Terjadwal',c:'b-amber'},draft:{l:'Draft',c:'b-gray'}};
+  document.getElementById('tbody-ujian').innerHTML = DEMO_EXAMS.map(e => {
+    const s = sm[e.status] || sm.draft;
+    return `<tr>
+      <td class="td-main">${e.title}</td>
+      <td style="font-size:12px;color:var(--ink3)">${e.date}</td>
+      <td style="font-family:'JetBrains Mono',monospace">${e.peserta}</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:${e.avg>=70?'var(--green)':'var(--red)'}">${e.avg||'—'}</td>
+      <td><span class="badge ${s.c}">${s.l}</span></td>
+      <td><a href="rekap-nilai.html" style="font-size:12px;color:var(--navy);text-decoration:none;font-weight:500">Lihat Rekap →</a></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── KELUARKAN SISWA ── */
+function keluarkanSiswa(id, name) {
+  confirm(`Keluarkan ${name} dari kelas ini?`, async () => {
+    try {
+      await api('DELETE', `/guru/classes/${selectedClassId}/students`, {student_id: id});
+    } catch(_) {}
+    siswaData = siswaData.filter(s => s.id !== id);
+    renderSiswaTable();
+    toast(`${name} dikeluarkan dari kelas`, 'ok');
+  });
+}
+
+/* ── BUAT KELAS ── */
+async function buatKelas() {
+  const name    = document.getElementById('kls-name').value.trim();
+  const subject = document.getElementById('kls-subject').value.trim();
+  if (!name || !subject) { toast('Nama kelas dan mata pelajaran wajib diisi', 'err'); return; }
+  try {
+    await api('POST', '/guru/classes', {
+      name, subject,
+      academic_year: document.getElementById('kls-year').value,
+      semester:      document.getElementById('kls-semester').value,
+      description:   document.getElementById('kls-desc').value,
+    });
+    toast('Kelas berhasil dibuat', 'ok');
+  } catch(_) { toast('Kelas berhasil dibuat (demo)', 'ok'); }
+
+  DEMO_CLASSES.push({id:Date.now(),name,subject,academic_year:document.getElementById('kls-year').value,semester:document.getElementById('kls-semester').value,student_count:0,exam_count:0,avg:0});
+  renderClasses(DEMO_CLASSES);
+  closeModal('modal-kelas');
+}
+
+/* ── HAPUS KELAS ── */
+function hapusKelas() {
+  if (!selectedClassId) return;
+  const kelas = DEMO_CLASSES.find(c => c.id === selectedClassId);
+  confirm(`Hapus kelas ${kelas?.name}? Semua data terkait kelas ini akan dihapus.`, async () => {
+    try { await api('DELETE', `/guru/classes/${selectedClassId}`); } catch(_) {}
+    const idx = DEMO_CLASSES.findIndex(c => c.id === selectedClassId);
+    if (idx > -1) DEMO_CLASSES.splice(idx, 1);
+    selectedClassId = null;
+    document.getElementById('detail-panel').style.display = 'none';
+    renderClasses(DEMO_CLASSES);
+    toast('Kelas dihapus', 'ok');
+  });
+}
+
+function editKelas(id) { toast('Fitur edit kelas segera hadir', 'ok'); }
+
+/* ── ADD SISWA MODAL ── */
+let addTab = 'nis';
+function switchAddTab(tab) {
+  addTab = tab;
+  document.getElementById('add-nis').style.display  = tab === 'nis'  ? '' : 'none';
+  document.getElementById('add-bulk').style.display = tab === 'bulk' ? '' : 'none';
+  document.getElementById('tab-nis').style.fontWeight  = tab === 'nis'  ? '600' : '400';
+  document.getElementById('tab-bulk').style.fontWeight = tab === 'bulk' ? '600' : '400';
+}
+
+function searchSiswaAdd(q) {
+  const res = document.getElementById('siswa-search-results');
+  if (!q.trim()) { res.style.display = 'none'; return; }
+  const found = DEMO_STUDENTS.filter(s => s.name.toLowerCase().includes(q.toLowerCase()) || s.nis.includes(q));
+  res.style.display = found.length ? '' : 'none';
+  res.innerHTML = found.map(s => `
+    <div onclick="toggleAddSiswa(${s.id},'${s.name}')" style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--border);font-size:13px;transition:background .15s" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+      <div style="width:26px;height:26px;border-radius:6px;background:var(--navy-light);color:var(--navy);display:grid;place-items:center;font-size:11px;font-weight:700;flex-shrink:0">${s.name.charAt(0)}</div>
+      <div><div style="color:var(--ink);font-weight:500">${s.name}</div><div style="font-size:11px;color:var(--ink3)">${s.nis}</div></div>
+    </div>`).join('');
+}
+
+function toggleAddSiswa(id, name) {
+  const idx = selectedToAdd.findIndex(s => s.id === id);
+  if (idx > -1) selectedToAdd.splice(idx, 1);
+  else selectedToAdd.push({id, name});
+  renderSelectedToAdd();
+}
+
+function renderSelectedToAdd() {
+  const el = document.getElementById('selected-students');
+  if (!selectedToAdd.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div style="font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">${selectedToAdd.length} siswa dipilih</div>` +
+    selectedToAdd.map(s => `<span style="display:inline-flex;align-items:center;gap:5px;background:var(--navy-light);color:var(--navy);padding:3px 10px;border-radius:20px;font-size:12px;margin:0 5px 5px 0">
+      ${s.name}<button onclick="toggleAddSiswa(${s.id},'${s.name}')" style="background:none;border:none;cursor:pointer;color:var(--navy);line-height:1;font-size:13px">×</button></span>`).join('');
+}
+
+async function tambahSiswa() {
+  if (addTab === 'bulk') {
+    const nis = document.getElementById('bulk-nis').value.split('\n').map(n => n.trim()).filter(Boolean);
+    if (!nis.length) { toast('Masukkan minimal 1 NIS', 'err'); return; }
+    try { await api('POST', `/guru/classes/${selectedClassId}/students`, {nis_list: nis}); }
+    catch(_) {}
+    toast(`${nis.length} siswa ditambahkan`, 'ok');
+  } else {
+    if (!selectedToAdd.length) { toast('Pilih minimal 1 siswa', 'err'); return; }
+    try { await api('POST', `/guru/classes/${selectedClassId}/students`, {student_ids: selectedToAdd.map(s => s.id)}); }
+    catch(_) {}
+    toast(`${selectedToAdd.length} siswa ditambahkan`, 'ok');
+    selectedToAdd = [];
+    renderSelectedToAdd();
+  }
+  closeModal('modal-add-siswa');
+  renderSiswaTable();
+}
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+</script>
+</body>
+</html>

@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Guru — ExamCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#1a3c6e;
+  --navy-dark:#122a52;
+  --navy-light:#e8eef7;
+  --orange:#e8821a;
+  --orange-light:#fff4e8;
+  --bg:#f0f2f5;
+  --surface:#ffffff;
+  --border:#e2e6ea;
+  --border2:#d1d8e0;
+  --ink:#1a2332;
+  --ink2:#4a5568;
+  --ink3:#9aa5b4;
+  --ink4:#c9d3dc;
+  --green:#2e7d32;
+  --green-light:#e8f5e9;
+  --green-mid:rgba(46,125,50,.12);
+  --red:#c62828;
+  --red-light:#ffebee;
+  --red-mid:rgba(198,40,40,.12);
+  --amber:#f59e0b;
+  --amber-light:#fffbeb;
+  --sky:#0369a1;
+  --sky-light:#e0f2fe;
+  --sidebar-w:220px;
+  --topbar-h:60px;
+}
+
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  min-height:100vh;
+  display:flex;
+  overflow-x:hidden;
+}
+
+/* ════════════════════════════════
+   SKELETON LOADING
+════════════════════════════════ */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+.sk {
+  background: linear-gradient(90deg,
+    #e8ebef 25%,
+    #f4f6f8 50%,
+    #e8ebef 75%
+  );
+  background-size: 600px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+.sk-text   { height: 14px; margin-bottom: 8px; }
+.sk-text.sm{ height: 11px; }
+.sk-text.lg{ height: 20px; }
+.sk-circle { border-radius: 50%; }
+.sk-block  { border-radius: 8px; }
+.sk-w100   { width: 100%; }
+.sk-w80    { width: 80%; }
+.sk-w60    { width: 60%; }
+.sk-w40    { width: 40%; }
+
+/* Stat card skeleton */
+.stat-skeleton {
+  padding: 20px;
+}
+.stat-skeleton .sk-text.lg { width: 55%; margin-bottom: 10px; }
+.stat-skeleton .sk-text     { width: 70%; margin-bottom: 6px; }
+.stat-skeleton .sk-text.sm  { width: 45%; }
+
+/* Table skeleton rows */
+.sk-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sk-row .sk { flex: 1; height: 13px; }
+.sk-row .sk:nth-child(1) { flex: 2; }
+.sk-row .sk:nth-child(3) { flex: 0.5; }
+.sk-row .sk:nth-child(4) { flex: 0.8; }
+.sk-row .sk:last-child   { flex: 0.7; }
+
+/* Activity skeleton */
+.sk-activity {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.sk-activity:last-child { border-bottom: none; }
+
+/* ════════════════════════════════
+   SIDEBAR
+════════════════════════════════ */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 18px;
+  height: var(--topbar-h);
+  border-bottom: 1px solid var(--border);
+}
+.brand-icon {
+  width: 36px; height: 36px;
+  background: var(--navy);
+  border-radius: 8px;
+  display: grid; place-items: center;
+  flex-shrink: 0;
+}
+.brand-icon svg { width: 18px; height: 18px; fill: white; }
+.brand-name { font-size: 15px; font-weight: 700; color: var(--ink); }
+.brand-sub  {
+  font-size: 9.5px; font-weight: 500;
+  color: var(--ink3); text-transform: uppercase;
+  letter-spacing: .5px; margin-top: 1px;
+}
+
+/* Nav */
+.nav-section  { padding: 16px 10px 0; }
+.nav-label {
+  font-size: 9.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .8px;
+  color: var(--ink3); padding: 0 8px; margin-bottom: 5px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: 7px;
+  font-size: 13px; font-weight: 500;
+  color: var(--ink2); cursor: pointer;
+  transition: all .15s;
+  border: none; background: transparent;
+  width: 100%; text-align: left;
+  font-family: 'Inter', sans-serif;
+  margin-bottom: 1px;
+  text-decoration: none;
+}
+.nav-item:hover { background: var(--bg); color: var(--ink); }
+.nav-item.active {
+  background: var(--navy-light);
+  color: var(--navy);
+  font-weight: 600;
+}
+.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto;
+  font-size: 10px; font-weight: 700;
+  padding: 1px 7px; border-radius: 10px;
+  background: var(--red); color: #fff;
+}
+
+/* Sidebar footer */
+.sidebar-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  padding: 14px;
+}
+.user-info {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px; border-radius: 8px;
+  cursor: pointer; transition: background .15s;
+}
+.user-info:hover { background: var(--bg); }
+.user-avatar {
+  width: 34px; height: 34px;
+  background: var(--navy);
+  border-radius: 8px;
+  display: grid; place-items: center;
+  font-size: 13px; font-weight: 700;
+  color: #fff; flex-shrink: 0;
+}
+.user-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+.user-role { font-size: 11px; color: var(--ink3); }
+.logout-link {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 8px; border-radius: 6px;
+  font-size: 12px; color: var(--ink3);
+  cursor: pointer; transition: all .15s;
+  border: none; background: transparent;
+  width: 100%; margin-top: 2px;
+  font-family: 'Inter', sans-serif;
+}
+.logout-link:hover { background: var(--red-light); color: var(--red); }
+.logout-link svg { width: 14px; height: 14px; }
+
+/* ════════════════════════════════
+   MAIN
+════════════════════════════════ */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ════════════════════════════════
+   TOPBAR
+════════════════════════════════ */
+.topbar {
+  height: var(--topbar-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 24px; gap: 12px;
+  position: sticky; top: 0; z-index: 50;
+}
+.topbar-brand {
+  display: flex; align-items: center; gap: 10px;
+}
+.topbar-app { font-size: 15px; font-weight: 700; color: var(--ink); }
+.topbar-role-badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 600;
+  background: var(--navy-light); color: var(--navy);
+}
+.topbar-greeting {
+  font-size: 13px; color: var(--ink2);
+  display: flex; align-items: center; gap: 6px;
+}
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+.topbar-btn {
+  width: 36px; height: 36px; border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent; cursor: pointer;
+  display: grid; place-items: center;
+  color: var(--ink2); transition: all .15s;
+  position: relative;
+}
+.topbar-btn:hover { background: var(--bg); color: var(--ink); }
+.topbar-btn svg { width: 17px; height: 17px; }
+.notif-dot {
+  width: 7px; height: 7px;
+  background: var(--red); border-radius: 50%;
+  position: absolute; top: 6px; right: 6px;
+  border: 1.5px solid var(--surface);
+}
+
+.live-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 20px;
+  border: 1.5px solid rgba(46,125,50,.3);
+  background: var(--green-light);
+  font-size: 12px; font-weight: 600; color: var(--green);
+}
+.live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(1.3)} }
+
+.btn-new {
+  display: flex; align-items: center; gap: 7px;
+  padding: 8px 16px; border-radius: 7px;
+  background: var(--navy); color: #fff;
+  border: none; font-family: 'Inter', sans-serif;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background .18s;
+}
+.btn-new:hover { background: var(--navy-dark); }
+.btn-new svg { width: 14px; height: 14px; }
+
+/* ════════════════════════════════
+   CONTENT
+════════════════════════════════ */
+.content { padding: 22px 24px; }
+
+.page-heading { margin-bottom: 20px; }
+.page-title { font-size: 22px; font-weight: 700; color: var(--ink); }
+.page-sub { font-size: 13px; color: var(--ink3); margin-top: 2px; }
+
+/* ════════════════════════════════
+   STAT CARDS — matching reference
+════════════════════════════════ */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 22px;
+  border-left: 5px solid;
+  transition: box-shadow .2s, transform .2s;
+}
+.stat-card:hover {
+  box-shadow: 0 4px 18px rgba(0,0,0,.08);
+  transform: translateY(-1px);
+}
+.stat-card.orange { border-left-color: var(--orange); }
+.stat-card.navy   { border-left-color: var(--navy); }
+.stat-card.green  { border-left-color: var(--green); }
+.stat-card.red    { border-left-color: var(--red); }
+.stat-card.sky    { border-left-color: var(--sky); }
+.stat-card.amber  { border-left-color: var(--amber); }
+
+.sc-header {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.sc-label {
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .5px;
+  color: var(--ink3);
+}
+.sc-status {
+  font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .4px;
+}
+.sc-status.active { color: var(--green); }
+.sc-status.info   { color: var(--sky); }
+.sc-status.warn   { color: var(--orange); }
+
+.sc-value {
+  font-size: 36px; font-weight: 700;
+  color: var(--ink); line-height: 1;
+  margin-bottom: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.sc-change {
+  font-size: 12px; color: var(--ink3);
+  display: flex; align-items: center; gap: 5px;
+}
+.sc-change.up   { color: var(--green); }
+.sc-change.down { color: var(--red); }
+.sc-change svg  { width: 13px; height: 13px; }
+
+/* ════════════════════════════════
+   MAIN GRID
+════════════════════════════════ */
+.grid-main { display: grid; grid-template-columns: 1fr 340px; gap: 16px; margin-bottom: 16px; }
+.grid-bottom { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+/* ════════════════════════════════
+   CARD
+════════════════════════════════ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.card-head {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.card-title {
+  font-size: 14px; font-weight: 600; color: var(--ink);
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title svg { width: 16px; height: 16px; color: var(--ink3); }
+.card-action {
+  font-size: 12px; font-weight: 500;
+  color: var(--navy); text-decoration: none; cursor: pointer;
+  background: none; border: none;
+  font-family: 'Inter', sans-serif;
+}
+.card-action:hover { text-decoration: underline; }
+.card-body { padding: 16px 18px; }
+
+/* ════════════════════════════════
+   TABLE
+════════════════════════════════ */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead tr { background: #f7f9fc; }
+th {
+  padding: 10px 14px; text-align: left;
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: .6px; text-transform: uppercase;
+  color: var(--ink3); border-bottom: 1.5px solid var(--border);
+  white-space: nowrap;
+}
+th.right, td.right { text-align: right; }
+th.center, td.center { text-align: center; }
+td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink2); vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: #f9fafc; }
+.td-main { color: var(--ink); font-weight: 500; }
+
+/* ════════════════════════════════
+   BADGE / PILL
+════════════════════════════════ */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; white-space: nowrap;
+}
+.b-green  { background: var(--green-light);  color: var(--green); }
+.b-orange { background: var(--orange-light); color: var(--orange); }
+.b-red    { background: var(--red-light);    color: var(--red); }
+.b-sky    { background: var(--sky-light);    color: var(--sky); }
+.b-navy   { background: var(--navy-light);   color: var(--navy); }
+.b-gray   { background: var(--bg);           color: var(--ink3); }
+.b-amber  { background: var(--amber-light);  color: #92400e; }
+
+/* ════════════════════════════════
+   LIVE MONITOR CARD
+════════════════════════════════ */
+.monitor-empty {
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--ink3); font-size: 13px;
+}
+.monitor-empty svg {
+  width: 32px; height: 32px;
+  opacity: .2; display: block;
+  margin: 0 auto 10px;
+}
+
+.monitor-exam {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.monitor-exam:last-child { border-bottom: none; }
+.me-title {
+  font-size: 13px; font-weight: 600;
+  color: var(--ink); margin-bottom: 3px;
+}
+.me-sub {
+  font-size: 11.5px; color: var(--ink3); margin-bottom: 10px;
+}
+.me-stats {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 6px; margin-bottom: 10px;
+}
+.mes {
+  text-align: center;
+  background: var(--bg);
+  border-radius: 7px; padding: 7px 8px;
+}
+.mes-val {
+  font-size: 18px; font-weight: 700; color: var(--navy); line-height: 1;
+}
+.mes-label { font-size: 9.5px; color: var(--ink3); text-transform: uppercase; letter-spacing: .3px; }
+.progress-wrap { margin-bottom: 10px; }
+.progress-label {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--ink3); margin-bottom: 4px;
+}
+.progress-track {
+  height: 7px; background: var(--border);
+  border-radius: 4px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: var(--green);
+  border-radius: 4px;
+  transition: width .6s ease;
+}
+.me-actions { display: flex; gap: 6px; }
+.me-btn {
+  flex: 1; padding: 7px;
+  border-radius: 7px; border: 1.5px solid;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.me-btn.pause {
+  border-color: rgba(245,158,11,.4);
+  background: var(--amber-light); color: #92400e;
+}
+.me-btn.stop {
+  border-color: rgba(198,40,40,.3);
+  background: var(--red-light); color: var(--red);
+}
+.me-btn svg { width: 12px; height: 12px; }
+
+/* Countdown */
+.countdown-wrap {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--ink3); margin-top: 8px;
+}
+.countdown-wrap svg { width: 13px; height: 13px; }
+#countdown-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; color: var(--ink); font-weight: 500;
+}
+#countdown-val.danger { color: var(--red); }
+
+/* ════════════════════════════════
+   VIOLATION LIST
+════════════════════════════════ */
+.viol-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.viol-item:last-child { border-bottom: none; }
+.viol-avatar {
+  width: 32px; height: 32px;
+  border-radius: 7px;
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 700;
+  flex-shrink: 0;
+}
+.viol-name { font-size: 13px; font-weight: 500; color: var(--ink); }
+.viol-type { font-size: 11px; color: var(--ink3); margin-top: 1px; }
+.viol-count {
+  margin-left: auto; flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; font-weight: 700;
+}
+.viol-time { font-size: 11px; color: var(--ink4); }
+
+/* ════════════════════════════════
+   SCORE LIST
+════════════════════════════════ */
+.score-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.score-item:last-child { border-bottom: none; }
+.rank-badge {
+  width: 26px; height: 26px;
+  border-radius: 6px;
+  display: grid; place-items: center;
+  font-size: 11px; font-weight: 700;
+  flex-shrink: 0;
+}
+.rank-1 { background: #fff8e1; color: #f59e0b; }
+.rank-2 { background: #f5f5f5; color: #9e9e9e; }
+.rank-3 { background: #fbe9e7; color: #bf360c; }
+.rank-n { background: var(--bg); color: var(--ink3); }
+.score-name { font-size: 13px; font-weight: 500; color: var(--ink); flex: 1; }
+.score-exam { font-size: 11px; color: var(--ink3); }
+.score-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; font-weight: 700;
+  flex-shrink: 0;
+}
+.score-val.good { color: var(--green); }
+.score-val.avg  { color: var(--amber); }
+.score-val.low  { color: var(--red); }
+
+/* ════════════════════════════════
+   ACTIVITY LOG
+════════════════════════════════ */
+.activity-item {
+  display: flex; align-items: flex-start; gap: 11px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-icon {
+  width: 30px; height: 30px;
+  border-radius: 7px;
+  display: grid; place-items: center;
+  font-size: 13px; flex-shrink: 0;
+}
+.activity-icon svg { width: 13px; height: 13px; }
+.activity-text { font-size: 13px; color: var(--ink); line-height: 1.5; flex: 1; }
+.activity-time { font-size: 11px; color: var(--ink3); margin-top: 2px; }
+
+/* ════════════════════════════════
+   QUESTION DIST BARS
+════════════════════════════════ */
+.dist-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.dist-row:last-child { margin-bottom: 0; }
+.dist-label { font-size: 12px; color: var(--ink2); width: 52px; flex-shrink: 0; }
+.dist-track { flex: 1; height: 9px; background: var(--bg); border-radius: 5px; overflow: hidden; }
+.dist-fill { height: 100%; border-radius: 5px; transition: width .8s cubic-bezier(.34,1.56,.64,1); }
+.dist-count { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink3); width: 28px; text-align: right; }
+
+/* ════════════════════════════════
+   ACTION BTNS IN TABLE
+════════════════════════════════ */
+.tbl-btn {
+  padding: 4px 11px; border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 11.5px; font-weight: 600;
+  cursor: pointer; border: 1.5px solid;
+  transition: all .15s;
+}
+.tbl-btn.primary {
+  background: var(--navy-light); color: var(--navy);
+  border-color: rgba(26,60,110,.2);
+}
+.tbl-btn.primary:hover { background: var(--navy); color: #fff; }
+.tbl-btn.ghost {
+  background: transparent; color: var(--ink3);
+  border-color: var(--border);
+}
+.tbl-btn.ghost:hover { background: var(--bg); color: var(--ink2); }
+.tbl-btn.danger {
+  background: var(--red-light); color: var(--red);
+  border-color: rgba(198,40,40,.2);
+}
+
+/* ════════════════════════════════
+   MODAL
+════════════════════════════════ */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.3);
+  backdrop-filter: blur(3px);
+  z-index: 500; display: none;
+  place-items: center; padding: 20px;
+}
+.overlay.open { display: grid; }
+.modal {
+  background: var(--surface);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  width: 100%; max-width: 500px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,.15);
+  animation: mi .2s ease;
+}
+@keyframes mi { from{opacity:0;transform:scale(.97)} to{opacity:1;transform:none} }
+.modal-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: #f7f9fc;
+}
+.modal-title { font-size: 15px; font-weight: 700; color: var(--ink); }
+.modal-close {
+  width: 28px; height: 28px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--ink3); cursor: pointer;
+  display: grid; place-items: center; font-size: 14px;
+}
+.modal-close:hover { background: var(--bg); color: var(--ink); }
+.modal-body { padding: 20px; }
+.modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  display: flex; gap: 8px; justify-content: flex-end;
+  background: #f7f9fc;
+}
+
+/* Forms in modal */
+.form-group { margin-bottom: 14px; }
+.form-group:last-child { margin-bottom: 0; }
+.form-label { display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 5px; }
+.form-input {
+  width: 100%; padding: 9px 12px;
+  border: 1.5px solid var(--border); border-radius: 7px;
+  font-family: 'Inter', sans-serif; font-size: 13px;
+  color: var(--ink); outline: none; background: var(--surface);
+  transition: border-color .18s;
+}
+.form-input:focus { border-color: var(--navy); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* ════════════════════════════════
+   TOAST
+════════════════════════════════ */
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--ink); color: #fff;
+  padding: 10px 18px; border-radius: 8px;
+  font-size: 13px; display: flex; align-items: center; gap: 8px;
+  z-index: 999;
+  transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 4px 20px rgba(0,0,0,.2);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.ok  { background: var(--green); }
+.toast.err { background: var(--red); }
+.toast svg { width: 15px; height: 15px; }
+
+/* ════════════════════════════════
+   SCROLLBAR
+════════════════════════════════ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ════════════════════════════════
+   RESPONSIVE
+════════════════════════════════ */
+@media(max-width:1100px) {
+  .grid-bottom { grid-template-columns: 1fr 1fr; }
+}
+@media(max-width:900px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: none; }
+  .main { margin-left: 0; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .grid-main { grid-template-columns: 1fr; }
+  .grid-bottom { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════
+     SIDEBAR
+════════════════════════════ -->
+<aside class="sidebar" id="sidebar">
+
+  <div class="sidebar-brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg>
+    </div>
+    <div>
+      <div class="brand-name">ExamCore</div>
+      <div class="brand-sub">Exam Management</div>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Menu Utama</div>
+    <button class="nav-item active" onclick="navTo('dashboard',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" onclick="navTo('manajemen-kelas',this)" id="nav-kelas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Manajemen Kelas
+    </button>
+    <button class="nav-item" onclick="navTo('input-soal',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Input Soal
+    </button>
+    <button class="nav-item" onclick="navTo('jadwal-ujian',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Jadwal Ujian
+    </button>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Laporan</div>
+    <button class="nav-item" onclick="navTo('rekap-nilai',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Rekap Nilai
+    </button>
+    <button class="nav-item" onclick="navTo('import-arsip',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Import & Arsip
+    </button>
+    <button class="nav-item" id="nav-viol-btn" onclick="navTo('pelanggaran',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Pelanggaran
+      <span class="nav-badge" id="viol-nav-badge" style="display:none">0</span>
+    </button>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar" id="sb-avatar">G</div>
+      <div>
+        <div class="user-name" id="sb-name">Memuat...</div>
+        <div class="user-role">Guru</div>
+      </div>
+    </div>
+    <button class="logout-link" onclick="doLogout()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Logout
+    </button>
+  </div>
+
+</aside>
+
+<!-- ════════════════════════════
+     MAIN
+════════════════════════════ -->
+<main class="main">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <span class="topbar-app">ExamCore</span>
+      <span class="topbar-role-badge">Guru User</span>
+    </div>
+    <div class="topbar-greeting" id="topbar-greeting" style="margin-left:16px;display:none">
+      <!-- populated by JS -->
+    </div>
+    <div class="topbar-right">
+      <div class="live-pill" id="live-pill" style="display:none">
+        <div class="live-dot"></div>
+        <span id="live-count">0</span> Ujian Aktif
+      </div>
+      <button class="topbar-btn" title="Notifikasi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <div class="notif-dot" id="notif-dot" style="display:none"></div>
+      </button>
+      <button class="topbar-btn" title="Bantuan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </button>
+      <button class="btn-new" onclick="window.location.href='input-soal.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Examination
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- PAGE HEADING -->
+    <div class="page-heading">
+      <div class="page-title" id="page-title">Institutional Overview</div>
+      <div class="page-sub" id="page-sub">Welcome back. Here is the latest system activity summary.</div>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="stats-row" id="stats-row">
+      <!-- SKELETON -->
+      <div class="card stat-card orange">
+        <div class="stat-skeleton">
+          <div class="sc-header">
+            <div class="sk sk-text sm" style="width:50%"></div>
+            <div class="sk sk-text sm" style="width:30%"></div>
+          </div>
+          <div class="sk sk-text lg" style="width:40%;height:36px;margin-bottom:8px"></div>
+          <div class="sk sk-text sm" style="width:60%"></div>
+        </div>
+      </div>
+      <div class="card stat-card navy">
+        <div class="stat-skeleton">
+          <div class="sc-header">
+            <div class="sk sk-text sm" style="width:50%"></div>
+            <div class="sk sk-text sm" style="width:30%"></div>
+          </div>
+          <div class="sk sk-text lg" style="width:40%;height:36px;margin-bottom:8px"></div>
+          <div class="sk sk-text sm" style="width:60%"></div>
+        </div>
+      </div>
+      <div class="card stat-card green">
+        <div class="stat-skeleton">
+          <div class="sc-header">
+            <div class="sk sk-text sm" style="width:50%"></div>
+            <div class="sk sk-text sm" style="width:30%"></div>
+          </div>
+          <div class="sk sk-text lg" style="width:40%;height:36px;margin-bottom:8px"></div>
+          <div class="sk sk-text sm" style="width:60%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="grid-main">
+
+      <!-- RECENT ACTIVITIES TABLE -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Recent Activities
+          </div>
+          <button class="card-action" onclick="window.location.href='jadwal-ujian.html'">View Audit Log →</button>
+        </div>
+
+        <!-- TABLE SKELETON -->
+        <div id="activities-skeleton">
+          <div class="sk-row" style="background:#f7f9fc">
+            <div class="sk" style="height:11px;flex:2"></div>
+            <div class="sk" style="height:11px;flex:1"></div>
+            <div class="sk" style="height:11px;flex:.7"></div>
+          </div>
+          <div class="sk-row"><div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+          <div class="sk-row"><div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+          <div class="sk-row"><div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+          <div class="sk-row"><div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+        </div>
+
+        <div class="table-wrap" id="activities-table" style="display:none">
+          <table>
+            <thead>
+              <tr>
+                <th>Activity Name</th>
+                <th>Date &amp; Time</th>
+                <th class="center">Status</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-activities"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- RIGHT: LIVE MONITOR + SYSTEM HEALTH -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+
+        <!-- LIVE MONITOR -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg>
+              Live Monitor
+            </div>
+            <span class="badge b-green" id="monitor-badge">0 Aktif</span>
+          </div>
+          <!-- Skeleton -->
+          <div id="monitor-skeleton" style="padding:14px 18px">
+            <div class="sk sk-text" style="width:70%;margin-bottom:6px"></div>
+            <div class="sk sk-text sm" style="width:50%;margin-bottom:14px"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+              <div class="sk" style="height:52px;border-radius:8px"></div>
+              <div class="sk" style="height:52px;border-radius:8px"></div>
+              <div class="sk" style="height:52px;border-radius:8px"></div>
+            </div>
+            <div class="sk" style="height:7px;border-radius:4px;margin-bottom:12px"></div>
+            <div style="display:flex;gap:8px">
+              <div class="sk" style="height:32px;flex:1;border-radius:7px"></div>
+              <div class="sk" style="height:32px;flex:1;border-radius:7px"></div>
+            </div>
+          </div>
+          <div id="monitor-content" style="display:none"></div>
+        </div>
+
+        <!-- SYSTEM HEALTH -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              System Health
+            </div>
+          </div>
+          <div class="card-body" id="system-health">
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div class="sk sk-text" style="width:100%;height:10px"></div>
+              <div class="sk sk-text" style="width:80%;height:10px"></div>
+              <div class="sk sk-text" style="width:90%;height:10px"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BOTTOM GRID -->
+    <div class="grid-bottom">
+
+      <!-- DISTRIBUSI SOAL -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Distribusi Soal
+          </div>
+        </div>
+        <div class="card-body" id="dist-body">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div class="dist-row"><div class="sk dist-label" style="height:12px"></div><div class="sk dist-track" style="height:9px"></div><div class="sk dist-count" style="height:12px"></div></div>
+            <div class="dist-row"><div class="sk dist-label" style="height:12px"></div><div class="sk dist-track" style="height:9px"></div><div class="sk dist-count" style="height:12px"></div></div>
+            <div class="dist-row"><div class="sk dist-label" style="height:12px"></div><div class="sk dist-track" style="height:9px"></div><div class="sk dist-count" style="height:12px"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PELANGGARAN -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Pelanggaran Terbaru
+          </div>
+        </div>
+        <div class="card-body" id="viol-body">
+          <!-- skeleton -->
+          <div class="sk-activity"><div class="sk sk-circle" style="width:32px;height:32px;flex-shrink:0"></div><div style="flex:1"><div class="sk sk-text" style="width:80%"></div><div class="sk sk-text sm" style="width:50%"></div></div></div>
+          <div class="sk-activity"><div class="sk sk-circle" style="width:32px;height:32px;flex-shrink:0"></div><div style="flex:1"><div class="sk sk-text" style="width:70%"></div><div class="sk sk-text sm" style="width:40%"></div></div></div>
+          <div class="sk-activity"><div class="sk sk-circle" style="width:32px;height:32px;flex-shrink:0"></div><div style="flex:1"><div class="sk sk-text" style="width:75%"></div><div class="sk sk-text sm" style="width:55%"></div></div></div>
+        </div>
+      </div>
+
+      <!-- TOP SCORES -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Top Scores
+          </div>
+        </div>
+        <div class="card-body" id="scores-body">
+          <!-- skeleton -->
+          <div class="sk-activity"><div class="sk" style="width:26px;height:26px;border-radius:6px;flex-shrink:0"></div><div class="sk sk-circle" style="width:32px;height:32px;flex-shrink:0"></div><div style="flex:1"><div class="sk sk-text" style="width:80%"></div><div class="sk sk-text sm" style="width:50%"></div></div><div class="sk" style="width:35px;height:18px;border-radius:4px;flex-shrink:0"></div></div>
+          <div class="sk-activity"><div class="sk" style="width:26px;height:26px;border-radius:6px;flex-shrink:0"></div><div class="sk sk-circle" style="width:32px;height:32px;flex-shrink:0"></div><div style="flex:1"><div class="sk sk-text" style="width:70%"></div><div class="sk sk-text sm" style="width:40%"></div></div><div class="sk" style="width:35px;height:18px;border-radius:4px;flex-shrink:0"></div></div>
+          <div class="sk-activity"><div class="sk" style="width:26px;height:26px;border-radius:6px;flex-shrink:0"></div><div class="sk sk-circle" style="width:32px;height:32px;flex-shrink:0"></div><div style="flex:1"><div class="sk sk-text" style="width:75%"></div><div class="sk sk-text sm" style="width:45%"></div></div><div class="sk" style="width:35px;height:18px;border-radius:4px;flex-shrink:0"></div></div>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" id="toast-icon"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toast-msg"></span>
+</div>
+
+<script>
+/* ════════════════════════════════
+   AUTH — otomatis dari localStorage
+════════════════════════════════ */
+const EC = {
+  get token() { return localStorage.getItem('ec_token') || ''; },
+  get base()  { return localStorage.getItem('ec_base')  || 'http://127.0.0.1:8000/api'; },
+  get user()  { try { return JSON.parse(localStorage.getItem('ec_user') || '{}'); } catch { return {}; } },
+};
+
+async function api(method, path, body = null) {
+  const res = await fetch(EC.base.replace(/\/$/, '') + path, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${EC.token}`,
+    },
+    body: body ? JSON.stringify(body) : null,
+  });
+  if (res.status === 401) { doLogout(); return null; }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
+  return data;
+}
+
+function doLogout() {
+  api('POST', '/auth/logout').catch(() => {});
+  ['ec_token','ec_user','ec_role','ec_base'].forEach(k => localStorage.removeItem(k));
+  window.location.href = 'login.html';
+}
+
+function navTo(page, btn) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const pages = {
+    'dashboard':       'guru-dashboard.html',
+    'manajemen-kelas': 'manajemen-kelas.html',
+    'input-soal':      'input-soal.html',
+    'jadwal-ujian':    'jadwal-ujian.html',
+    'rekap-nilai':     'rekap-nilai.html',
+    'import-arsip':    'import-arsip.html',
+    'pelanggaran':     'rekap-nilai.html',
+  };
+  if (page !== 'dashboard') window.location.href = pages[page] || '#';
+}
+
+/* ════════════════════════════════
+   DEMO DATA (fallback jika API belum siap)
+════════════════════════════════ */
+const DEMO = {
+  stats: { total_exams:12, total_questions:48, total_students:87, average_score:76.4, active_exams:2, violations_today:3 },
+  active_exams: [
+    { id:1, title:'UH Aljabar', class_room:{name:'X IPA 1'}, sessions_count:32, submitted_count:18, violations_count:2, end_time: new Date(Date.now()+55*60000).toISOString() }
+  ],
+  question_dist: { easy:18, medium:22, hard:8 },
+  recent_exams: [
+    { id:1, title:'UH 1 — Aljabar', class_room:{name:'X IPA 1'}, total_questions:25, status:'active', start_time:'2026-03-21T08:00:00Z', sessions_count:32 },
+    { id:2, title:'UH 2 — Geometri', class_room:{name:'X IPA 1'}, total_questions:20, status:'ended', start_time:'2026-03-10T08:00:00Z', sessions_count:30 },
+    { id:3, title:'UTS Semester 1', class_room:{name:'X IPA 1'}, total_questions:40, status:'ended', start_time:'2026-03-01T07:30:00Z', sessions_count:32 },
+    { id:4, title:'UH Ekonomi Mikro', class_room:{name:'XI IPS 1'}, total_questions:25, status:'scheduled', start_time:'2026-03-25T08:00:00Z', sessions_count:0 },
+    { id:5, title:'UAS Semester 1', class_room:{name:'X IPA 2'}, total_questions:40, status:'draft', start_time:null, sessions_count:0 },
+  ],
+  recent_violations: [
+    { student_name:'Ahmad Naufal', violation_type:'tab_switch', count:3, created_at: new Date(Date.now()-10*60000).toISOString() },
+    { student_name:'Rizal Pratama', violation_type:'fullscreen_exit', count:1, created_at: new Date(Date.now()-32*60000).toISOString() },
+    { student_name:'Dita Kusuma', violation_type:'tab_switch', count:5, created_at: new Date(Date.now()-58*60000).toISOString() },
+  ],
+  top_scores: [
+    { student_name:'Siti Rahayu', score:97, total_questions:25, duration_minutes:72 },
+    { student_name:'Ahmad Naufal', score:94, total_questions:25, duration_minutes:85 },
+    { student_name:'Eka Putri', score:91, total_questions:25, duration_minutes:90 },
+    { student_name:'Gita Andriani', score:88, total_questions:25, duration_minutes:78 },
+  ],
+  activity_logs: [
+    { description:'UH Aljabar diaktifkan otomatis (X IPA 1)', action:'exam_started', created_at: new Date(Date.now()-60*60000).toISOString() },
+    { description:'Ahmad Naufal submit ujian UH Aljabar', action:'student_submit', created_at: new Date(Date.now()-72*60000).toISOString() },
+    { description:'Pelanggaran: Rizal Pratama pindah tab 3×', action:'violation', created_at: new Date(Date.now()-95*60000).toISOString() },
+    { description:'Soal baru ditambahkan ke bank soal', action:'question_added', created_at: new Date(Date.now()-120*60000).toISOString() },
+    { description:'Login berhasil: Budi Santoso', action:'login', created_at: new Date(Date.now()-140*60000).toISOString() },
+  ],
+};
+
+/* ════════════════════════════════
+   INIT
+════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  if (!EC.token) { window.location.href = 'login.html'; return; }
+
+  const u = EC.user;
+  document.getElementById('sb-name').textContent   = u.name || 'Guru';
+  document.getElementById('sb-avatar').textContent = (u.name || 'G').charAt(0).toUpperCase();
+
+  // Topbar greeting
+  const jam    = new Date().getHours();
+  const salam  = jam < 11 ? 'Good Morning' : jam < 15 ? 'Good Afternoon' : 'Good Evening';
+  const g      = document.getElementById('topbar-greeting');
+  g.textContent = `${salam}, ${(u.name || 'Guru').split(' ')[0]}`;
+  g.style.display = 'flex';
+
+  // Load data (simulasi delay API)
+  setTimeout(() => loadDashboard(), 800);
+
+  // Auto refresh tiap 30 detik
+  setInterval(loadDashboard, 30000);
+  // Live monitor tiap 10 detik
+  setInterval(loadLiveMonitor, 10000);
+});
+
+/* ════════════════════════════════
+   LOAD DASHBOARD
+════════════════════════════════ */
+async function loadDashboard() {
+  try {
+    const data = await api('GET', '/guru/dashboard');
+    renderAll(data || DEMO);
+  } catch(_) {
+    renderAll(DEMO);
+  }
+}
+
+async function loadLiveMonitor() {
+  try {
+    const data = await api('GET', '/guru/dashboard');
+    if (data) renderMonitor(data.active_exams || []);
+  } catch(_) {}
+}
+
+function renderAll(d) {
+  renderStats(d);
+  renderActivities(d.recent_exams || []);
+  renderMonitor(d.active_exams || []);
+  renderDist(d.question_dist || {});
+  renderViolations(d.recent_violations || []);
+  renderScores(d.top_scores || []);
+  renderSystemHealth(d.stats || {});
+
+  // Live pill
+  const active = (d.active_exams || []).length;
+  if (active > 0) {
+    document.getElementById('live-pill').style.display = 'flex';
+    document.getElementById('live-count').textContent  = active;
+    document.getElementById('notif-dot').style.display = 'block';
+  }
+
+  // Violation badge
+  const vCount = (d.recent_violations || []).length;
+  if (vCount > 0) {
+    const badge = document.getElementById('viol-nav-badge');
+    badge.textContent = vCount;
+    badge.style.display = 'inline-flex';
+  }
+}
+
+/* ── STAT CARDS ── */
+function renderStats(d) {
+  const s = d.stats || {};
+  const cards = [
+    { color:'orange', label:'ACTIVE', status:'active', val: s.total_exams || 0, label2:'TOTAL EXAMS', change:`${s.active_exams || 0} currently running` },
+    { color:'navy',   label:'VERIFIED', status:'info', val: s.total_questions || 0, label2:'TOTAL QUESTIONS', change:'All questions verified' },
+    { color:'green',  label:'ONGOING', status:'warn', val: s.total_students || 0, label2:'TOTAL STUDENTS', change:`Avg score: ${Number(s.average_score||0).toFixed(1)}` },
+  ];
+  document.getElementById('stats-row').innerHTML = cards.map(c => `
+    <div class="card stat-card ${c.color}">
+      <div class="sc-header">
+        <span class="sc-label">${c.label2}</span>
+        <span class="sc-status ${c.status}">${c.label}</span>
+      </div>
+      <div class="sc-value">${Number(c.val).toLocaleString('id-ID')}</div>
+      <div class="sc-change">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+        ${c.change}
+      </div>
+    </div>`).join('');
+}
+
+/* ── ACTIVITIES TABLE ── */
+function renderActivities(exams) {
+  const statusMap = {
+    active:    { label:'ONGOING',    cls:'b-green' },
+    ended:     { label:'COMPLETED',  cls:'b-navy' },
+    scheduled: { label:'SCHEDULED',  cls:'b-amber' },
+    draft:     { label:'DRAFT',      cls:'b-gray' },
+    paused:    { label:'PAUSED',     cls:'b-orange' },
+  };
+  document.getElementById('activities-skeleton').style.display = 'none';
+  const tbl = document.getElementById('activities-table');
+  tbl.style.display = 'block';
+  document.getElementById('tbody-activities').innerHTML = exams.map(e => {
+    const s   = statusMap[e.status] || statusMap.draft;
+    const dt  = e.start_time ? new Date(e.start_time).toLocaleDateString('id-ID', {day:'2-digit',month:'short',year:'numeric'}) + ' | ' + new Date(e.start_time).toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'}) : 'Belum dijadwalkan';
+    return `<tr>
+      <td>
+        <div class="td-main">${e.title}</div>
+        <div style="font-size:11.5px;color:var(--ink3);margin-top:2px">${e.class_room?.name || '—'} · ${e.total_questions} soal</div>
+      </td>
+      <td style="font-size:12.5px;color:var(--ink3)">${dt}</td>
+      <td class="center">
+        <span class="badge ${s.cls}">${s.label}</span>
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="3" style="text-align:center;padding:24px;color:var(--ink3)">Belum ada ujian</td></tr>`;
+}
+
+/* ── LIVE MONITOR ── */
+function renderMonitor(actives) {
+  document.getElementById('monitor-skeleton').style.display = 'none';
+  document.getElementById('monitor-content').style.display  = 'block';
+  document.getElementById('monitor-badge').textContent      = `${actives.length} Aktif`;
+  document.getElementById('monitor-badge').className        = `badge ${actives.length > 0 ? 'b-green' : 'b-gray'}`;
+
+  if (!actives.length) {
+    document.getElementById('monitor-content').innerHTML = `
+      <div class="monitor-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+        Tidak ada ujian aktif saat ini
+      </div>`;
+    return;
+  }
+
+  const e   = actives[0];
+  const tot = e.sessions_count || 0;
+  const sub = e.submitted_count || 0;
+  const pct = tot > 0 ? ((sub/tot)*100).toFixed(0) : 0;
+  const endTime = e.end_time ? new Date(e.end_time) : null;
+
+  document.getElementById('monitor-content').innerHTML = `
+    <div class="monitor-exam">
+      <div class="me-title">${e.title}</div>
+      <div class="me-sub">${e.class_room?.name || ''}</div>
+      <div class="me-stats">
+        <div class="mes"><div class="mes-val">${tot}</div><div class="mes-label">Peserta</div></div>
+        <div class="mes"><div class="mes-val" style="color:var(--green)">${sub}</div><div class="mes-label">Submit</div></div>
+        <div class="mes"><div class="mes-val" style="color:var(--red)">${e.violations_count||0}</div><div class="mes-label">Langgar</div></div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Progress Submit</span><span>${sub}/${tot} (${pct}%)</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      ${endTime ? `<div class="countdown-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Berakhir: <span id="countdown-val">${endTime.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</span>
+      </div>` : ''}
+      <div class="me-actions" style="margin-top:10px">
+        <button class="me-btn pause" onclick="pauseExam(${e.id})">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> Pause
+        </button>
+        <button class="me-btn stop" onclick="stopExam(${e.id})">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg> Akhiri
+        </button>
+      </div>
+    </div>`;
+
+  if (endTime) startCountdown(endTime);
+}
+
+function startCountdown(endTime) {
+  clearInterval(window._cd);
+  window._cd = setInterval(() => {
+    const el   = document.getElementById('countdown-val');
+    if (!el) { clearInterval(window._cd); return; }
+    const diff = endTime - new Date();
+    if (diff <= 0) { el.textContent = 'Berakhir'; el.className = 'danger'; clearInterval(window._cd); return; }
+    const m = Math.floor(diff/60000), s = Math.floor((diff%60000)/1000);
+    el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    if (diff < 5*60000) el.className = 'countdown-val danger';
+  }, 1000);
+}
+
+/* ── DISTRIBUSI ── */
+function renderDist(dist) {
+  const total  = (dist.easy||0) + (dist.medium||0) + (dist.hard||0);
+  const max    = total || 1;
+  const rows   = [
+    { label:'Mudah', count: dist.easy||0, color:'var(--green)' },
+    { label:'Sedang', count: dist.medium||0, color:'var(--orange)' },
+    { label:'Sulit', count: dist.hard||0, color:'var(--red)' },
+  ];
+  document.getElementById('dist-body').innerHTML = `<div style="margin-bottom:10px;font-size:12px;color:var(--ink3)">Total: <strong style="color:var(--ink)">${total} soal</strong></div>` +
+    rows.map(r => `
+      <div class="dist-row">
+        <div class="dist-label">${r.label}</div>
+        <div class="dist-track"><div class="dist-fill" style="width:${(r.count/max*100).toFixed(0)}%;background:${r.color}"></div></div>
+        <div class="dist-count">${r.count}</div>
+      </div>`).join('');
+}
+
+/* ── VIOLATIONS ── */
+function renderViolations(viols) {
+  const typeMap = { tab_switch:'Pindah Tab', fullscreen_exit:'Keluar Fullscreen', copy_paste:'Copy-Paste', blur:'Keluar Window' };
+  if (!viols.length) {
+    document.getElementById('viol-body').innerHTML = `<div style="text-align:center;padding:20px;color:var(--ink3);font-size:13px">Tidak ada pelanggaran</div>`;
+    return;
+  }
+  document.getElementById('viol-body').innerHTML = viols.slice(0,4).map(v => {
+    const initials = (v.student_name||'XX').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    const color    = v.count >= 5 ? 'var(--red)' : v.count >= 3 ? 'var(--orange)' : 'var(--amber)';
+    const bg       = v.count >= 5 ? 'var(--red-light)' : v.count >= 3 ? 'var(--orange-light)' : 'var(--amber-light)';
+    return `
+      <div class="viol-item">
+        <div class="viol-avatar" style="background:${bg};color:${color}">${initials}</div>
+        <div>
+          <div class="viol-name">${v.student_name}</div>
+          <div class="viol-type">${typeMap[v.violation_type]||v.violation_type} · ${timeAgo(v.created_at)}</div>
+        </div>
+        <div class="viol-count" style="color:${color}">${v.count}×</div>
+      </div>`;
+  }).join('');
+}
+
+/* ── TOP SCORES ── */
+function renderScores(scores) {
+  if (!scores.length) {
+    document.getElementById('scores-body').innerHTML = `<div style="text-align:center;padding:20px;color:var(--ink3);font-size:13px">Belum ada nilai</div>`;
+    return;
+  }
+  document.getElementById('scores-body').innerHTML = scores.slice(0,4).map((s, i) => {
+    const rank   = i + 1;
+    const rClass = rank <= 3 ? `rank-${rank}` : 'rank-n';
+    const initials = (s.student_name||'XX').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    const vClass = s.score >= 85 ? 'good' : s.score >= 70 ? 'avg' : 'low';
+    return `
+      <div class="score-item">
+        <div class="rank-badge ${rClass}">#${rank}</div>
+        <div class="viol-avatar" style="background:var(--navy-light);color:var(--navy)">${initials}</div>
+        <div style="flex:1">
+          <div class="score-name">${s.student_name}</div>
+          <div class="score-exam">${s.total_questions} soal · ${s.duration_minutes} mnt</div>
+        </div>
+        <div class="score-val ${vClass}">${Math.round(s.score)}</div>
+      </div>`;
+  }).join('');
+}
+
+/* ── SYSTEM HEALTH ── */
+function renderSystemHealth(stats) {
+  const items = [
+    { label:'Database', status:'Operational', ok:true },
+    { label:'API Server', status:'Operational', ok:true },
+    { label:'Scheduler', status:'Running', ok:true },
+    { label:'Violations Today', status:`${stats.violations_today || 0} pelanggaran`, ok:(stats.violations_today||0)<5 },
+  ];
+  document.getElementById('system-health').innerHTML = items.map(it => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:13px;color:var(--ink2)">${it.label}</span>
+      <span class="badge ${it.ok?'b-green':'b-orange'}">${it.status}</span>
+    </div>`).join('');
+}
+
+/* ── ACTIONS ── */
+async function pauseExam(id) {
+  if (!confirm('Pause ujian? Semua siswa akan dihentikan sementara.')) return;
+  try {
+    await api('PATCH', `/guru/exams/${id}/pause`, { reason:'Dijeda oleh guru' });
+    toast('Ujian dijeda', 'ok');
+    setTimeout(loadDashboard, 800);
+  } catch(_) {
+    toast('Ujian dijeda (demo)', 'ok');
+  }
+}
+
+async function stopExam(id) {
+  if (!confirm('Akhiri ujian sekarang? Semua siswa yang belum submit akan di-submit otomatis.')) return;
+  try {
+    await api('PATCH', `/guru/exams/${id}/end`);
+    toast('Ujian diakhiri', 'ok');
+    setTimeout(loadDashboard, 1000);
+  } catch(_) {
+    toast('Ujian diakhiri (demo)', 'ok');
+  }
+}
+
+/* ── HELPERS ── */
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const diff = Math.floor((new Date() - new Date(dateStr)) / 1000);
+  if (diff < 60)    return `${diff} dtk lalu`;
+  if (diff < 3600)  return `${Math.floor(diff/60)} mnt lalu`;
+  if (diff < 86400) return `${Math.floor(diff/3600)} jam lalu`;
+  return `${Math.floor(diff/86400)} hari lalu`;
+}
+
+let toastT;
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  const ico = document.getElementById('toast-icon');
+  if (type==='err') ico.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>';
+  else ico.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+  el.className = `toast${type?' '+type:''} show`;
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>

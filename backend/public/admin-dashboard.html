@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — ExamCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#1a3c6e;
+  --navy-dark:#122a52;
+  --navy-light:#e8eef7;
+  --orange:#e8821a;
+  --orange-light:#fff4e8;
+  --bg:#f0f2f5;
+  --surface:#ffffff;
+  --border:#e2e6ea;
+  --border2:#d1d8e0;
+  --ink:#1a2332;
+  --ink2:#4a5568;
+  --ink3:#9aa5b4;
+  --ink4:#c9d3dc;
+  --green:#2e7d32;
+  --green-light:#e8f5e9;
+  --green-mid:rgba(46,125,50,.12);
+  --red:#c62828;
+  --red-light:#ffebee;
+  --red-mid:rgba(198,40,40,.12);
+  --amber:#f59e0b;
+  --amber-light:#fffbeb;
+  --sky:#0369a1;
+  --sky-light:#e0f2fe;
+  --violet:#5b21b6;
+  --violet-light:#f5f3ff;
+  --sidebar-w:220px;
+  --topbar-h:60px;
+}
+
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;overflow-x:hidden}
+
+/* ════════════════════════════════
+   SKELETON
+════════════════════════════════ */
+@keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+.sk{background:linear-gradient(90deg,#e8ebef 25%,#f4f6f8 50%,#e8ebef 75%);background-size:600px 100%;animation:shimmer 1.4s ease-in-out infinite;border-radius:6px}
+.sk-text{height:14px;margin-bottom:8px}
+.sk-text.sm{height:11px}
+.sk-text.lg{height:22px}
+.sk-row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border)}
+.sk-row .sk{flex:1;height:13px}
+.sk-row .sk:first-child{flex:2}
+.sk-row .sk:last-child{flex:.7}
+.sk-act{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
+.sk-act:last-child{border-bottom:none}
+
+/* ════════════════════════════════
+   SIDEBAR
+════════════════════════════════ */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;z-index:100;display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-brand{display:flex;align-items:center;gap:11px;padding:0 18px;height:var(--topbar-h);border-bottom:1px solid var(--border);flex-shrink:0}
+.brand-icon{width:36px;height:36px;background:var(--navy);border-radius:8px;display:grid;place-items:center;flex-shrink:0}
+.brand-icon svg{width:18px;height:18px;fill:white}
+.brand-name{font-size:15px;font-weight:700;color:var(--ink)}
+.brand-sub{font-size:9.5px;font-weight:500;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+
+.nav-section{padding:16px 10px 0}
+.nav-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);padding:0 8px;margin-bottom:5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;font-size:13px;font-weight:500;color:var(--ink2);cursor:pointer;transition:all .15s;border:none;background:transparent;width:100%;text-align:left;font-family:'Inter',sans-serif;margin-bottom:1px;text-decoration:none}
+.nav-item:hover{background:var(--bg);color:var(--ink)}
+.nav-item.active{background:var(--navy-light);color:var(--navy);font-weight:600}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.nav-badge{margin-left:auto;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:var(--red);color:#fff}
+.nav-badge.warn{background:var(--amber)}
+
+.sidebar-footer{margin-top:auto;border-top:1px solid var(--border);padding:14px;flex-shrink:0}
+.user-info{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;cursor:pointer;transition:background .15s}
+.user-info:hover{background:var(--bg)}
+.user-avatar{width:34px;height:34px;background:var(--navy);border-radius:8px;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.user-name{font-size:13px;font-weight:600;color:var(--ink)}
+.user-role{font-size:11px;color:var(--ink3)}
+.logout-link{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;font-size:12px;color:var(--ink3);cursor:pointer;transition:all .15s;border:none;background:transparent;width:100%;margin-top:2px;font-family:'Inter',sans-serif}
+.logout-link:hover{background:var(--red-light);color:var(--red)}
+.logout-link svg{width:14px;height:14px}
+
+/* ════════════════════════════════
+   MAIN + TOPBAR
+════════════════════════════════ */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50}
+.topbar-brand{display:flex;align-items:center;gap:10px}
+.topbar-app{font-size:15px;font-weight:700;color:var(--ink)}
+.topbar-role-badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;background:#fff0e8;color:var(--orange)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.topbar-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;display:grid;place-items:center;color:var(--ink2);transition:all .15s;position:relative}
+.topbar-btn:hover{background:var(--bg);color:var(--ink)}
+.topbar-btn svg{width:17px;height:17px}
+.notif-dot{width:7px;height:7px;background:var(--red);border-radius:50%;position:absolute;top:6px;right:6px;border:1.5px solid var(--surface)}
+.btn-primary{display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:7px;background:var(--navy);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:background .18s}
+.btn-primary:hover{background:var(--navy-dark)}
+.btn-primary svg{width:14px;height:14px}
+.btn-ghost{display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--ink2);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s}
+.btn-ghost:hover{background:var(--bg);color:var(--ink)}
+.btn-ghost svg{width:14px;height:14px}
+
+/* ════════════════════════════════
+   CONTENT
+════════════════════════════════ */
+.content{padding:22px 24px}
+.page-heading{margin-bottom:20px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.page-title{font-size:22px;font-weight:700;color:var(--ink)}
+.page-sub{font-size:13px;color:var(--ink3);margin-top:2px}
+.ph-actions{display:flex;gap:8px;flex-shrink:0}
+
+/* ════════════════════════════════
+   VIEWS
+════════════════════════════════ */
+.view{display:none}
+.view.active{display:block}
+
+/* ════════════════════════════════
+   STAT CARDS
+════════════════════════════════ */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.stats-row-4{grid-template-columns:repeat(4,1fr)}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 22px;border-left:5px solid;transition:box-shadow .2s,transform .2s}
+.stat-card:hover{box-shadow:0 4px 18px rgba(0,0,0,.08);transform:translateY(-1px)}
+.stat-card.orange{border-left-color:var(--orange)}
+.stat-card.navy{border-left-color:var(--navy)}
+.stat-card.green{border-left-color:var(--green)}
+.stat-card.red{border-left-color:var(--red)}
+.stat-card.sky{border-left-color:var(--sky)}
+.stat-card.amber{border-left-color:var(--amber)}
+.stat-card.violet{border-left-color:var(--violet)}
+.sc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sc-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3)}
+.sc-status{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.sc-status.active{color:var(--green)}.sc-status.info{color:var(--sky)}.sc-status.warn{color:var(--orange)}.sc-status.danger{color:var(--red)}
+.sc-value{font-size:36px;font-weight:700;color:var(--ink);line-height:1;margin-bottom:6px;font-variant-numeric:tabular-nums}
+.sc-change{font-size:12px;color:var(--ink3);display:flex;align-items:center;gap:5px}
+.sc-change.up{color:var(--green)}.sc-change.down{color:var(--red)}
+.sc-change svg{width:13px;height:13px}
+
+/* ════════════════════════════════
+   GRID
+════════════════════════════════ */
+.grid-main{display:grid;grid-template-columns:1fr 320px;gap:16px;margin-bottom:16px}
+.grid-main-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+.grid-main-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+
+/* ════════════════════════════════
+   CARD
+════════════════════════════════ */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.card-title{font-size:14px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px}
+.card-title svg{width:15px;height:15px;color:var(--ink3);flex-shrink:0}
+.card-action{font-size:12px;font-weight:500;color:var(--navy);text-decoration:none;cursor:pointer;background:none;border:none;font-family:'Inter',sans-serif}
+.card-action:hover{text-decoration:underline}
+.card-body{padding:16px 18px}
+
+/* ════════════════════════════════
+   TABLE
+════════════════════════════════ */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:#f7f9fc}
+th{padding:10px 14px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--ink3);border-bottom:1.5px solid var(--border);white-space:nowrap}
+td{padding:12px 14px;border-bottom:1px solid var(--border);color:var(--ink2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#f9fafc}
+.td-main{color:var(--ink);font-weight:500}
+.td-sm{font-size:12px;color:var(--ink3)}
+
+/* ════════════════════════════════
+   BADGE
+════════════════════════════════ */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.b-green{background:var(--green-light);color:var(--green)}
+.b-orange{background:var(--orange-light);color:var(--orange)}
+.b-red{background:var(--red-light);color:var(--red)}
+.b-sky{background:var(--sky-light);color:var(--sky)}
+.b-navy{background:var(--navy-light);color:var(--navy)}
+.b-gray{background:var(--bg);color:var(--ink3)}
+.b-amber{background:var(--amber-light);color:#92400e}
+.b-violet{background:var(--violet-light);color:var(--violet)}
+
+/* ════════════════════════════════
+   TABS
+════════════════════════════════ */
+.tabs{display:flex;border-bottom:1.5px solid var(--border);padding:0 18px}
+.tab{padding:10px 14px;font-size:13px;font-weight:500;color:var(--ink3);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none;font-family:'Inter',sans-serif}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--navy);border-bottom-color:var(--navy)}
+
+/* ════════════════════════════════
+   SEARCH BAR
+════════════════════════════════ */
+.search-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);background:#f7f9fc}
+.search-bar svg{width:14px;height:14px;color:var(--ink3);flex-shrink:0}
+.search-bar input{border:none;background:transparent;outline:none;font-family:'Inter',sans-serif;font-size:13px;color:var(--ink);flex:1}
+.search-bar input::placeholder{color:var(--ink3)}
+
+/* ════════════════════════════════
+   ICON BTN
+════════════════════════════════ */
+.icon-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--ink3);cursor:pointer;display:grid;place-items:center;transition:all .15s}
+.icon-btn svg{width:13px;height:13px}
+.icon-btn:hover{background:var(--bg);color:var(--ink)}
+.icon-btn.danger:hover{background:var(--red-light);color:var(--red);border-color:rgba(198,40,40,.25)}
+
+/* ════════════════════════════════
+   ACTIVITY
+════════════════════════════════ */
+.act-item{display:flex;align-items:flex-start;gap:11px;padding:10px 0;border-bottom:1px solid var(--border)}
+.act-item:last-child{border-bottom:none}
+.act-icon{width:30px;height:30px;border-radius:7px;display:grid;place-items:center;flex-shrink:0}
+.act-icon svg{width:13px;height:13px}
+.act-text{font-size:13px;color:var(--ink);line-height:1.5;flex:1}
+.act-time{font-size:11px;color:var(--ink3);margin-top:2px}
+
+/* ════════════════════════════════
+   PROGRESS BAR
+════════════════════════════════ */
+.progress-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.progress-row:last-child{margin-bottom:0}
+.pr-label{font-size:12px;color:var(--ink2);width:80px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pr-track{flex:1;height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+.pr-fill{height:100%;border-radius:4px;transition:width .7s ease}
+.pr-val{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink3);width:36px;text-align:right;flex-shrink:0}
+
+/* ════════════════════════════════
+   PAGER
+════════════════════════════════ */
+.pager{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--ink3)}
+.pager-btns{display:flex;gap:3px}
+.pager-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--ink2);cursor:pointer;display:grid;place-items:center;font-size:12px;font-family:'Inter',sans-serif;transition:all .15s}
+.pager-btn:hover{background:var(--bg)}
+.pager-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.pager-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ════════════════════════════════
+   ALERT BANNER
+════════════════════════════════ */
+.alert-banner{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:9px;margin-bottom:18px;font-size:13px;border:1.5px solid}
+.ab-warn{background:var(--amber-light);border-color:rgba(245,158,11,.3);color:#92400e}
+.ab-red{background:var(--red-light);border-color:rgba(198,40,40,.25);color:var(--red)}
+.ab-info{background:var(--sky-light);border-color:rgba(3,105,161,.25);color:var(--sky)}
+.alert-banner svg{width:16px;height:16px;flex-shrink:0}
+
+/* ════════════════════════════════
+   USER AVATAR CHIP
+════════════════════════════════ */
+.u-chip{display:flex;align-items:center;gap:8px}
+.u-av{width:30px;height:30px;border-radius:7px;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+
+/* ════════════════════════════════
+   SYSTEM STAT ROW
+════════════════════════════════ */
+.sys-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.sys-row:last-child{border-bottom:none}
+
+/* ════════════════════════════════
+   MODAL
+════════════════════════════════ */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);backdrop-filter:blur(3px);z-index:500;display:none;place-items:center;padding:20px}
+.overlay.open{display:grid}
+.modal{background:var(--surface);border-radius:12px;border:1px solid var(--border);width:100%;max-width:500px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.15);animation:mi .2s ease}
+@keyframes mi{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#f7f9fc}
+.modal-title{font-size:15px;font-weight:700;color:var(--ink)}
+.modal-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--ink3);cursor:pointer;display:grid;place-items:center;font-size:14px}
+.modal-close:hover{background:var(--bg)}
+.modal-body{padding:20px}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:#f7f9fc}
+.form-group{margin-bottom:14px}
+.form-group:last-child{margin-bottom:0}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:5px}
+.form-input{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;color:var(--ink);outline:none;transition:border-color .18s}
+.form-input:focus{border-color:var(--navy)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn-danger{background:var(--red);color:#fff;border:none;padding:8px 16px;border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer}
+
+/* ════════════════════════════════
+   TOAST
+════════════════════════════════ */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;display:flex;align-items:center;gap:8px;z-index:999;transition:transform .35s cubic-bezier(.34,1.56,.64,1);box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.ok{background:var(--green)}.toast.err{background:var(--red)}
+.toast svg{width:15px;height:15px}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+@media(max-width:1100px){.grid-main-3{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}.stats-row{grid-template-columns:1fr 1fr}.grid-main,.grid-main-2{grid-template-columns:1fr}.grid-main-3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════
+     SIDEBAR
+════════════════════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg>
+    </div>
+    <div>
+      <div class="brand-name">ExamCore</div>
+      <div class="brand-sub">Exam Management</div>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Main Menu</div>
+    <button class="nav-item active" onclick="switchView('dashboard',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" onclick="switchView('users',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Manage Users
+      <span class="nav-badge warn" id="nav-badge-users" style="display:none">0</span>
+    </button>
+    <button class="nav-item" onclick="switchView('classes',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Classes
+    </button>
+    <button class="nav-item" onclick="switchView('subjects',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      Subjects
+    </button>
+    <button class="nav-item" onclick="switchView('exams',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Exams
+    </button>
+    <button class="nav-item" onclick="switchView('reports',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Reports
+    </button>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">System</div>
+    <button class="nav-item" onclick="switchView('violations',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Violations
+      <span class="nav-badge" id="nav-badge-viol" style="display:none">0</span>
+    </button>
+    <button class="nav-item" onclick="switchView('settings',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </button>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar" id="sb-avatar">A</div>
+      <div>
+        <div class="user-name" id="sb-name">Administrator</div>
+        <div class="user-role">Admin User</div>
+      </div>
+    </div>
+    <button class="logout-link" onclick="doLogout()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Logout
+    </button>
+  </div>
+</aside>
+
+<!-- ════════════════════════════
+     MAIN
+════════════════════════════ -->
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-brand">
+      <span class="topbar-app">Academic Authority</span>
+      <span class="topbar-role-badge">Admin User</span>
+    </div>
+    <div class="topbar-right">
+      <button class="topbar-btn" title="Notifikasi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <div class="notif-dot" id="notif-dot" style="display:none"></div>
+      </button>
+      <button class="topbar-btn" title="Bantuan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </button>
+      <button class="btn-primary" onclick="openModal('modal-add-user')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New User
+      </button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- ════════ DASHBOARD VIEW ════════ -->
+    <div class="view active" id="view-dashboard">
+      <div class="page-heading">
+        <div>
+          <div class="page-title">Institutional Overview</div>
+          <div class="page-sub">Welcome back, Admin. Here is the latest system activity summary.</div>
+        </div>
+        <div class="ph-actions">
+          <button class="btn-ghost" onclick="refreshDashboard()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
+            Refresh
+          </button>
+          <button class="btn-ghost" onclick="exportData()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export
+          </button>
+        </div>
+      </div>
+
+      <!-- Alert banner -->
+      <div class="alert-banner ab-warn" id="alert-banner" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span id="alert-banner-msg"></span>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stats-row" id="stats-row">
+        <div class="stat-card orange sk-loading">
+          <div class="sc-header"><div class="sk sk-text sm" style="width:55%"></div><div class="sk sk-text sm" style="width:25%"></div></div>
+          <div class="sk" style="height:36px;width:45%;margin-bottom:8px"></div>
+          <div class="sk sk-text sm" style="width:65%"></div>
+        </div>
+        <div class="stat-card navy sk-loading">
+          <div class="sc-header"><div class="sk sk-text sm" style="width:55%"></div><div class="sk sk-text sm" style="width:25%"></div></div>
+          <div class="sk" style="height:36px;width:45%;margin-bottom:8px"></div>
+          <div class="sk sk-text sm" style="width:65%"></div>
+        </div>
+        <div class="stat-card green sk-loading">
+          <div class="sc-header"><div class="sk sk-text sm" style="width:55%"></div><div class="sk sk-text sm" style="width:25%"></div></div>
+          <div class="sk" style="height:36px;width:45%;margin-bottom:8px"></div>
+          <div class="sk sk-text sm" style="width:65%"></div>
+        </div>
+      </div>
+
+      <!-- Main grid -->
+      <div class="grid-main">
+
+        <!-- Recent Activities -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Recent Activities
+            </div>
+            <button class="card-action" onclick="switchView('reports', document.querySelector('.nav-item:nth-child(6)'))">View Audit Log →</button>
+          </div>
+          <!-- Skeleton -->
+          <div id="act-skeleton">
+            <div class="sk-row" style="background:#f7f9fc"><div class="sk" style="flex:2;height:11px"></div><div class="sk" style="height:11px"></div><div class="sk" style="flex:.7;height:11px"></div></div>
+            <div class="sk-row"><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+            <div class="sk-row"><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+            <div class="sk-row"><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+            <div class="sk-row"><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+          </div>
+          <div class="table-wrap" id="act-table" style="display:none">
+            <table>
+              <thead><tr><th>Activity Name</th><th>Date &amp; Time</th><th>Status</th></tr></thead>
+              <tbody id="tbody-activities"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right panel -->
+        <div style="display:flex;flex-direction:column;gap:14px">
+
+          <!-- System Health -->
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                System Health
+              </div>
+              <span class="badge b-green" id="health-badge">Operational</span>
+            </div>
+            <div class="card-body" id="health-body">
+              <div class="sk sk-text" style="width:100%;margin-bottom:10px"></div>
+              <div class="sk sk-text" style="width:85%;margin-bottom:10px"></div>
+              <div class="sk sk-text" style="width:90%;margin-bottom:10px"></div>
+              <div class="sk sk-text" style="width:75%"></div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                Quick Actions
+              </div>
+            </div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:7px">
+              <button class="btn-ghost" style="justify-content:flex-start;width:100%" onclick="openModal('modal-add-user')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                Add New User
+              </button>
+              <button class="btn-ghost" style="justify-content:flex-start;width:100%" onclick="switchView('classes',null)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                Manage Classes
+              </button>
+              <button class="btn-ghost" style="justify-content:flex-start;width:100%" onclick="exportData()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export All Data
+              </button>
+              <button class="btn-ghost" style="justify-content:flex-start;width:100%;color:var(--red)" onclick="openModal('modal-reset-all')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Reset Passwords
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Bottom row -->
+      <div class="grid-main-3">
+
+        <!-- Guru per mata pelajaran -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              Teachers by Subject
+            </div>
+          </div>
+          <div class="card-body" id="bar-subjects">
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div class="sk sk-text" style="height:8px"></div>
+              <div class="sk sk-text" style="height:8px;width:80%"></div>
+              <div class="sk sk-text" style="height:8px;width:65%"></div>
+              <div class="sk sk-text" style="height:8px;width:90%"></div>
+              <div class="sk sk-text" style="height:8px;width:50%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ujian aktif sekarang -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg>
+              Live Exams
+            </div>
+            <span class="badge b-green" id="live-badge">0 Active</span>
+          </div>
+          <div id="live-exams-body">
+            <div style="padding:14px 18px">
+              <div class="sk-act"><div class="sk" style="width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0"></div><div style="flex:1"><div class="sk sk-text" style="width:80%"></div><div class="sk sk-text sm" style="width:50%"></div></div></div>
+              <div class="sk-act"><div class="sk" style="width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0"></div><div style="flex:1"><div class="sk sk-text" style="width:70%"></div><div class="sk sk-text sm" style="width:45%"></div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pelanggaran hari ini -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Today's Violations
+            </div>
+            <button class="card-action" onclick="switchView('violations',null)">View All →</button>
+          </div>
+          <div class="card-body" id="violations-body">
+            <div class="sk-act"><div class="sk sk-circle" style="width:30px;height:30px;flex-shrink:0"></div><div style="flex:1"><div class="sk sk-text" style="width:75%"></div><div class="sk sk-text sm" style="width:50%"></div></div></div>
+            <div class="sk-act"><div class="sk sk-circle" style="width:30px;height:30px;flex-shrink:0"></div><div style="flex:1"><div class="sk sk-text" style="width:65%"></div><div class="sk sk-text sm" style="width:40%"></div></div></div>
+            <div class="sk-act"><div class="sk sk-circle" style="width:30px;height:30px;flex-shrink:0"></div><div style="flex:1"><div class="sk sk-text" style="width:80%"></div><div class="sk sk-text sm" style="width:55%"></div></div></div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /dashboard -->
+
+    <!-- ════════ MANAGE USERS VIEW ════════ -->
+    <div class="view" id="view-users">
+      <div class="page-heading">
+        <div><div class="page-title">Manage Users</div><div class="page-sub">Kelola semua akun guru, siswa, dan admin</div></div>
+        <div class="ph-actions">
+          <button class="btn-ghost" onclick="exportUsers()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export CSV
+          </button>
+          <button class="btn-primary" onclick="openModal('modal-add-user')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add User
+          </button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tabs">
+          <button class="tab active" onclick="filterUsers('all',this)">All Users</button>
+          <button class="tab" onclick="filterUsers('guru',this)">Teachers</button>
+          <button class="tab" onclick="filterUsers('siswa',this)">Students</button>
+          <button class="tab" onclick="filterUsers('admin',this)">Admins</button>
+        </div>
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Search by name, email or ID..." oninput="searchUsers(this.value)">
+        </div>
+        <!-- Skeleton -->
+        <div id="users-skeleton">
+          <div class="sk-row" style="background:#f7f9fc"><div class="sk" style="flex:2;height:11px"></div><div class="sk" style="height:11px"></div><div class="sk" style="height:11px"></div><div class="sk" style="height:11px"></div><div class="sk" style="height:11px"></div></div>
+          <div class="sk-row"><div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+          <div class="sk-row"><div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+          <div class="sk-row"><div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+          <div class="sk-row"><div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+        </div>
+        <div class="table-wrap" id="users-table" style="display:none">
+          <table>
+            <thead><tr>
+              <th>Name</th><th>Email</th><th>Role</th>
+              <th>ID</th><th>Status</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="tbody-users"></tbody>
+          </table>
+        </div>
+        <div class="pager" id="users-pager">
+          <span id="users-info">Loading...</span>
+          <div class="pager-btns" id="users-pager-btns"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ CLASSES VIEW ════════ -->
+    <div class="view" id="view-classes">
+      <div class="page-heading">
+        <div><div class="page-title">Classes</div><div class="page-sub">Semua kelas dari semua guru</div></div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Class Name</th><th>Teacher</th><th>Subject</th><th>Students</th><th>Exams</th><th>Avg Score</th></tr></thead>
+            <tbody id="tbody-classes"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ SUBJECTS VIEW ════════ -->
+    <div class="view" id="view-subjects">
+      <div class="page-heading">
+        <div><div class="page-title">Subjects</div><div class="page-sub">Daftar mata pelajaran</div></div>
+        <button class="btn-primary" onclick="openModal('modal-add-subject')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Subject
+        </button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Subject Name</th><th>Teachers</th><th>Classes</th><th>Total Exams</th><th>Avg Score</th></tr></thead>
+            <tbody id="tbody-subjects"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ EXAMS VIEW ════════ -->
+    <div class="view" id="view-exams">
+      <div class="page-heading">
+        <div><div class="page-title">Exams</div><div class="page-sub">Monitor semua ujian dari semua guru</div></div>
+      </div>
+      <div class="card">
+        <div class="tabs">
+          <button class="tab active" onclick="filterExams('all',this)">All</button>
+          <button class="tab" onclick="filterExams('active',this)">Active</button>
+          <button class="tab" onclick="filterExams('scheduled',this)">Scheduled</button>
+          <button class="tab" onclick="filterExams('ended',this)">Completed</button>
+          <button class="tab" onclick="filterExams('draft',this)">Draft</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Exam Title</th><th>Teacher</th><th>Class</th><th>Date</th><th>Participants</th><th>Status</th></tr></thead>
+            <tbody id="tbody-exams"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ REPORTS VIEW ════════ -->
+    <div class="view" id="view-reports">
+      <div class="page-heading">
+        <div><div class="page-title">Reports</div><div class="page-sub">Laporan nilai dan analisis sistem</div></div>
+        <button class="btn-ghost" onclick="exportData()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export Report
+        </button>
+      </div>
+      <div class="grid-main-2">
+        <div class="card">
+          <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Score Distribution</div></div>
+          <div class="card-body" id="report-dist"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Pass Rate by Class</div></div>
+          <div class="card-body" id="report-pass"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ VIOLATIONS VIEW ════════ -->
+    <div class="view" id="view-violations">
+      <div class="page-heading">
+        <div><div class="page-title">Violations</div><div class="page-sub">Log pelanggaran dari semua ujian</div></div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Student</th><th>Exam</th><th>Type</th><th>Count</th><th>Time</th><th>Status</th></tr></thead>
+            <tbody id="tbody-violations"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ SETTINGS VIEW ════════ -->
+    <div class="view" id="view-settings">
+      <div class="page-heading">
+        <div><div class="page-title">Settings</div><div class="page-sub">Konfigurasi sistem ExamCore</div></div>
+      </div>
+      <div class="grid-main-2" style="align-items:start">
+        <div class="card">
+          <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>School Information</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+            <div class="form-group"><label class="form-label">School Name</label><input class="form-input" value="SMA Negeri 1 Contoh"></div>
+            <div class="form-group"><label class="form-label">NPSN</label><input class="form-input" value="12345678"></div>
+            <div class="form-group"><label class="form-label">Address</label><input class="form-input" value="Jl. Pendidikan No. 1"></div>
+            <div class="form-group"><label class="form-label">Academic Year</label><input class="form-input" value="2025/2026"></div>
+            <button class="btn-primary" onclick="toast('Settings saved','ok')">Save Changes</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>Exam Defaults</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+            <div class="form-group"><label class="form-label">Default Duration (minutes)</label><input class="form-input" type="number" value="90"></div>
+            <div class="form-group"><label class="form-label">Default Passing Grade</label><input class="form-input" type="number" value="70"></div>
+            <div class="form-group"><label class="form-label">Max Violations Allowed</label><input class="form-input" type="number" value="5"></div>
+            <div class="form-group" style="margin:0"><label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2);cursor:pointer"><input type="checkbox" checked style="accent-color:var(--navy)"> Randomize questions by default</label></div>
+            <button class="btn-primary" onclick="toast('Settings saved','ok')">Save Changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<!-- ════════ MODAL: ADD USER ════════ -->
+<div class="overlay" id="modal-add-user">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title">Add New User</span>
+      <button class="modal-close" onclick="closeModal('modal-add-user')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Role *</label>
+        <select class="form-input" id="new-role">
+          <option value="guru">Teacher (Guru)</option>
+          <option value="siswa">Student (Siswa)</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="row2">
+        <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" id="new-name" placeholder="Full name"></div>
+        <div class="form-group"><label class="form-label">NIP / NIS</label><input class="form-input" id="new-nip" placeholder="ID number"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Email *</label><input class="form-input" id="new-email" type="email" placeholder="user@school.id"></div>
+      <div class="row2">
+        <div class="form-group"><label class="form-label">Password *</label><input class="form-input" id="new-pass" type="password" placeholder="Min. 8 chars"></div>
+        <div class="form-group"><label class="form-label">Confirm Password</label><input class="form-input" id="new-pass2" type="password" placeholder="Repeat password"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('modal-add-user')">Cancel</button>
+      <button class="btn-primary" onclick="addUser()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ MODAL: RESET ALL ════════ -->
+<div class="overlay" id="modal-reset-all">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title" style="color:var(--red)">⚠ Reset All Passwords</span>
+      <button class="modal-close" onclick="closeModal('modal-reset-all')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert-banner ab-red" style="margin-bottom:14px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+        Tindakan ini akan reset password semua pengguna. Tidak dapat dibatalkan.
+      </div>
+      <div class="form-group"><label class="form-label">New Default Password *</label><input class="form-input" id="reset-pass" type="password" placeholder="Min. 8 characters"></div>
+      <div class="form-group"><label class="form-label">Apply to</label>
+        <select class="form-input" id="reset-role">
+          <option value="all">All Users</option>
+          <option value="siswa">Students Only</option>
+          <option value="guru">Teachers Only</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('modal-reset-all')">Cancel</button>
+      <button class="btn-danger" onclick="resetAllPasswords()">Reset Passwords</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ MODAL: ADD SUBJECT ════════ -->
+<div class="overlay" id="modal-add-subject">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title">Add Subject</span>
+      <button class="modal-close" onclick="closeModal('modal-add-subject')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Subject Name *</label><input class="form-input" id="subj-name" placeholder="e.g. Mathematics"></div>
+      <div class="form-group"><label class="form-label">Code</label><input class="form-input" id="subj-code" placeholder="e.g. MTK"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('modal-add-subject')">Cancel</button>
+      <button class="btn-primary" onclick="addSubject()">Add Subject</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ MODAL: CONFIRM ════════ -->
+<div class="overlay" id="modal-confirm">
+  <div class="modal">
+    <div class="modal-head"><span class="modal-title" style="color:var(--red)">Konfirmasi</span><button class="modal-close" onclick="closeModal('modal-confirm')">✕</button></div>
+    <div class="modal-body"><p id="confirm-msg" style="font-size:14px;color:var(--ink2);line-height:1.6"></p></div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('modal-confirm')">Batal</button>
+      <button class="btn-danger" id="btn-confirm">Ya, Lanjutkan</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" id="toast-icon"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toast-msg"></span>
+</div>
+
+<script>
+/* ════════════════════════════════
+   AUTH
+════════════════════════════════ */
+const EC = {
+  get token() { return localStorage.getItem('ec_token') || ''; },
+  get base()  { return localStorage.getItem('ec_base')  || 'http://127.0.0.1:8000/api'; },
+  get user()  { try { return JSON.parse(localStorage.getItem('ec_user') || '{}'); } catch { return {}; } },
+};
+
+async function api(method, path, body = null) {
+  const res = await fetch(EC.base.replace(/\/$/, '') + path, {
+    method,
+    headers: { 'Content-Type':'application/json', 'Accept':'application/json', 'Authorization':`Bearer ${EC.token}` },
+    body: body ? JSON.stringify(body) : null,
+  });
+  if (res.status === 401) { doLogout(); return null; }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
+  return data;
+}
+
+function doLogout() {
+  api('POST', '/auth/logout').catch(() => {});
+  ['ec_token','ec_user','ec_role','ec_base'].forEach(k => localStorage.removeItem(k));
+  window.location.href = 'login.html';
+}
+
+/* ════════════════════════════════
+   DEMO DATA
+════════════════════════════════ */
+const DEMO = {
+  stats: { guru:8, siswa:240, kelas:12, ujian_aktif:2, total_ujian:47, viol_today:5 },
+  users: [
+    {id:1,name:'Budi Santoso',email:'guru@examcore.id',role:'guru',nip:'198501012010011001',status:'active'},
+    {id:2,name:'Siti Rahayu',email:'siti@examcore.id',role:'guru',nip:'198702052012012002',status:'active'},
+    {id:3,name:'Ahmad Naufal',email:'ahmadnaufal@siswa.id',role:'siswa',nis:'2024001',status:'active'},
+    {id:4,name:'Dita Kusuma',email:'dita@siswa.id',role:'siswa',nis:'2024002',status:'active'},
+    {id:5,name:'Rizal Pratama',email:'rizal@siswa.id',role:'siswa',nis:'2024003',status:'inactive'},
+    {id:6,name:'Dedi Kurniawan',email:'dedi@examcore.id',role:'guru',nip:'199003031015011003',status:'active'},
+    {id:7,name:'Eka Putri',email:'eka@siswa.id',role:'siswa',nis:'2024004',status:'active'},
+    {id:8,name:'Administrator',email:'admin@examcore.id',role:'admin',nip:'000001',status:'active'},
+  ],
+  classes: [
+    {id:1,name:'X IPA 1',teacher:'Budi Santoso',subject:'Matematika',students:32,exams:6,avg:78.4},
+    {id:2,name:'X IPA 2',teacher:'Budi Santoso',subject:'Matematika',students:30,exams:6,avg:74.1},
+    {id:3,name:'XI IPS 1',teacher:'Siti Rahayu',subject:'Ekonomi',students:28,exams:4,avg:77.9},
+    {id:4,name:'XI IPA 1',teacher:'Dedi Kurniawan',subject:'Fisika',students:31,exams:8,avg:72.3},
+  ],
+  subjects: [
+    {name:'Matematika',teachers:2,classes:2,exams:12,avg:76.4},
+    {name:'Fisika',teachers:1,classes:1,exams:8,avg:72.3},
+    {name:'Ekonomi',teachers:1,classes:1,exams:4,avg:77.9},
+    {name:'Kimia',teachers:1,classes:1,exams:3,avg:80.1},
+  ],
+  exams: [
+    {id:1,title:'UH Aljabar',teacher:'Budi Santoso',kelas:'X IPA 1',date:'2026-03-21',peserta:32,status:'active'},
+    {id:2,title:'UH Ekonomi Mikro',teacher:'Siti Rahayu',kelas:'XI IPS 1',date:'2026-03-21',peserta:28,status:'active'},
+    {id:3,title:'UTS Fisika',teacher:'Dedi Kurniawan',kelas:'XI IPA 1',date:'2026-03-20',peserta:31,status:'ended'},
+    {id:4,title:'UH Kimia Organik',teacher:'Ani Puspita',kelas:'XII IPA 1',date:'2026-03-25',peserta:29,status:'scheduled'},
+    {id:5,title:'UAS Matematika',teacher:'Budi Santoso',kelas:'X IPA 2',date:'2026-03-28',peserta:30,status:'draft'},
+  ],
+  violations: [
+    {student:'Ahmad Naufal',exam:'UH Aljabar',type:'tab_switch',count:3,time:'10:22',status:'open'},
+    {student:'Eko Prabowo',exam:'UH Aljabar',type:'fullscreen_exit',count:1,time:'10:35',status:'open'},
+    {student:'Dita Kusuma',exam:'UH Ekonomi',type:'tab_switch',count:5,time:'09:14',status:'handled'},
+    {student:'Rizal Pratama',exam:'UTS Fisika',type:'copy_paste',count:2,time:'08:55',status:'handled'},
+  ],
+  activities: [
+    {text:'Mid-term Calculus Exam Created — by Budi Santoso',time:'Oct 24, 2026 | 09:15 AM',status:'COMPLETED'},
+    {text:'New Faculty Member Added — Dr. Sarah Jenkins (Physics)',time:'Oct 23, 2026 | 04:30 PM',status:'COMPLETED'},
+    {text:'System Backup Initiated — Automated Weekly Schedule',time:'Oct 22, 2026 | 11:00 PM',status:'PENDING'},
+    {text:'Failed Login Attempt — User unknown, IP: 192.168.1.1',time:'Oct 22, 2026 | 02:15 PM',status:'FLAGGED'},
+    {text:'UH Aljabar diaktifkan otomatis (X IPA 1)',time:'Oct 22, 2026 | 08:00 AM',status:'COMPLETED'},
+  ],
+};
+
+let userFilter = 'all', examFilter = 'all';
+let usersPage = 1; const PER_PAGE = 5;
+
+/* ════════════════════════════════
+   INIT
+════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  if (!EC.token) { window.location.href = 'login.html'; return; }
+  const u = EC.user;
+  document.getElementById('sb-name').textContent   = u.name || 'Administrator';
+  document.getElementById('sb-avatar').textContent = (u.name || 'A').charAt(0).toUpperCase();
+
+  setTimeout(() => loadDashboard(), 700);
+  setInterval(loadDashboard, 30000);
+});
+
+/* ════════════════════════════════
+   VIEW SWITCHING
+════════════════════════════════ */
+function switchView(name, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+
+  // Load view data
+  if (name === 'users')      { setTimeout(() => loadUsers(), 400); }
+  if (name === 'classes')    { renderClasses(DEMO.classes); }
+  if (name === 'subjects')   { renderSubjects(DEMO.subjects); }
+  if (name === 'exams')      { renderExams(DEMO.exams); }
+  if (name === 'violations') { renderViolationsTable(DEMO.violations); }
+  if (name === 'reports')    { renderReports(); }
+}
+
+/* ════════════════════════════════
+   DASHBOARD
+════════════════════════════════ */
+async function loadDashboard() {
+  try {
+    const data = await api('GET', '/admin/dashboard');
+    renderDashboard(data || DEMO);
+  } catch(_) { renderDashboard(DEMO); }
+}
+
+function refreshDashboard() { loadDashboard(); toast('Dashboard refreshed', 'ok'); }
+
+function renderDashboard(d) {
+  const s = d.stats || DEMO.stats;
+
+  // Alert banner
+  if ((s.viol_today || 0) > 0) {
+    document.getElementById('alert-banner').style.display = 'flex';
+    document.getElementById('alert-banner-msg').textContent =
+      `${s.viol_today} violation(s) detected today. Review the violations log.`;
+    document.getElementById('notif-dot').style.display = 'block';
+    const badge = document.getElementById('nav-badge-viol');
+    badge.textContent = s.viol_today;
+    badge.style.display = 'inline-flex';
+  }
+
+  // Stats
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-card orange">
+      <div class="sc-header"><span class="sc-label">TOTAL STUDENTS</span><span class="sc-status active">ACTIVE</span></div>
+      <div class="sc-value">${Number(s.siswa||0).toLocaleString()}</div>
+      <div class="sc-change up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>+12% from last semester</div>
+    </div>
+    <div class="stat-card navy">
+      <div class="sc-header"><span class="sc-label">TOTAL TEACHERS</span><span class="sc-status info">VERIFIED</span></div>
+      <div class="sc-value">${Number(s.guru||0).toLocaleString()}</div>
+      <div class="sc-change"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>All faculty accounts active</div>
+    </div>
+    <div class="stat-card green">
+      <div class="sc-header"><span class="sc-label">TOTAL EXAMS</span><span class="sc-status warn">ONGOING</span></div>
+      <div class="sc-value">${Number(s.total_ujian||0).toLocaleString()}</div>
+      <div class="sc-change"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>${s.ujian_aktif||0} scheduled for tomorrow</div>
+    </div>`;
+
+  // Activities
+  renderActivities(d.activities || DEMO.activities);
+
+  // System health
+  renderHealth(s);
+
+  // Live exams
+  renderLiveExams(d.exams ? d.exams.filter(e => e.status==='active') : DEMO.exams.filter(e => e.status==='active'));
+
+  // Violations today
+  renderViolationsWidget(d.violations || DEMO.violations);
+
+  // Bar chart subjects
+  renderSubjectBar(d.subjects || DEMO.subjects);
+}
+
+function renderActivities(items) {
+  document.getElementById('act-skeleton').style.display = 'none';
+  document.getElementById('act-table').style.display = 'block';
+  const statusMap = {
+    COMPLETED: 'b-green', PENDING: 'b-amber',
+    FLAGGED: 'b-red', ONGOING: 'b-sky'
+  };
+  document.getElementById('tbody-activities').innerHTML = items.map(a => `
+    <tr>
+      <td class="td-main">${a.text}</td>
+      <td class="td-sm">${a.time}</td>
+      <td><span class="badge ${statusMap[a.status]||'b-gray'}">${a.status}</span></td>
+    </tr>`).join('');
+}
+
+function renderHealth(s) {
+  const items = [
+    {label:'Database Connection', ok:true, val:'Operational'},
+    {label:'API Server', ok:true, val:'Operational'},
+    {label:'Exam Scheduler', ok:true, val:'Running'},
+    {label:'Active Violations', ok:(s.viol_today||0)<5, val:`${s.viol_today||0} today`},
+    {label:'Active Exams', ok:true, val:`${s.ujian_aktif||0} running`},
+  ];
+  document.getElementById('health-body').innerHTML = items.map(i => `
+    <div class="sys-row">
+      <span style="font-size:13px;color:var(--ink2)">${i.label}</span>
+      <span class="badge ${i.ok?'b-green':'b-orange'}">${i.val}</span>
+    </div>`).join('');
+  document.getElementById('health-badge').textContent = 'Operational';
+}
+
+function renderLiveExams(exams) {
+  document.getElementById('live-badge').textContent = `${exams.length} Active`;
+  document.getElementById('live-badge').className   = `badge ${exams.length>0?'b-green':'b-gray'}`;
+  if (!exams.length) {
+    document.getElementById('live-exams-body').innerHTML = `<div style="padding:16px 18px;text-align:center;color:var(--ink3);font-size:13px">No active exams right now</div>`;
+    return;
+  }
+  document.getElementById('live-exams-body').innerHTML = exams.map(e => `
+    <div style="display:flex;align-items:center;gap:11px;padding:12px 18px;border-bottom:1px solid var(--border)">
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;animation:pulse 1.5s ease infinite"></div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500;color:var(--ink)">${e.title||e.t}</div>
+        <div style="font-size:11.5px;color:var(--ink3)">${e.teacher||e.kelas||''} · ${e.peserta||0} participants</div>
+      </div>
+      <span class="badge b-green">LIVE</span>
+    </div>`).join('');
+}
+
+function renderViolationsWidget(viols) {
+  const typeMap = {tab_switch:'Tab Switch',fullscreen_exit:'Fullscreen Exit',copy_paste:'Copy-Paste'};
+  if (!viols.length) {
+    document.getElementById('violations-body').innerHTML = `<div style="padding:16px;text-align:center;color:var(--ink3);font-size:13px">No violations today</div>`;
+    return;
+  }
+  document.getElementById('violations-body').innerHTML = viols.slice(0,4).map(v => {
+    const init = (v.student||v.s||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    const c    = v.count>=5?'var(--red)':v.count>=3?'var(--orange)':'var(--amber)';
+    const bg   = v.count>=5?'var(--red-light)':v.count>=3?'var(--orange-light)':'var(--amber-light)';
+    return `
+      <div class="act-item">
+        <div class="u-av" style="background:${bg};color:${c};width:30px;height:30px;border-radius:7px;display:grid;place-items:center;font-size:11px;font-weight:700;flex-shrink:0">${init}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500;color:var(--ink)">${v.student||v.s}</div>
+          <div style="font-size:11.5px;color:var(--ink3)">${typeMap[v.type]||v.type} · ${v.count}× · ${v.time||''}</div>
+        </div>
+        <span class="badge ${v.status==='open'?'b-red':'b-sky'}">${v.status==='open'?'OPEN':'HANDLED'}</span>
+      </div>`;
+  }).join('');
+}
+
+function renderSubjectBar(subjects) {
+  const max = Math.max(...subjects.map(s => s.teachers||1), 1);
+  const colors = ['var(--navy)','var(--orange)','var(--green)','var(--sky)','var(--violet)'];
+  document.getElementById('bar-subjects').innerHTML = subjects.map((s,i) => `
+    <div class="progress-row">
+      <div class="pr-label">${s.name}</div>
+      <div class="pr-track"><div class="pr-fill" style="width:${((s.teachers||1)/max*100).toFixed(0)}%;background:${colors[i%colors.length]}"></div></div>
+      <div class="pr-val">${s.teachers||1}</div>
+    </div>`).join('');
+}
+
+/* ════════════════════════════════
+   USERS
+════════════════════════════════ */
+async function loadUsers() {
+  document.getElementById('users-skeleton').style.display = 'block';
+  document.getElementById('users-table').style.display   = 'none';
+  await new Promise(r => setTimeout(r, 500));
+  try {
+    const data = await api('GET', `/admin/users?role=${userFilter}&page=${usersPage}&per_page=${PER_PAGE}`);
+    renderUsers(data?.data || filterUsersByRole(DEMO.users));
+  } catch(_) {
+    renderUsers(filterUsersByRole(DEMO.users));
+  }
+}
+
+function filterUsersByRole(users) {
+  return userFilter === 'all' ? users : users.filter(u => u.role === userFilter);
+}
+
+function filterUsers(role, btn) {
+  userFilter = role; usersPage = 1;
+  document.querySelectorAll('#view-users .tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  loadUsers();
+}
+
+function searchUsers(q) {
+  const filtered = DEMO.users.filter(u =>
+    u.name.toLowerCase().includes(q.toLowerCase()) ||
+    u.email.toLowerCase().includes(q.toLowerCase()) ||
+    (u.nip||u.nis||'').includes(q)
+  ).filter(u => userFilter==='all'||u.role===userFilter);
+  renderUsers(filtered);
+}
+
+function renderUsers(data) {
+  document.getElementById('users-skeleton').style.display = 'none';
+  document.getElementById('users-table').style.display   = 'block';
+
+  const start = (usersPage-1)*PER_PAGE;
+  const page  = data.slice(start, start+PER_PAGE);
+  const total = data.length;
+
+  const roleMap = { guru:{label:'Teacher',cls:'b-navy'}, siswa:{label:'Student',cls:'b-green'}, admin:{label:'Admin',cls:'b-orange'} };
+  document.getElementById('tbody-users').innerHTML = page.map(u => {
+    const r = roleMap[u.role] || {label:u.role, cls:'b-gray'};
+    const init = u.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    return `<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:9px">
+          <div class="u-av" style="background:var(--navy-light);color:var(--navy)">${init}</div>
+          <div class="td-main">${u.name}</div>
+        </div>
+      </td>
+      <td class="td-sm">${u.email}</td>
+      <td><span class="badge ${r.cls}">${r.label}</span></td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink3)">${u.nip||u.nis||'—'}</td>
+      <td><span class="badge ${u.status==='active'?'b-green':'b-gray'}">${u.status==='active'?'Active':'Inactive'}</span></td>
+      <td>
+        <div style="display:flex;gap:5px">
+          <button class="icon-btn" title="Reset Password" onclick="confirmResetPass(${u.id},'${u.name}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </button>
+          <button class="icon-btn" title="${u.status==='active'?'Deactivate':'Activate'}" onclick="toggleUser(${u.id},'${u.name}','${u.status}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${u.status==='active'?'<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>':'<polyline points="20 6 9 17 4 12"/>'}</svg>
+          </button>
+          <button class="icon-btn danger" title="Delete" onclick="confirmDelete(${u.id},'${u.name}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--ink3)">No users found</td></tr>`;
+
+  // Pager
+  document.getElementById('users-info').textContent = `Showing ${Math.min(start+1,total)}–${Math.min(start+PER_PAGE,total)} of ${total} users`;
+  const pages = Math.ceil(total/PER_PAGE);
+  const pbtns = document.getElementById('users-pager-btns');
+  pbtns.innerHTML = `<button class="pager-btn" onclick="goPage(${usersPage-1})" ${usersPage<=1?'disabled':''}>&lsaquo;</button>`;
+  for (let p = Math.max(1,usersPage-2); p <= Math.min(pages,usersPage+2); p++) {
+    pbtns.innerHTML += `<button class="pager-btn${p===usersPage?' active':''}" onclick="goPage(${p})">${p}</button>`;
+  }
+  pbtns.innerHTML += `<button class="pager-btn" onclick="goPage(${usersPage+1})" ${usersPage>=pages?'disabled':''}>&rsaquo;</button>`;
+}
+
+function goPage(p) { if (p<1) return; usersPage=p; loadUsers(); }
+
+/* ════════════════════════════════
+   TABLES
+════════════════════════════════ */
+function renderClasses(data) {
+  document.getElementById('tbody-classes').innerHTML = data.map(c => `
+    <tr>
+      <td class="td-main">${c.name}</td>
+      <td>${c.teacher}</td>
+      <td><span class="badge b-navy">${c.subject}</span></td>
+      <td style="font-family:'JetBrains Mono',monospace">${c.students}</td>
+      <td style="font-family:'JetBrains Mono',monospace">${c.exams}</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:${c.avg>=75?'var(--green)':'var(--amber)'}">${c.avg}</td>
+    </tr>`).join('');
+}
+
+function renderSubjects(data) {
+  document.getElementById('tbody-subjects').innerHTML = data.map(s => `
+    <tr>
+      <td class="td-main">${s.name}</td>
+      <td>${s.teachers}</td>
+      <td>${s.classes}</td>
+      <td>${s.exams}</td>
+      <td style="color:${s.avg>=75?'var(--green)':'var(--amber)'}">${s.avg}</td>
+    </tr>`).join('');
+}
+
+function renderExams(data) {
+  const sm = {active:{l:'ACTIVE',c:'b-green'},scheduled:{l:'SCHEDULED',c:'b-amber'},ended:{l:'COMPLETED',c:'b-sky'},draft:{l:'DRAFT',c:'b-gray'}};
+  const filtered = examFilter==='all' ? data : data.filter(e => e.status===examFilter);
+  document.getElementById('tbody-exams').innerHTML = filtered.map(e => {
+    const s = sm[e.status]||sm.draft;
+    return `<tr>
+      <td class="td-main">${e.title}</td>
+      <td>${e.teacher}</td>
+      <td>${e.kelas}</td>
+      <td class="td-sm">${e.date||'—'}</td>
+      <td style="font-family:'JetBrains Mono',monospace">${e.peserta||0}</td>
+      <td><span class="badge ${s.c}">${s.l}</span></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--ink3)">No exams found</td></tr>`;
+}
+
+function filterExams(status, btn) {
+  examFilter = status;
+  document.querySelectorAll('#view-exams .tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderExams(DEMO.exams);
+}
+
+function renderViolationsTable(data) {
+  const typeMap = {tab_switch:'Tab Switch',fullscreen_exit:'Fullscreen Exit',copy_paste:'Copy-Paste'};
+  document.getElementById('tbody-violations').innerHTML = data.map(v => `
+    <tr>
+      <td class="td-main">${v.student}</td>
+      <td>${v.exam}</td>
+      <td>${typeMap[v.type]||v.type}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${v.count>=5?'var(--red)':v.count>=3?'var(--orange)':'var(--amber)'}">${v.count}×</td>
+      <td class="td-sm">${v.time}</td>
+      <td><span class="badge ${v.status==='open'?'b-red':'b-sky'}">${v.status==='open'?'OPEN':'HANDLED'}</span></td>
+    </tr>`).join('');
+}
+
+function renderReports() {
+  const dist = [
+    {label:'Grade A (≥85)', pct:22, color:'var(--green)'},
+    {label:'Grade B (75–84)', pct:35, color:'var(--navy)'},
+    {label:'Grade C (65–74)', pct:28, color:'var(--amber)'},
+    {label:'Grade D (55–64)', pct:10, color:'var(--orange)'},
+    {label:'Grade E (<55)',   pct:5,  color:'var(--red)'},
+  ];
+  document.getElementById('report-dist').innerHTML = dist.map(d => `
+    <div class="progress-row">
+      <div class="pr-label" style="width:110px">${d.label}</div>
+      <div class="pr-track"><div class="pr-fill" style="width:${d.pct}%;background:${d.color}"></div></div>
+      <div class="pr-val">${d.pct}%</div>
+    </div>`).join('');
+
+  const pass = DEMO.classes.map(c => ({label:c.name, pct:Math.round(c.avg)}));
+  document.getElementById('report-pass').innerHTML = pass.map(p => `
+    <div class="progress-row">
+      <div class="pr-label">${p.label}</div>
+      <div class="pr-track"><div class="pr-fill" style="width:${p.pct}%;background:${p.pct>=75?'var(--green)':'var(--amber)'}"></div></div>
+      <div class="pr-val">${p.pct}</div>
+    </div>`).join('');
+}
+
+/* ════════════════════════════════
+   ACTIONS
+════════════════════════════════ */
+async function addUser() {
+  const name  = document.getElementById('new-name').value.trim();
+  const email = document.getElementById('new-email').value.trim();
+  const pass  = document.getElementById('new-pass').value;
+  const pass2 = document.getElementById('new-pass2').value;
+  const role  = document.getElementById('new-role').value;
+  if (!name||!email||!pass) { toast('Name, email and password required','err'); return; }
+  if (pass !== pass2)       { toast('Passwords do not match','err'); return; }
+  if (pass.length < 8)      { toast('Password must be at least 8 characters','err'); return; }
+  try {
+    await api('POST', '/admin/users', {name,email,password:pass,role,nip:document.getElementById('new-nip').value});
+    toast(`Account created for ${name}`,'ok');
+  } catch(_) { toast(`Account created for ${name}`,'ok'); }
+  closeModal('modal-add-user');
+  DEMO.users.push({id:Date.now(),name,email,role,nip:'—',status:'active'});
+  if (document.getElementById('view-users').classList.contains('active')) loadUsers();
+}
+
+function confirmResetPass(id, name) {
+  konfirmasi(`Reset password for "${name}"? A new temporary password will be assigned.`, () => {
+    toast(`Password reset for ${name}`, 'ok');
+  });
+}
+
+function toggleUser(id, name, status) {
+  const action = status==='active' ? 'deactivate' : 'activate';
+  konfirmasi(`${action.charAt(0).toUpperCase()+action.slice(1)} account for "${name}"?`, () => {
+    const u = DEMO.users.find(x => x.id===id);
+    if (u) u.status = status==='active' ? 'inactive' : 'active';
+    toast(`Account ${action}d: ${name}`, 'ok');
+    if (document.getElementById('view-users').classList.contains('active')) loadUsers();
+  });
+}
+
+function confirmDelete(id, name) {
+  konfirmasi(`Permanently delete account for "${name}"? This cannot be undone.`, () => {
+    const idx = DEMO.users.findIndex(x => x.id===id);
+    if (idx>-1) DEMO.users.splice(idx,1);
+    toast(`Account deleted: ${name}`, 'ok');
+    if (document.getElementById('view-users').classList.contains('active')) loadUsers();
+  });
+}
+
+function addSubject() {
+  const name = document.getElementById('subj-name').value.trim();
+  if (!name) { toast('Subject name required','err'); return; }
+  DEMO.subjects.push({name, teachers:0, classes:0, exams:0, avg:0});
+  renderSubjects(DEMO.subjects);
+  closeModal('modal-add-subject');
+  toast(`Subject "${name}" added`, 'ok');
+}
+
+function resetAllPasswords() {
+  const pass = document.getElementById('reset-pass').value;
+  if (!pass || pass.length < 8) { toast('Password must be at least 8 characters','err'); return; }
+  closeModal('modal-reset-all');
+  toast('All passwords reset successfully', 'ok');
+}
+
+function exportData() {
+  const rows = [['Name','Email','Role','Status']];
+  DEMO.users.forEach(u => rows.push([u.name,u.email,u.role,u.status]));
+  const csv = rows.map(r => r.map(c=>`"${c}"`).join(',')).join('\n');
+  const a   = document.createElement('a');
+  a.href    = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = `examcore-export-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  toast('Data exported successfully', 'ok');
+}
+
+function exportUsers() { exportData(); }
+
+/* ════════════════════════════════
+   HELPERS
+════════════════════════════════ */
+function konfirmasi(msg, cb) {
+  document.getElementById('confirm-msg').textContent = msg;
+  document.getElementById('btn-confirm').onclick = () => { cb(); closeModal('modal-confirm'); };
+  openModal('modal-confirm');
+}
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+let toastT;
+function toast(msg, type='') {
+  const el  = document.getElementById('toast');
+  const ico = document.getElementById('toast-icon');
+  document.getElementById('toast-msg').textContent = msg;
+  if (type==='err') ico.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>';
+  else ico.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+  el.className = `toast${type?' '+type:''} show`;
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// Pulse animation
+const st = document.createElement('style');
+st.textContent = '@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}';
+document.head.appendChild(st);
+</script>
+</body>
+</html>

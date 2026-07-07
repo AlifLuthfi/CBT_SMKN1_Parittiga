@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Import & Arsip — ExamCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#1a3c6e;--navy-dark:#122a52;--navy-light:#e8eef7;
+  --orange:#e8821a;--orange-light:#fff4e8;
+  --bg:#f0f2f5;--surface:#ffffff;--border:#e2e6ea;--border2:#d1d8e0;
+  --ink:#1a2332;--ink2:#4a5568;--ink3:#9aa5b4;--ink4:#c9d3dc;
+  --green:#2e7d32;--green-light:#e8f5e9;
+  --red:#c62828;--red-light:#ffebee;
+  --amber:#f59e0b;--amber-light:#fffbeb;
+  --sky:#0369a1;--sky-light:#e0f2fe;
+  --sidebar-w:220px;--topbar-h:60px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex}
+@keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+.sk{background:linear-gradient(90deg,#e8ebef 25%,#f4f6f8 50%,#e8ebef 75%);background-size:600px 100%;animation:shimmer 1.4s ease-in-out infinite;border-radius:6px}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;z-index:100;display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-brand{display:flex;align-items:center;gap:11px;padding:0 18px;height:var(--topbar-h);border-bottom:1px solid var(--border);flex-shrink:0}
+.brand-icon{width:36px;height:36px;background:var(--navy);border-radius:8px;display:grid;place-items:center;flex-shrink:0}
+.brand-icon svg{width:18px;height:18px;fill:white}
+.brand-name{font-size:15px;font-weight:700;color:var(--ink)}
+.brand-sub{font-size:9.5px;font-weight:500;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+.nav-section{padding:16px 10px 0}
+.nav-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);padding:0 8px;margin-bottom:5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;font-size:13px;font-weight:500;color:var(--ink2);cursor:pointer;transition:all .15s;border:none;background:transparent;width:100%;text-align:left;font-family:'Inter',sans-serif;margin-bottom:1px;text-decoration:none}
+.nav-item:hover{background:var(--bg);color:var(--ink)}
+.nav-item.active{background:var(--navy-light);color:var(--navy);font-weight:600}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.sidebar-footer{margin-top:auto;border-top:1px solid var(--border);padding:14px;flex-shrink:0}
+.user-card{display:flex;align-items:center;gap:9px;padding:8px;border-radius:8px;cursor:pointer}
+.user-avatar{width:32px;height:32px;background:var(--navy);border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.user-name{font-size:13px;font-weight:600;color:var(--ink)}
+.user-role{font-size:11px;color:var(--ink3)}
+.logout-btn{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;font-size:12px;color:var(--ink3);cursor:pointer;transition:all .15s;border:none;background:transparent;width:100%;margin-top:2px;font-family:'Inter',sans-serif}
+.logout-btn:hover{background:var(--red-light);color:var(--red)}
+
+/* MAIN */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column}
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:15px;font-weight:700;color:var(--ink)}
+.topbar-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;border:1.5px solid}
+.btn-primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-primary:hover{background:var(--navy-dark)}
+.btn-ghost{background:transparent;color:var(--ink2);border-color:var(--border)}
+.btn-ghost:hover{background:var(--bg);color:var(--ink)}
+.btn-danger{background:var(--red-light);color:var(--red);border-color:rgba(198,40,40,.2)}
+.btn-danger:hover{background:var(--red);color:#fff}
+.btn svg{width:14px;height:14px}
+.icon-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--ink3);cursor:pointer;display:grid;place-items:center;transition:all .15s}
+.icon-btn svg{width:13px;height:13px}
+.icon-btn:hover{background:var(--bg);color:var(--ink)}
+.icon-btn.danger:hover{background:var(--red-light);color:var(--red);border-color:rgba(198,40,40,.25)}
+.content{padding:22px 24px;flex:1}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
+.page-title{font-size:20px;font-weight:700;color:var(--ink)}
+.page-sub{font-size:13px;color:var(--ink3);margin-top:2px}
+
+/* MAIN TABS */
+.main-tabs{display:flex;border-bottom:1.5px solid var(--border);margin-bottom:22px}
+.main-tab{padding:10px 20px;font-size:13.5px;font-weight:500;color:var(--ink3);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none;font-family:'Inter',sans-serif}
+.main-tab:hover{color:var(--ink)}
+.main-tab.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:600}
+.view{display:none}
+.view.active{display:block}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);background:#f7f9fc}
+.card-title{font-size:14px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px}
+.card-title svg{width:15px;height:15px;color:var(--ink3)}
+.card-body{padding:18px}
+
+/* DROPZONE */
+.dropzone{border:2.5px dashed var(--border2);border-radius:12px;padding:48px 32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface)}
+.dropzone:hover,.dropzone.drag-over{border-color:var(--navy);background:var(--navy-light)}
+.dropzone-icon{width:56px;height:56px;border-radius:14px;background:var(--navy-light);display:grid;place-items:center;margin:0 auto 16px}
+.dropzone-icon svg{width:28px;height:28px;color:var(--navy)}
+.dropzone-title{font-size:15px;font-weight:600;color:var(--ink);margin-bottom:5px}
+.dropzone-sub{font-size:13px;color:var(--ink3)}
+.dropzone-formats{display:flex;gap:8px;justify-content:center;margin-top:14px}
+.format-badge{padding:3px 12px;border-radius:20px;font-size:11px;font-weight:600;background:var(--bg);color:var(--ink3);border:1px solid var(--border)}
+#file-input{display:none}
+
+/* PROGRESS */
+.progress-wrap{margin-top:16px;display:none}
+.progress-label{display:flex;justify-content:space-between;font-size:12px;color:var(--ink2);margin-bottom:5px}
+.progress-track{height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;background:var(--navy);border-radius:4px;transition:width .4s ease}
+
+/* PARSE RESULT */
+.parse-result{display:none;margin-top:16px}
+.parse-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.parse-stat{text-align:center;padding:12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)}
+.ps-val{font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;line-height:1;margin-bottom:3px}
+.ps-label{font-size:10.5px;color:var(--ink3)}
+
+/* TABLE */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:#f7f9fc}
+th{padding:10px 14px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--ink3);border-bottom:1.5px solid var(--border);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--ink2);vertical-align:middle;font-size:12.5px}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#f9fafc}
+.td-main{color:var(--ink);font-weight:500}
+
+/* STATUS ROW */
+.row-ok   td:first-child{border-left:3px solid var(--green)}
+.row-warn td:first-child{border-left:3px solid var(--amber)}
+.row-err  td:first-child{border-left:3px solid var(--red)}
+
+/* BADGE */
+.badge{display:inline-flex;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.b-green{background:var(--green-light);color:var(--green)}
+.b-red{background:var(--red-light);color:var(--red)}
+.b-navy{background:var(--navy-light);color:var(--navy)}
+.b-amber{background:var(--amber-light);color:#92400e}
+.b-gray{background:var(--bg);color:var(--ink3)}
+.b-sky{background:var(--sky-light);color:var(--sky)}
+.b-orange{background:var(--orange-light);color:var(--orange)}
+
+/* FILTER CHIPS */
+.filter-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.filter-chip{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--ink3);transition:all .15s;font-family:'Inter',sans-serif}
+.filter-chip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.filter-chip:not(.active):hover{border-color:var(--navy);color:var(--navy)}
+
+/* ARCHIVE CARD GRID */
+.archive-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.archive-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;transition:all .2s;cursor:pointer}
+.archive-card:hover{box-shadow:0 4px 18px rgba(0,0,0,.08);transform:translateY(-1px);border-color:var(--navy-light)}
+.ac-icon{width:40px;height:40px;border-radius:9px;display:grid;place-items:center;margin-bottom:12px}
+.ac-icon svg{width:20px;height:20px}
+.ac-title{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.ac-meta{font-size:11.5px;color:var(--ink3);margin-bottom:12px}
+.ac-stats{display:flex;gap:10px;margin-bottom:12px}
+.ac-stat{font-size:11px;color:var(--ink2);display:flex;align-items:center;gap:4px}
+.ac-stat svg{width:12px;height:12px;color:var(--ink3)}
+.ac-actions{display:flex;gap:6px;padding-top:12px;border-top:1px solid var(--border)}
+
+/* IMPORT HISTORY */
+.history-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.history-item:last-child{border-bottom:none}
+.hi-icon{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;flex-shrink:0}
+.hi-icon svg{width:16px;height:16px}
+.hi-name{font-size:13px;font-weight:500;color:var(--ink)}
+.hi-meta{font-size:11.5px;color:var(--ink3);margin-top:1px}
+.hi-stats{margin-left:auto;text-align:right;flex-shrink:0}
+.hi-success{font-size:13px;font-weight:700;color:var(--green)}
+.hi-err{font-size:11.5px;color:var(--red)}
+
+/* TEMPLATE DOWNLOAD */
+.template-box{background:var(--bg);border:1.5px dashed var(--border2);border-radius:10px;padding:16px;display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.tb-icon{width:40px;height:40px;border-radius:9px;background:var(--green-light);display:grid;place-items:center;flex-shrink:0}
+.tb-icon svg{width:20px;height:20px;color:var(--green)}
+.tb-title{font-size:13px;font-weight:600;color:var(--ink)}
+.tb-sub{font-size:12px;color:var(--ink3);margin-top:2px}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);backdrop-filter:blur(3px);z-index:500;display:none;place-items:center;padding:20px}
+.overlay.open{display:grid}
+.modal{background:var(--surface);border-radius:12px;border:1px solid var(--border);width:100%;max-width:480px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.15);animation:mi .2s ease}
+@keyframes mi{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#f7f9fc}
+.modal-title{font-size:15px;font-weight:700;color:var(--ink)}
+.modal-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--ink3);cursor:pointer;display:grid;place-items:center;font-size:14px}
+.modal-close:hover{background:var(--bg)}
+.modal-body{padding:20px}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:#f7f9fc}
+.form-group{margin-bottom:14px}
+.form-group:last-child{margin-bottom:0}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:5px}
+.form-input,.form-select{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;color:var(--ink);outline:none;transition:border-color .18s}
+.form-input:focus,.form-select:focus{border-color:var(--navy)}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}.parse-summary{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg></div>
+    <div><div class="brand-name">ExamCore</div><div class="brand-sub">Exam Management</div></div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Menu Utama</div>
+    <a class="nav-item" href="guru-dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</a>
+    <a class="nav-item" href="manajemen-kelas.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Manajemen Kelas</a>
+    <a class="nav-item" href="input-soal.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Input Soal</a>
+    <a class="nav-item" href="jadwal-ujian.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Jadwal Ujian</a>
+    <div class="nav-label" style="margin-top:12px">Laporan</div>
+    <a class="nav-item" href="rekap-nilai.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Rekap Nilai</a>
+    <a class="nav-item active" href="import-arsip.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Import & Arsip</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" data-user-avatar>G</div>
+      <div><div class="user-name" data-user-name>Guru</div><div class="user-role" data-user-role>guru</div></div>
+    </div>
+    <button class="logout-btn" onclick="logout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-title">Import & Arsip</div>
+    <div class="topbar-r">
+      <button class="btn btn-ghost" onclick="downloadTemplate('csv')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Template CSV
+      </button>
+      <button class="btn btn-ghost" onclick="downloadTemplate('json')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Template JSON
+      </button>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="page-head">
+      <div><div class="page-title">Import & Arsip</div><div class="page-sub">Import soal massal dan kelola arsip template ujian</div></div>
+    </div>
+
+    <div class="main-tabs">
+      <button class="main-tab active" onclick="switchTab('import',this)">Import Soal</button>
+      <button class="main-tab" onclick="switchTab('arsip',this)">Arsip & Template</button>
+      <button class="main-tab" onclick="switchTab('history',this)">Riwayat Import</button>
+    </div>
+
+    <!-- TAB 1: IMPORT -->
+    <div class="view active" id="view-import">
+
+      <!-- Template download -->
+      <div class="template-box">
+        <div class="tb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+        <div style="flex:1">
+          <div class="tb-title">Download Template</div>
+          <div class="tb-sub">Download template CSV atau JSON untuk memastikan format yang benar</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost" style="font-size:12px" onclick="downloadTemplate('csv')">CSV</button>
+          <button class="btn btn-ghost" style="font-size:12px" onclick="downloadTemplate('json')">JSON</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 280px;gap:18px;align-items:start">
+        <div>
+          <!-- Dropzone -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload File</div></div>
+            <div class="card-body">
+              <div class="dropzone" id="dropzone" onclick="document.getElementById('file-input').click()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+                <div class="dropzone-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+                <div class="dropzone-title">Seret file ke sini atau klik untuk memilih</div>
+                <div class="dropzone-sub">Mendukung file CSV dan JSON</div>
+                <div class="dropzone-formats">
+                  <span class="format-badge">CSV</span>
+                  <span class="format-badge">JSON</span>
+                  <span class="format-badge">Max 5MB</span>
+                </div>
+              </div>
+              <input type="file" id="file-input" accept=".csv,.json,.txt" onchange="handleFile(this.files[0])">
+
+              <!-- Progress -->
+              <div class="progress-wrap" id="progress-wrap">
+                <div class="progress-label"><span id="prog-status">Memproses...</span><span id="prog-pct">0%</span></div>
+                <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preview table -->
+          <div class="card" id="card-preview" style="display:none">
+            <div class="card-head">
+              <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Preview Soal</div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <select class="form-select" style="font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid var(--border)" id="filter-preview">
+                  <option value="all">Semua</option>
+                  <option value="ok">Valid</option>
+                  <option value="warn">Warning</option>
+                  <option value="err">Error</option>
+                </select>
+                <span id="preview-count" style="font-size:12px;color:var(--ink3)"></span>
+              </div>
+            </div>
+
+            <!-- Parse summary -->
+            <div class="parse-result" id="parse-result">
+              <div style="padding:14px 18px;border-bottom:1px solid var(--border)">
+                <div class="parse-summary">
+                  <div class="parse-stat"><div class="ps-val" id="ps-total">0</div><div class="ps-label">Total Baris</div></div>
+                  <div class="parse-stat"><div class="ps-val" style="color:var(--green)" id="ps-ok">0</div><div class="ps-label">Valid</div></div>
+                  <div class="parse-stat"><div class="ps-val" style="color:var(--amber)" id="ps-warn">0</div><div class="ps-label">Warning</div></div>
+                  <div class="parse-stat"><div class="ps-val" style="color:var(--red)" id="ps-err">0</div><div class="ps-label">Error</div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>#</th><th>Pertanyaan</th><th>Tipe</th><th>Jawaban</th><th>Difficulty</th><th>Status</th></tr></thead>
+                <tbody id="tbody-preview"></tbody>
+              </table>
+            </div>
+
+            <div style="padding:14px 18px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:#f7f9fc">
+              <div style="font-size:12.5px;color:var(--ink3)">Soal dengan status Error tidak akan diimpor</div>
+              <button class="btn btn-primary" id="btn-import" onclick="eksekusiImport()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Import Soal
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Side: Pengaturan import -->
+        <div>
+          <div class="card">
+            <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Pengaturan</div></div>
+            <div class="card-body">
+              <div class="form-group"><label class="form-label">Kategori Default</label>
+                <select class="form-select" id="import-category"><option value="">— Tidak ada —</option></select>
+              </div>
+              <div class="form-group" style="margin:0"><label class="form-label">Skip baris error</label>
+                <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink2);cursor:pointer;margin-top:4px">
+                  <input type="checkbox" id="skip-errors" checked style="accent-color:var(--navy)">
+                  Lanjutkan meski ada error
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Format reference -->
+          <div class="card" style="margin-top:14px">
+            <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Format CSV</div></div>
+            <div class="card-body">
+              <div style="font-size:11.5px;color:var(--ink2);line-height:1.8">
+                <div style="margin-bottom:6px;font-weight:600;color:var(--ink)">Kolom yang diperlukan:</div>
+                <div>• <code style="background:var(--bg);padding:1px 5px;border-radius:3px;font-size:11px">question_text</code> — Teks soal</div>
+                <div>• <code style="background:var(--bg);padding:1px 5px;border-radius:3px;font-size:11px">question_type</code> — multiple_choice / true_false / essay</div>
+                <div>• <code style="background:var(--bg);padding:1px 5px;border-radius:3px;font-size:11px">option_a/b/c/d</code> — Opsi jawaban</div>
+                <div>• <code style="background:var(--bg);padding:1px 5px;border-radius:3px;font-size:11px">correct_answer</code> — A/B/C/D/true/false</div>
+                <div>• <code style="background:var(--bg);padding:1px 5px;border-radius:3px;font-size:11px">difficulty</code> — easy/medium/hard</div>
+                <div>• <code style="background:var(--bg);padding:1px 5px;border-radius:3px;font-size:11px">weight</code> — Bobot nilai (1-10)</div>
+                <div style="color:var(--ink3);margin-top:4px">• explanation, category (opsional)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: ARSIP -->
+    <div class="view" id="view-arsip">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div class="filter-row" style="margin-bottom:0">
+          <button class="filter-chip active" data-filter="all" onclick="filterArsip('all',this)">Semua</button>
+          <button class="filter-chip" data-filter="template" onclick="filterArsip('template',this)">Template</button>
+          <button class="filter-chip" data-filter="backup" onclick="filterArsip('backup',this)">Backup</button>
+          <button class="filter-chip" data-filter="archive" onclick="filterArsip('archive',this)">Arsip</button>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-save-template')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/></svg>Simpan Template
+        </button>
+      </div>
+
+      <div class="archive-grid" id="archive-grid"></div>
+    </div>
+
+    <!-- TAB 3: HISTORY -->
+    <div class="view" id="view-history">
+      <div class="card">
+        <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Riwayat Import</div></div>
+        <div id="history-list">
+          <div class="sk" style="height:60px;margin:16px;border-radius:8px"></div>
+          <div class="sk" style="height:60px;margin:16px;border-radius:8px"></div>
+          <div class="sk" style="height:60px;margin:16px;border-radius:8px"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- MODAL: SAVE TEMPLATE -->
+<div class="overlay" id="modal-save-template">
+  <div class="modal">
+    <div class="modal-head"><span class="modal-title">Simpan sebagai Template</span><button class="modal-close" onclick="closeModal('modal-save-template')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Judul Template *</label><input class="form-input" id="tmpl-title" placeholder="Contoh: Soal UH Matematika Kelas X"></div>
+      <div class="form-group"><label class="form-label">Deskripsi</label><input class="form-input" id="tmpl-desc" placeholder="Opsional"></div>
+      <div class="form-group" style="margin:0"><label class="form-label">Tipe</label>
+        <select class="form-select" id="tmpl-type">
+          <option value="template">Template</option>
+          <option value="backup">Backup</option>
+          <option value="archive">Arsip</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-save-template')">Batal</button>
+      <button class="btn btn-primary" onclick="simpanTemplate()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script>
+const DEMO_ARCHIVE = [
+  {id:1,title:'Soal UH Matematika Kelas X',desc:'Bank soal aljabar dan geometri',type:'template',question_count:30,used_count:3,created:'2024-10-01'},
+  {id:2,title:'Soal UTS Ekonomi',desc:'Soal UTS semester ganjil',type:'template',question_count:40,used_count:2,created:'2024-11-15'},
+  {id:3,title:'Backup Bank Soal Nov 2024',desc:'Backup lengkap semua soal',type:'backup',question_count:98,used_count:0,created:'2024-11-30'},
+  {id:4,title:'Soal UH Fisika Kelas XI',desc:'Arsip soal semester lalu',type:'archive',question_count:25,used_count:0,created:'2024-08-20'},
+  {id:5,title:'Soal UNBK Latihan',desc:'Soal latihan ujian nasional',type:'template',question_count:50,used_count:5,created:'2024-09-10'},
+];
+const DEMO_HISTORY = [
+  {id:1,filename:'soal-matematika.csv',total_rows:30,success_count:28,error_count:2,status:'completed',created:'2024-11-20 14:32'},
+  {id:2,filename:'bank-soal-ekonomi.json',total_rows:40,success_count:40,error_count:0,status:'completed',created:'2024-11-18 10:15'},
+  {id:3,filename:'soal-fisika-upload.csv',total_rows:25,success_count:0,error_count:25,status:'failed',created:'2024-11-10 09:00'},
+];
+
+let parsedRows = [];
+let archiveFilter = 'all';
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!requireAuth('guru')) return;
+  renderUser();
+  renderArchive(DEMO_ARCHIVE);
+  renderHistory(DEMO_HISTORY);
+  loadCategories();
+  document.getElementById('filter-preview').onchange = () => renderPreviewTable();
+});
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+}
+
+/* ── DROPZONE ── */
+function dragOver(e) { e.preventDefault(); document.getElementById('dropzone').classList.add('drag-over'); }
+function dragLeave()  { document.getElementById('dropzone').classList.remove('drag-over'); }
+function dropFile(e)  { e.preventDefault(); dragLeave(); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }
+
+function handleFile(file) {
+  if (!file) return;
+  if (!file.name.match(/\.(csv|json|txt)$/i)) { toast('Format harus CSV atau JSON','err'); return; }
+  if (file.size > 5 * 1024 * 1024) { toast('File maksimal 5MB','err'); return; }
+
+  // Show progress
+  const pw = document.getElementById('progress-wrap');
+  pw.style.display = '';
+  animateProgress();
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const content = e.target.result;
+    if (file.name.endsWith('.json')) parseJSON(content);
+    else parseCSV(content);
+  };
+  reader.readAsText(file);
+}
+
+function animateProgress() {
+  let pct = 0;
+  const fill = document.getElementById('prog-fill');
+  const pctEl = document.getElementById('prog-pct');
+  const statEl = document.getElementById('prog-status');
+  const interval = setInterval(() => {
+    pct += Math.random() * 15;
+    if (pct >= 100) { pct = 100; clearInterval(interval); statEl.textContent = 'Selesai diproses'; }
+    else statEl.textContent = 'Memproses file...';
+    fill.style.width = Math.min(pct, 100).toFixed(0) + '%';
+    pctEl.textContent = Math.min(pct, 100).toFixed(0) + '%';
+  }, 80);
+}
+
+function parseCSV(content) {
+  const lines = content.split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length < 2) { toast('File kosong atau tidak valid','err'); return; }
+
+  const header = parseLine(lines[0]);
+  parsedRows   = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = parseLine(lines[i]);
+    const row  = {};
+    header.forEach((h, idx) => row[h.trim()] = (cols[idx] || '').trim());
+
+    const status = validateRow(row);
+    parsedRows.push({
+      row: i,
+      text:     row.question_text || '—',
+      type:     row.question_type || 'multiple_choice',
+      answer:   row.correct_answer || '—',
+      diff:     row.difficulty || 'medium',
+      status,
+      raw: row,
+    });
+  }
+  showPreview();
+}
+
+function parseJSON(content) {
+  try {
+    const data = JSON.parse(content);
+    const list = Array.isArray(data) ? data : data.questions || [];
+    parsedRows  = list.map((row, i) => ({
+      row: i+1,
+      text:   row.question_text || row.text || '—',
+      type:   row.question_type || row.type || 'multiple_choice',
+      answer: row.correct_answer || row.answer || '—',
+      diff:   row.difficulty || 'medium',
+      status: validateRow(row),
+      raw: row,
+    }));
+    showPreview();
+  } catch(e) { toast('Format JSON tidak valid: ' + e.message, 'err'); }
+}
+
+function parseLine(line) {
+  const result = []; let field = ''; let inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { if (inQ && line[i+1]==='"') { field += '"'; i++; } else inQ = !inQ; }
+    else if (c === ',' && !inQ) { result.push(field); field = ''; }
+    else field += c;
+  }
+  result.push(field);
+  return result;
+}
+
+function validateRow(row) {
+  const text = row.question_text || row.text || '';
+  const type = row.question_type || row.type || '';
+  const diff = row.difficulty || '';
+  if (!text) return 'err';
+  if (!['multiple_choice','true_false','essay'].includes(type)) return 'err';
+  if (!['easy','medium','hard'].includes(diff)) return 'warn';
+  if (type === 'multiple_choice' && !(row.option_a || row.options?.A)) return 'warn';
+  return 'ok';
+}
+
+function showPreview() {
+  document.getElementById('card-preview').style.display = '';
+  document.getElementById('parse-result').style.display = '';
+
+  const ok   = parsedRows.filter(r => r.status === 'ok').length;
+  const warn = parsedRows.filter(r => r.status === 'warn').length;
+  const err  = parsedRows.filter(r => r.status === 'err').length;
+
+  document.getElementById('ps-total').textContent = parsedRows.length;
+  document.getElementById('ps-ok').textContent    = ok;
+  document.getElementById('ps-warn').textContent  = warn;
+  document.getElementById('ps-err').textContent   = err;
+
+  renderPreviewTable();
+}
+
+function renderPreviewTable() {
+  const filter   = document.getElementById('filter-preview').value;
+  const filtered = filter === 'all' ? parsedRows : parsedRows.filter(r => r.status === filter);
+  document.getElementById('preview-count').textContent = `${filtered.length} soal`;
+
+  const typeLabels = {multiple_choice:'Pilihan Ganda',true_false:'Benar/Salah',essay:'Esai'};
+  const diffLabels = {easy:'Mudah',medium:'Sedang',hard:'Sulit'};
+  const stMap = {ok:{cls:'b-green',label:'Valid'},warn:{cls:'b-amber',label:'Warning'},err:{cls:'b-red',label:'Error'}};
+
+  document.getElementById('tbody-preview').innerHTML = filtered.map(r => {
+    const s   = stMap[r.status];
+    const rowCls = {ok:'row-ok',warn:'row-warn',err:'row-err'}[r.status];
+    return `<tr class="${rowCls}">
+      <td style="font-family:'JetBrains Mono',monospace;color:var(--ink3)">${r.row}</td>
+      <td class="td-main">${r.text.substring(0,50)}${r.text.length>50?'...':''}</td>
+      <td>${typeLabels[r.type]||r.type}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-weight:700">${r.answer}</td>
+      <td><span class="badge ${{easy:'b-green',medium:'b-amber',hard:'b-red'}[r.diff]||'b-gray'}">${diffLabels[r.diff]||r.diff}</span></td>
+      <td><span class="badge ${s.cls}">${s.label}</span></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--ink3)">Tidak ada data</td></tr>`;
+}
+
+async function eksekusiImport() {
+  const skipErrors   = document.getElementById('skip-errors').checked;
+  const toImport     = skipErrors ? parsedRows.filter(r => r.status !== 'err') : parsedRows;
+  const validRows    = toImport.filter(r => r.status !== 'err');
+
+  if (!validRows.length) { toast('Tidak ada soal valid untuk diimport','err'); return; }
+
+  document.getElementById('btn-import').disabled = true;
+  document.getElementById('btn-import').textContent = 'Mengimport...';
+
+  try {
+    const questions = validRows.map(r => ({
+      question_text:  r.raw.question_text || r.raw.text,
+      question_type:  r.raw.question_type || r.raw.type || 'multiple_choice',
+      options:        r.raw.options || {A:r.raw.option_a,B:r.raw.option_b,C:r.raw.option_c,D:r.raw.option_d},
+      correct_answer: r.raw.correct_answer || r.raw.answer,
+      difficulty:     r.raw.difficulty || 'medium',
+      weight:         parseFloat(r.raw.weight) || 1,
+      explanation:    r.raw.explanation || null,
+      category_id:    document.getElementById('import-category').value || null,
+    }));
+    await api('POST', '/guru/questions/bulk', {questions});
+  } catch(_) {}
+
+  // Add to history
+  DEMO_HISTORY.unshift({id:Date.now(),filename:'imported-file.csv',total_rows:parsedRows.length,success_count:validRows.length,error_count:parsedRows.length-validRows.length,status:'completed',created:new Date().toLocaleString('id-ID')});
+  renderHistory(DEMO_HISTORY);
+
+  toast(`${validRows.length} soal berhasil diimport`, 'ok');
+  document.getElementById('btn-import').disabled = false;
+  document.getElementById('btn-import').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Import Soal';
+  document.getElementById('card-preview').style.display = 'none';
+  parsedRows = [];
+}
+
+/* ── ARCHIVE ── */
+function filterArsip(filter, btn) {
+  archiveFilter = filter;
+  document.querySelectorAll('[data-filter]').forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
+  renderArchive(DEMO_ARCHIVE);
+}
+
+function renderArchive(data) {
+  const filtered = archiveFilter === 'all' ? data : data.filter(a => a.type === archiveFilter);
+  const typeMap  = {template:{icon:'📋',color:'var(--navy)',bg:'var(--navy-light)',badge:'b-navy',label:'Template'},backup:{icon:'💾',color:'var(--green)',bg:'var(--green-light)',badge:'b-green',label:'Backup'},archive:{icon:'📦',color:'var(--ink3)',bg:'var(--bg)',badge:'b-gray',label:'Arsip'}};
+
+  document.getElementById('archive-grid').innerHTML = filtered.map(a => {
+    const t = typeMap[a.type] || typeMap.archive;
+    return `<div class="archive-card">
+      <div class="ac-icon" style="background:${t.bg}"><svg viewBox="0 0 24 24" fill="none" stroke="${t.color}" stroke-width="2" style="width:20px;height:20px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+      <span class="badge ${t.badge}" style="margin-bottom:8px">${t.label}</span>
+      <div class="ac-title">${a.title}</div>
+      <div class="ac-meta">${a.desc||'—'}</div>
+      <div class="ac-stats">
+        <div class="ac-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>${a.question_count} soal</div>
+        <div class="ac-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Dipakai ${a.used_count}×</div>
+      </div>
+      <div class="ac-actions">
+        <button class="btn btn-primary" style="flex:1;justify-content:center;font-size:12px" onclick="gunakanTemplate(${a.id})">Gunakan</button>
+        <button class="btn btn-ghost" style="font-size:12px" onclick="exportTemplate(${a.id})">Export</button>
+        <button class="icon-btn danger" onclick="hapusTemplate(${a.id},'${a.title}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+      </div>
+    </div>`;
+  }).join('') || '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--ink3)">Tidak ada arsip dalam kategori ini</div>';
+}
+
+function gunakanTemplate(id) {
+  const a = DEMO_ARCHIVE.find(x => x.id === id);
+  a.used_count++;
+  toast(`Template "${a.title}" siap digunakan`, 'ok');
+}
+
+function exportTemplate(id) {
+  const a = DEMO_ARCHIVE.find(x => x.id === id);
+  toast(`Mengekspor "${a.title}"...`, 'ok');
+}
+
+function hapusTemplate(id, title) {
+  confirm(`Hapus template "${title}"?`, () => {
+    const idx = DEMO_ARCHIVE.findIndex(x => x.id === id);
+    if (idx > -1) DEMO_ARCHIVE.splice(idx, 1);
+    renderArchive(DEMO_ARCHIVE);
+    toast('Template dihapus', 'ok');
+  });
+}
+
+function simpanTemplate() {
+  const title = document.getElementById('tmpl-title').value.trim();
+  if (!title) { toast('Judul wajib diisi', 'err'); return; }
+  DEMO_ARCHIVE.unshift({id:Date.now(),title,desc:document.getElementById('tmpl-desc').value,type:document.getElementById('tmpl-type').value,question_count:0,used_count:0,created:new Date().toISOString().split('T')[0]});
+  renderArchive(DEMO_ARCHIVE);
+  closeModal('modal-save-template');
+  toast('Template disimpan', 'ok');
+}
+
+/* ── HISTORY ── */
+function renderHistory(data) {
+  const statusMap = {completed:{label:'Selesai',cls:'b-green',icon:'✓'},failed:{label:'Gagal',cls:'b-red',icon:'✗'},processing:{label:'Proses',cls:'b-amber',icon:'⋯'}};
+  document.getElementById('history-list').innerHTML = data.map(h => {
+    const s = statusMap[h.status] || statusMap.processing;
+    return `<div class="history-item">
+      <div class="hi-icon" style="background:${h.status==='completed'?'var(--green-light)':'var(--red-light)'}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="${h.status==='completed'?'var(--green)':'var(--red)'}" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </div>
+      <div style="flex:1">
+        <div class="hi-name">${h.filename}</div>
+        <div class="hi-meta">${h.created}</div>
+      </div>
+      <div class="hi-stats">
+        <div class="hi-success">${h.success_count} berhasil</div>
+        ${h.error_count > 0 ? `<div class="hi-err">${h.error_count} error</div>` : ''}
+      </div>
+      <span class="badge ${s.cls}" style="margin-left:10px">${s.label}</span>
+    </div>`;
+  }).join('') || '<div style="padding:24px;text-align:center;color:var(--ink3)">Belum ada riwayat import</div>';
+}
+
+/* ── TEMPLATE DOWNLOAD ── */
+function downloadTemplate(format) {
+  if (format === 'csv') {
+    const csv = `question_text,question_type,option_a,option_b,option_c,option_d,correct_answer,difficulty,weight,explanation,category
+"Hitunglah nilai x jika 2x+5=11",multiple_choice,"x=2","x=3","x=4","x=5",B,easy,1,"2x=6, x=3",Aljabar
+"Nilai sin 30° adalah",multiple_choice,"0.25","0.5","0.75","1.0",B,medium,1,"sin30°=0.5",Trigonometri
+"Apakah 0 adalah bilangan asli?",true_false,,,,,false,easy,1,"Bilangan asli dimulai dari 1",`;
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+    a.download = 'template-import-soal.csv';
+    a.click();
+  } else {
+    const json = JSON.stringify({questions:[
+      {question_text:'Hitunglah nilai x jika 2x+5=11',question_type:'multiple_choice',options:{A:'x=2',B:'x=3',C:'x=4',D:'x=5'},correct_answer:'B',difficulty:'easy',weight:1,explanation:'2x=6, x=3',category:'Aljabar'},
+      {question_text:'Apakah 0 adalah bilangan asli?',question_type:'true_false',correct_answer:'false',difficulty:'easy',weight:1,explanation:'Bilangan asli dimulai dari 1'},
+    ]}, null, 2);
+    const a = document.createElement('a');
+    a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
+    a.download = 'template-import-soal.json';
+    a.click();
+  }
+  toast(`Template ${format.toUpperCase()} diunduh`, 'ok');
+}
+
+async function loadCategories() {
+  try {
+    const data = await api('GET', '/guru/questions/categories');
+    const sel  = document.getElementById('import-category');
+    (data.data || []).forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id; opt.textContent = c.name;
+      sel.appendChild(opt);
+    });
+  } catch(_) {}
+}
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+</script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hasil Ujian — ExamCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--navy:#1a3c6e;--navy-dark:#122a52;--navy-light:#e8eef7;--bg:#f0f2f5;--surface:#fff;--border:#e2e6ea;--ink:#1a2332;--ink2:#4a5568;--ink3:#9aa5b4;--green:#2e7d32;--green-light:#e8f5e9;--red:#c62828;--red-light:#ffebee;--amber:#f59e0b;--amber-light:#fffbeb;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+.topbar{height:60px;background:var(--navy);display:flex;align-items:center;padding:0 18px;gap:10px;position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;color:#fff;text-decoration:none}
+.brand-icon{width:34px;height:34px;background:rgba(255,255,255,.15);border-radius:8px;display:grid;place-items:center}
+.brand-icon svg{width:17px;height:17px;fill:#fff}
+.topbar-r{margin-left:auto;display:flex;gap:8px}
+.tb-btn{padding:7px 12px;background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:7px;cursor:pointer;font-size:12px;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:5px}
+/* HERO */
+.result-hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-dark) 100%);padding:28px 18px;text-align:center;overflow:hidden;position:relative}
+.result-hero::before{content:'';position:absolute;right:-60px;top:-60px;width:220px;height:220px;background:rgba(255,255,255,.04);border-radius:50%}
+.score-circle{width:110px;height:110px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 14px;border:5px solid;position:relative;z-index:1}
+.score-val{font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:700;line-height:1}
+.result-status{font-size:18px;font-weight:700;color:#fff;margin-bottom:4px}
+.result-sub{font-size:12.5px;color:rgba(255,255,255,.6)}
+.rs-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:18px;max-width:480px;margin-left:auto;margin-right:auto}
+.rs-box{background:rgba(255,255,255,.09);border-radius:9px;padding:10px;border:1px solid rgba(255,255,255,.1)}
+.rs-val{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:#fff;line-height:1}
+.rs-label{font-size:10px;color:rgba(255,255,255,.55);margin-top:3px}
+/* CONTENT */
+.main{max-width:720px;margin:0 auto;padding:18px 16px 60px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.card-head{padding:13px 18px;border-bottom:1px solid var(--border);background:#f7f9fc;display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:8px}
+.card-title svg{width:15px;height:15px;color:var(--ink3)}
+.card-body{padding:18px}
+.info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.info-box{background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:11px}
+.info-box-label{font-size:10.5px;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+.info-box-val{font-size:14px;font-weight:600;color:var(--ink)}
+.filter-row{display:flex;gap:7px;padding:12px 18px;border-bottom:1px solid var(--border);overflow-x:auto;background:var(--bg)}
+.fchip{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--ink3);transition:all .15s;flex-shrink:0}
+.fchip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+/* REVIEW */
+.ri{padding:16px 18px;border-bottom:1px solid var(--border)}
+.ri:last-child{border-bottom:none}
+.ri-hdr{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}
+.ri-num{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;flex-shrink:0}
+.ri-q{font-size:14px;line-height:1.7;flex:1}
+.ri-opts{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.ri-opt{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);font-size:13px}
+.ri-opt.ok-opt{background:var(--green-light);border-color:rgba(46,125,50,.3);color:var(--green)}
+.ri-opt.ng-opt{background:var(--red-light);border-color:rgba(198,40,40,.2);color:var(--red)}
+.ri-opt-key{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;width:22px;text-align:center;flex-shrink:0}
+.ri-ans-row{display:flex;gap:8px;font-size:12.5px;margin-bottom:8px;flex-wrap:wrap;align-items:center}
+.ri-bdg{padding:3px 10px;border-radius:20px;font-weight:600;font-size:11.5px}
+.ri-expl{background:var(--navy-light);border:1px solid rgba(26,60,110,.15);border-radius:9px;padding:11px 13px;display:flex;gap:9px}
+.ri-expl svg{width:14px;height:14px;color:var(--navy);flex-shrink:0;margin-top:2px}
+.ri-expl-txt{font-size:12.5px;color:var(--navy);line-height:1.6}
+.btn-print{display:flex;align-items:center;gap:7px;padding:8px 14px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer}
+.empty{text-align:center;padding:40px;color:var(--ink3);font-size:13px}
+@media print{.topbar,.filter-row,.btn-print{display:none}.main{padding-top:0}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a href="siswa-dashboard.html" class="brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg></div>
+    ExamCore
+  </a>
+  <div class="topbar-r">
+    <button class="tb-btn" onclick="location.href='riwayat-ujian.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="15 18 9 12 15 6"/></svg>Riwayat</button>
+    <button class="tb-btn" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Cetak</button>
+  </div>
+</header>
+<!-- HERO -->
+<div class="result-hero">
+  <div class="score-circle" id="score-circle">
+    <span class="score-val" id="score-val">88</span>
+  </div>
+  <div class="result-status" id="result-status">🎉 Selamat, Anda Lulus!</div>
+  <div class="result-sub" id="result-sub">UH 1 — Aljabar Dasar · KKM 70</div>
+  <div class="rs-row">
+    <div class="rs-box"><div class="rs-val">8</div><div class="rs-label">Benar</div></div>
+    <div class="rs-box"><div class="rs-val">1</div><div class="rs-label">Salah</div></div>
+    <div class="rs-box"><div class="rs-val">1</div><div class="rs-label">Kosong</div></div>
+    <div class="rs-box"><div class="rs-val">20m</div><div class="rs-label">Durasi</div></div>
+  </div>
+</div>
+<div class="main">
+  <!-- Info -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+        Informasi Ujian
+      </div>
+      <button class="btn-print" onclick="window.print()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Cetak / PDF
+      </button>
+    </div>
+    <div class="card-body">
+      <div class="info-grid">
+        <div class="info-box"><div class="info-box-label">Siswa</div><div class="info-box-val">Ahmad Naufal</div></div>
+        <div class="info-box"><div class="info-box-label">NIS</div><div class="info-box-val" style="font-family:'JetBrains Mono',monospace">2024001</div></div>
+        <div class="info-box"><div class="info-box-label">Kelas</div><div class="info-box-val">X IPA 1</div></div>
+        <div class="info-box"><div class="info-box-label">Guru</div><div class="info-box-val">Budi Santoso, S.Pd</div></div>
+        <div class="info-box"><div class="info-box-label">Ujian</div><div class="info-box-val">UH 1 — Aljabar Dasar</div></div>
+        <div class="info-box"><div class="info-box-label">Mapel</div><div class="info-box-val">Matematika</div></div>
+        <div class="info-box"><div class="info-box-label">Nilai</div><div class="info-box-val" style="font-family:'JetBrains Mono',monospace;color:var(--green)">88</div></div>
+        <div class="info-box"><div class="info-box-label">Passing Grade</div><div class="info-box-val" style="font-family:'JetBrains Mono',monospace">70</div></div>
+        <div class="info-box"><div class="info-box-label">Tahun Ajaran</div><div class="info-box-val">2024/2025 Ganjil</div></div>
+        <div class="info-box"><div class="info-box-label">Dikumpulkan</div><div class="info-box-val">10/05/2026 09:15</div></div>
+      </div>
+    </div>
+  </div>
+  <!-- Review -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Pembahasan Soal
+      </div>
+      <span id="review-count" style="font-size:11.5px;color:var(--ink3)">10 soal</span>
+    </div>
+    <div class="filter-row">
+      <span class="fchip active" onclick="setFilter('all',this)">Semua</span>
+      <span class="fchip" onclick="setFilter('correct',this)">Benar</span>
+      <span class="fchip" onclick="setFilter('wrong',this)">Salah</span>
+      <span class="fchip" onclick="setFilter('unanswered',this)">Tidak Dijawab</span>
+    </div>
+    <div id="review-list"></div>
+  </div>
+</div>
+<script src="auth.js"></script>
+<script>
+const ANSWERS=[
+  {no:1,q:'Berapakah nilai x jika 2x + 5 = 11?',type:'multiple_choice',opts:{A:'x = 2',B:'x = 3',C:'x = 4',D:'x = 5'},correct:'B',user:'B',status:'correct',expl:'2x = 6, maka x = 3'},
+  {no:2,q:'Tentukan nilai x jika 3x - 7 = 14',type:'multiple_choice',opts:{A:'x = 5',B:'x = 6',C:'x = 7',D:'x = 8'},correct:'C',user:'C',status:'correct',expl:'3x = 21, maka x = 7'},
+  {no:3,q:'Berapa hasil dari 5² + 4²?',type:'multiple_choice',opts:{A:'36',B:'41',C:'45',D:'61'},correct:'B',user:'C',status:'wrong',expl:'25 + 16 = 41, bukan 45'},
+  {no:4,q:'Jika f(x) = 2x + 3, maka f(4) adalah?',type:'multiple_choice',opts:{A:'10',B:'11',C:'12',D:'14'},correct:'B',user:'B',status:'correct',expl:'f(4) = 2(4)+3 = 11'},
+  {no:5,q:'Apakah bilangan prima selalu ganjil?',type:'true_false',opts:{true:'Benar',false:'Salah'},correct:'false',user:'false',status:'correct',expl:'Bilangan 2 adalah prima namun genap'},
+  {no:6,q:'Nilai sin 30° adalah 0.5',type:'true_false',opts:{true:'Benar',false:'Salah'},correct:'true',user:'true',status:'correct',expl:'sin 30° = 1/2 = 0.5'},
+  {no:7,q:'Integral dari 2x dx adalah?',type:'multiple_choice',opts:{A:'x² + C',B:'2x² + C',C:'x + C',D:'½x² + C'},correct:'A',user:'A',status:'correct',expl:'∫2x dx = x² + C'},
+  {no:8,q:'Nilai cos 60° adalah?',type:'multiple_choice',opts:{A:'0',B:'0.25',C:'0.5',D:'1'},correct:'C',user:'C',status:'correct',expl:'cos 60° = 1/2 = 0.5'},
+  {no:9,q:'Selesaikan sistem persamaan: x+y=5 dan x-y=1',type:'essay',opts:null,correct:null,user:'x=3, y=2',status:'correct',expl:'Dari kedua persamaan: 2x=6 → x=3, y=2'},
+  {no:10,q:"Tentukan turunan dari f(x) = x³ + 2x²",type:'essay',opts:null,correct:null,user:null,status:'unanswered',expl:"f'(x) = 3x² + 4x"},
+];
+let cfil='all';
+// Hero
+document.addEventListener('DOMContentLoaded',()=>{
+  const circle=document.getElementById('score-circle');
+  circle.style.background='rgba(76,175,80,.15)';circle.style.borderColor='#4caf50';
+  document.getElementById('score-val').style.color='#4caf50';
+  renderReview();
+});
+function setFilter(f,el){cfil=f;document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('active'));el.classList.add('active');renderReview();}
+function renderReview(){
+  const list=ANSWERS.filter(a=>cfil==='all'||a.status===cfil);
+  document.getElementById('review-count').textContent=`${list.length} soal`;
+  if(!list.length){document.getElementById('review-list').innerHTML='<div class="empty">Tidak ada soal untuk filter ini</div>';return;}
+  document.getElementById('review-list').innerHTML=list.map((a,i)=>{
+    const c=a.status==='correct'?'var(--green)':a.status==='wrong'?'var(--red)':'#92400e';
+    const bg=a.status==='correct'?'var(--green-light)':a.status==='wrong'?'var(--red-light)':'var(--amber-light)';
+    let opts='';
+    if(a.opts){opts=`<div class="ri-opts">${Object.entries(a.opts).map(([k,v])=>{
+      const ok=k===a.correct;const ng=k===a.user&&!ok;
+      const cls=ok?'ok-opt':ng?'ng-opt':'';
+      const icon=ok?'<svg style="margin-left:auto;width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>':ng?'<svg style="margin-left:auto;width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>':'';
+      return `<div class="ri-opt ${cls}"><span class="ri-opt-key" style="color:${ok?'var(--green)':ng?'var(--red)':'var(--ink3)'}">${k}</span><span>${v}</span>${icon}</div>`;
+    }).join('')}</div>`;}
+    const ub=a.user??null;const cb=a.correct;
+    let ans='';
+    if(a.type!=='essay'){
+      const uc=a.status==='correct'?'var(--green)':'var(--red)';
+      const ubg=a.status==='correct'?'var(--green-light)':ub?'var(--red-light)':'var(--amber-light)';
+      ans=`<div class="ri-ans-row"><span>Jawaban Anda:</span><span class="ri-bdg" style="background:${ubg};color:${uc}">${ub??'Tidak dijawab'}</span>${!a.status==='correct'&&cb?`<span>Kunci:</span><span class="ri-bdg" style="background:var(--green-light);color:var(--green)">${cb}</span>`:''}</div>`;
+    }else{ans=`<div class="ri-ans-row"><span>Jawaban:</span><span style="font-size:12.5px;color:var(--ink2);font-style:${ub?'normal':'italic'}">${ub??'Tidak dijawab'}</span></div>`;}
+    const expl=a.expl?`<div class="ri-expl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg><div class="ri-expl-txt"><strong>Pembahasan:</strong> ${a.expl}</div></div>`:'';
+    return `<div class="ri">
+      <div class="ri-hdr">
+        <div class="ri-num" style="background:${bg};color:${c}">${ANSWERS.indexOf(a)+1}</div>
+        <div class="ri-q">${a.q}</div>
+      </div>
+      ${opts}${ans}${expl}
+    </div>`;
+  }).join('');
+}
+</script>
+</body>
+</html>
