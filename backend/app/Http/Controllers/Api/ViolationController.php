@@ -7,6 +7,7 @@ use App\Models\Violation;
 use App\Services\GradingService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ViolationController extends Controller
 {
@@ -16,7 +17,7 @@ class ViolationController extends Controller
     {
         $data = $request->validate([
             'session_id'     => 'required|exists:exam_sessions,id',
-            'violation_type' => 'required|in:tab_switch,fullscreen_exit,copy_paste,blur,devtools',
+            'violation_type' => 'required|in:tab_switch,fullscreen_exit,copy_paste,blur,devtools,mouse_leave,window_resize,wrong_password',
         ]);
 
         $session = ExamSession::findOrFail($data['session_id']);

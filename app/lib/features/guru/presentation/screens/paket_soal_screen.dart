@@ -38,6 +38,12 @@ class _PaketSoalScreenState extends ConsumerState<PaketSoalScreen> {
             ref.invalidate(_subjectsProvider);
             if (_selectedSubjectId != null) ref.invalidate(_soalBySubjectProvider(_selectedSubjectId!));
           }),
+          if (_selectedSubjectId != null)
+            IconButton(
+              icon: const Icon(Icons.file_upload_outlined),
+              tooltip: 'Import dari Excel/CSV',
+              onPressed: () => _importSoalFlow(context),
+            ),
         ],
       ),
       body: _selectedSubjectId != null ? _soalList() : _subjectList(),
@@ -208,6 +214,19 @@ class _PaketSoalScreenState extends ConsumerState<PaketSoalScreen> {
         ),
       ],
     ));
+  }
+
+  // ── IMPORT SOAL ──────────────────────────────────────────
+  void _importSoalFlow(BuildContext ctx) {
+    showModalBottomSheet(
+      context: ctx,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ImportSoalSheet(
+        subjectId: _selectedSubjectId!,
+        onImported: () => ref.invalidate(_soalBySubjectProvider(_selectedSubjectId!)),
+      ),
+    );
   }
 
   // ── SOAL FORM ──────────────────────────────────────────
@@ -457,3 +476,370 @@ class _PaketSoalScreenState extends ConsumerState<PaketSoalScreen> {
     );
   }
 }
+
+// ── IMPORT SOAL SHEET ─────────────────────────────────────
+class _ImportSoalSheet extends StatefulWidget {
+  final int subjectId;
+  final VoidCallback onImported;
+  const _ImportSoalSheet({required this.subjectId, required this.onImported});
+
+  @override
+  State<_ImportSoalSheet> createState() => _ImportSoalSheetState();
+}
+
+class _ImportSoalSheetState extends State<_ImportSoalSheet> {
+  // File state
+  String? _filePath;
+  Uint8List? _fileBytes;
+  String? _fileName;
+
+  ScreenState _screenState = ScreenState.pick;
+
+  // Preview data
+  QuestionImportPreview? _preview;
+
+  // Import result
+  QuestionImportModel? _result;
+
+  bool _loading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * ( _screenState == ScreenState.pick ? .45 : .85 ),
+      decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      child: Column(children: [
+        Container(width: 40, height: 4, margin: const EdgeInsets.symmetric(vertical: 12), decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
+        Padding(padding: const EdgeInsets.fromLTRB(18, 0, 18, 12), child: Row(children: [
+          Text(_titleText, style: AppTextStyles.h4),
+          const Spacer(),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Tutup')),
+        ])),
+        const Divider(height: 1),
+        Expanded(child: _buildBody()),
+      ]),
+    );
+  }
+
+  String get _titleText {
+    switch (_screenState) {
+      case ScreenState.pick: return 'Import Soal';
+      case ScreenState.preview: return 'Preview Import';
+      case ScreenState.result: return 'Hasil Import';
+    }
+  }
+
+  Widget _buildBody() {
+    switch (_screenState) {
+      case ScreenState.pick: return _pickFileView();
+      case ScreenState.preview: return _previewView();
+      case ScreenState.result: return _resultView();
+    }
+  }
+
+  // ─── PICK FILE ──────────────────────────────────────────
+  Widget _pickFileView() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(18),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: AppColors.navyLight, borderRadius: BorderRadius.circular(9)),
+          child: Row(children: [
+            const Icon(Icons.info_outline, size: 16, color: AppColors.navy),
+            const SizedBox(width: 8),
+            Expanded(child: Text('Upload file Excel (.xlsx) atau CSV. Gunakan template untuk format yang benar.', style: AppTextStyles.bodySmall.copyWith(color: AppColors.navy))),
+          ]),
+        ),
+        const SizedBox(height: 16),
+        // Drop file area
+        GestureDetector(
+          onTap: _pickFile,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.border2, width: 2, strokeAlign: BorderSide.strokeAlignInside),
+              borderRadius: BorderRadius.circular(12),
+              color: AppColors.bg,
+            ),
+            child: Column(children: [
+              Icon(Icons.cloud_upload_outlined, size: 40, color: AppColors.navy.withValues(alpha: .4)),
+              const SizedBox(height: 10),
+              Text('Ketuk untuk pilih file', style: AppTextStyles.body.copyWith(color: AppColors.ink3)),
+              const SizedBox(height: 4),
+              Text('.xlsx, .xls, .csv — Maks 10 MB', style: AppTextStyles.bodySmall),
+            ]),
+          ),
+        ),
+        if (_filePath != null || _fileName != null) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: AppColors.greenLight, borderRadius: BorderRadius.circular(8)),
+            child: Row(children: [
+              const Icon(Icons.check_circle, size: 16, color: AppColors.green),
+              const SizedBox(width: 8),
+              Expanded(child: Text(_fileName ?? '', style: AppTextStyles.bodySmall.copyWith(color: AppColors.green, fontWeight: FontWeight.w600))),
+              IconButton(icon: const Icon(Icons.close, size: 14), onPressed: () => setState(() { _filePath = null; _fileBytes = null; _fileName = null; })),
+            ]),
+          ),
+        ],
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _downloadTemplate,
+            icon: const Icon(Icons.download, size: 16),
+            label: const Text('Download Template'),
+          ),
+        ),
+        const Spacer(),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: (_filePath == null && _fileBytes == null) || _loading ? null : _doPreview,
+            child: _loading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white)) : const Text('Preview & Import'),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  // ─── PREVIEW ────────────────────────────────────────────
+  Widget _previewView() {
+    if (_preview == null) return const Center(child: CircularProgressIndicator());
+    final p = _preview!;
+    return Column(children: [
+      // Summary bar
+      Container(
+        padding: const EdgeInsets.all(14),
+        color: AppColors.bg,
+        child: Row(children: [
+          _statChip('${p.totalRows}', 'Total Baris', AppColors.navy),
+          const SizedBox(width: 8),
+          _statChip('${p.validCount}', 'Valid', AppColors.green),
+          const SizedBox(width: 8),
+          _statChip('${p.errorCount}', 'Error', p.errorCount > 0 ? AppColors.red : AppColors.ink3),
+        ]),
+      ),
+      // List
+      Expanded(child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        itemCount: p.preview.length + 1, // +1 = action button
+        itemBuilder: (_, i) {
+          if (i == p.preview.length) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _loading ? null : _executeImport,
+                  child: _loading
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                      : Text('Import ${p.validCount} Soal'),
+                ),
+              ),
+            );
+          }
+          return _previewRow(p.preview[i]);
+        },
+      )),
+    ]);
+  }
+
+  Widget _previewRow(QuestionImportPreviewRow row) {
+    final isOk = row.status == 'ok';
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: isOk ? Colors.white : AppColors.redLight,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: isOk ? AppColors.border : AppColors.red.withValues(alpha: .3)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: isOk ? AppColors.greenLight : AppColors.redLight,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text('Baris ${row.row}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, fontFamily: 'JetBrainsMono')),
+          ),
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: isOk ? AppColors.green.withValues(alpha: .1) : AppColors.red.withValues(alpha: .1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(isOk ? 'OK' : 'Error', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: isOk ? AppColors.green : AppColors.red)),
+          ),
+          if (!isOk && row.errors != null && row.errors!.isNotEmpty) ...[
+            const Spacer(),
+            const Icon(Icons.warning_amber, size: 14, color: AppColors.red),
+          ],
+        ]),
+        const SizedBox(height: 6),
+        if (isOk) ...[
+          Text(row.questionText ?? '', maxLines: 2, overflow: TextOverflow.ellipsis, style: AppTextStyles.bodySmall.copyWith(color: AppColors.ink, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 4),
+          Row(children: [
+            if (row.options != null) ...[
+              ...row.options!.entries.take(4).map((e) => Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: e.key == row.correctAnswer ? AppColors.green.withValues(alpha: .15) : AppColors.bg,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: e.key == row.correctAnswer ? AppColors.green : AppColors.border, width: e.key == row.correctAnswer ? 1 : .5),
+                  ),
+                  child: Text('${e.key}. ${e.value}', style: TextStyle(fontSize: 9, fontWeight: e.key == row.correctAnswer ? FontWeight.w600 : FontWeight.w400, color: e.key == row.correctAnswer ? AppColors.green : AppColors.ink3)),
+                ),
+              )),
+            ],
+            if (row.difficulty != null) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                decoration: BoxDecoration(
+                  color: {'easy': AppColors.green, 'medium': AppColors.amber, 'hard': AppColors.red}[row.difficulty]?.withValues(alpha: .1) ?? AppColors.bg,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text({'easy': 'Mudah', 'medium': 'Sedang', 'hard': 'Sulit'}[row.difficulty] ?? row.difficulty!, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ]),
+        ] else ...[
+          ...(row.errors ?? []).map((e) => Padding(
+            padding: const EdgeInsets.only(bottom: 2),
+            child: Text(e, style: const TextStyle(fontSize: 11, color: AppColors.red)),
+          )),
+        ],
+      ]),
+    );
+  }
+
+  Widget _statChip(String value, String label, Color color) {
+    return Expanded(child: Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(color: color.withValues(alpha: .08), borderRadius: BorderRadius.circular(8)),
+      child: Column(children: [
+        Text(value, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18, color: color, fontFamily: 'JetBrainsMono')),
+        Text(label, style: TextStyle(fontSize: 10, color: color)),
+      ]),
+    ));
+  }
+
+  // ─── RESULT ─────────────────────────────────────────────
+  Widget _resultView() {
+    final r = _result;
+    if (r == null) return const SizedBox.shrink();
+    final hasError = r.errorCount > 0;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(18),
+      child: Column(children: [
+        const SizedBox(height: 20),
+        Icon(hasError ? Icons.warning_amber_rounded : Icons.check_circle_outline, size: 64, color: hasError ? AppColors.amber : AppColors.green),
+        const SizedBox(height: 12),
+        Text(r.successCount > 0 ? 'Import Berhasil!' : 'Import Gagal', style: AppTextStyles.h2.copyWith(color: hasError ? AppColors.amber : AppColors.green)),
+        const SizedBox(height: 8),
+        Text('${r.successCount} soal berhasil diimpor', style: AppTextStyles.body),
+        if (r.errorCount > 0) ...{
+          Text('${r.errorCount} error', style: AppTextStyles.body.copyWith(color: AppColors.red)),
+        },
+        const SizedBox(height: 16),
+        if (r.errors != null && r.errors!.isNotEmpty) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: AppColors.redLight, borderRadius: BorderRadius.circular(8)),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('Detail Error:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.red)),
+              const SizedBox(height: 6),
+              ...r.errors!.map((e) => Padding(padding: const EdgeInsets.only(bottom: 4), child: Text(e, style: const TextStyle(fontSize: 11, color: AppColors.red)))),
+            ]),
+          ),
+        ],
+        const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () { widget.onImported(); Navigator.pop(context); },
+            child: const Text('Selesai'),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  // ─── ACTIONS ────────────────────────────────────────────
+  Future<void> _pickFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['xlsx', 'xls', 'csv'],
+      allowMultiple: false,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final f = result.files.single;
+    setState(() {
+      if (f.bytes != null) {
+        _fileBytes = f.bytes;
+        _filePath = null;
+      } else if (f.path != null) {
+        _filePath = f.path;
+        _fileBytes = null;
+      }
+      _fileName = f.name;
+    });
+  }
+
+  Future<void> _downloadTemplate() async {
+    try {
+      await GuruRepository().downloadTemplate();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Template tersimpan')));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
+  Future<void> _doPreview() async {
+    setState(() => _loading = true);
+    try {
+      final repo = GuruRepository();
+      QuestionImportPreview p;
+      if (_fileBytes != null) {
+        p = await repo.previewImportBytes(_fileBytes!, _fileName ?? 'file.xlsx');
+      } else {
+        p = await repo.previewImport(_filePath!, _fileName ?? 'file.xlsx');
+      }
+      setState(() { _preview = p; _screenState = ScreenState.preview; _loading = false; });
+    } catch (e) {
+      setState(() => _loading = false);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
+  Future<void> _executeImport() async {
+    setState(() => _loading = true);
+    try {
+      final repo = GuruRepository();
+      QuestionImportModel r;
+      if (_fileBytes != null) {
+        r = await repo.executeImportBytes(_fileBytes!, _fileName ?? 'file.xlsx', subjectId: widget.subjectId);
+      } else {
+        r = await repo.executeImport(_filePath!, _fileName ?? 'file.xlsx', subjectId: widget.subjectId);
+      }
+      setState(() { _result = r; _screenState = ScreenState.result; _loading = false; });
+    } catch (e) {
+      setState(() => _loading = false);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+}
+
+enum ScreenState { pick, preview, result }

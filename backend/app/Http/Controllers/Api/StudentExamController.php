@@ -297,4 +297,66 @@ class StudentExamController extends Controller
     {
         if ($session->student_id !== $request->user()->id) abort(403, 'Akses ditolak.');
     }
+
+    /* ── Verifikasi password untuk keluar dari ujian ───────── */
+    public function verifyExit(Request $request)
+    {
+        $data = $request->validate([
+            'password'   => 'required|string',
+            'session_id' => 'nullable|exists:exam_sessions,id',
+            'action'     => 'nullable|string|in:exit_exam',
+        ]);
+
+        $user   = $request->user();
+        $action = $data['action'] ?? 'exit_exam';
+
+        // Verifikasi password user itu sendiri (siswa)
+        $valid = \Illuminate\Support\Facades\Hash::check($data['password'], $user->password);
+
+        // Juga cek apakah ini password guru/admin yang valid
+        if (!$valid) {
+            $admin = \App\Models\User::where('role', 'admin')->first();
+            if ($admin && \Illuminate\Support\Facades\Hash::check($data['password'], $admin->password)) {
+                $valid = true;
+            }
+        }
+
+        if (!$valid) {
+            $guru = \App\Models\User::where('role', 'guru')->first();
+            if ($guru && \Illuminate\Support\Facades\Hash::check($data['password'], $guru->password)) {
+                $valid = true;
+            }
+        }
+
+        if (!$valid) {
+            // Catat violation percobaan password salah
+            if ($data['session_id']) {
+                \App\Models\Violation::updateOrCreate(
+                    ['session_id' => $data['session_id'], 'violation_type' => 'wrong_password'],
+                    ['count' => \DB::raw('count + 1'), 'student_id' => $user->id]
+                );
+            }
+
+            return response()->json([
+                'valid'     => false,
+                'message'   => 'Password salah!',
+                'remaining' => $data['session_id']
+                    ? (5 - \App\Models\Violation::where('session_id', $data['session_id'])->where('violation_type', 'wrong_password')->sum('count'))
+                    : 5,
+            ], 422);
+        }
+
+        // Log aktivitas keluar
+        \App\Models\ActivityLog::create([
+            'user_id'     => $user->id,
+            'action'      => 'exam_exit_verified',
+            'description' => "{$user->name} keluar dari ujian (terverifikasi) — $action",
+            'metadata'    => json_encode(['session_id' => $data['session_id'], 'action' => $action]),
+        ]);
+
+        return response()->json([
+            'valid'   => true,
+            'message' => 'Password valid. Keluar diizinkan.',
+        ]);
+    }
 }

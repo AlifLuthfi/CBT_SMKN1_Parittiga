@@ -12,8 +12,11 @@ import '../../features/siswa/presentation/screens/riwayat_screen.dart';
 import '../../features/siswa/data/siswa_models.dart';
 import '../../features/admin/presentation/screens/admin_dashboard_screen.dart';
 import '../../features/admin/presentation/screens/user_management_screen.dart';
+import '../../features/admin/presentation/screens/role_user_list_screen.dart';
 import '../../features/admin/presentation/screens/admin_class_management_screen.dart';
 import '../../features/admin/presentation/screens/admin_exam_screen.dart';
+import '../../features/admin/presentation/screens/admin_violations_screen.dart';
+import '../../features/admin/presentation/screens/admin_activity_log_screen.dart';
 import '../../features/shared/presentation/screens/notification_screen.dart';
 import '../../features/shared/presentation/screens/profile_screen.dart';
 import '../storage/secure_storage.dart';
@@ -74,9 +77,14 @@ final appRouter = GoRouter(
       builder: (_, __, child) => _AdminShell(child: child),
       routes: [
         GoRoute(path: '/admin/dashboard', builder: (_, __) => const AdminDashboardScreen()),
-        GoRoute(path: '/admin/users',     builder: (_, __) => const UserManagementScreen()),
+        GoRoute(path: '/admin/users',         builder: (_, __) => const UserManagementScreen()),
+        GoRoute(path: '/admin/users/:role',    builder: (_, state) => RoleUserListScreen(
+          roleKey: state.pathParameters['role'] ?? 'siswa',
+        )),
         GoRoute(path: '/admin/kelas',     builder: (_, __) => const AdminClassManagementScreen()),
-        GoRoute(path: '/admin/exams',     builder: (_, __) => const AdminExamScreen()),
+        GoRoute(path: '/admin/exams',         builder: (_, __) => const AdminExamScreen()),
+        GoRoute(path: '/admin/violations',    builder: (_, __) => const AdminViolationsScreen()),
+        GoRoute(path: '/admin/activity-log',  builder: (_, __) => const AdminActivityLogScreen()),
       ],
     ),
     GoRoute(path: '/admin/notifications', builder: (_, __) => const NotificationScreen()),
@@ -206,7 +214,7 @@ class _GuruShell extends StatelessWidget {
           context.go(routes[i]);
         },
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard), label: 'Dashboard'),
+          NavigationDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard), label: 'Beranda'),
           NavigationDestination(icon: Icon(Icons.folder_outlined),    selectedIcon: Icon(Icons.folder),    label: 'Paket Soal'),
           NavigationDestination(icon: Icon(Icons.assignment_outlined),selectedIcon: Icon(Icons.assignment), label: 'Ujian'),
           NavigationDestination(icon: Icon(Icons.group_outlined),     selectedIcon: Icon(Icons.group),     label: 'Kelas'),
@@ -258,8 +266,8 @@ class _AdminShell extends StatelessWidget {
           context.go(routes[i]);
         },
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard), label: 'Dashboard'),
-          NavigationDestination(icon: Icon(Icons.people_outline),     selectedIcon: Icon(Icons.people),    label: 'Users'),
+          NavigationDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard), label: 'Beranda'),
+          NavigationDestination(icon: Icon(Icons.people_outline),     selectedIcon: Icon(Icons.people),    label: 'Pengguna'),
           NavigationDestination(icon: Icon(Icons.class_outlined),      selectedIcon: Icon(Icons.class_),     label: 'Kelas'),
           NavigationDestination(icon: Icon(Icons.assignment_outlined),selectedIcon: Icon(Icons.assignment), label: 'Ujian'),
         ],

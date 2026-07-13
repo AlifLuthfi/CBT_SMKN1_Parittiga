@@ -74,4 +74,30 @@ class AuthController extends Controller
         $request->user()->tokens()->delete();
         return response()->json(['message' => 'Logout dari semua perangkat.']);
     }
+
+    public function gantiPassword(Request $request)
+    {
+        $request->validate([
+            'current_password'      => 'required|string',
+            'password'              => 'required|min:8|confirmed',
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json(['message' => 'Password lama salah.'], 422);
+        }
+
+        $user->update(['password' => Hash::make($request->password)]);
+
+        ActivityLog::create([
+            'user_id'    => $user->id,
+            'action'     => 'ganti_password',
+            'description'=> "{$user->name} mengganti password",
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        return response()->json(['message' => 'Password berhasil diubah.']);
+    }
 }

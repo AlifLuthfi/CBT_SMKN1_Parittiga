@@ -102,7 +102,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: ElevatedButton(
               onPressed: _gantiPassword,
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy),
-              child: const Text('Update Password'),
+              child: const Text('Perbarui Password'),
             ),
           ),
         ]),
@@ -180,7 +180,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           child: OutlinedButton.icon(
             onPressed: _logout,
             icon: const Icon(Icons.logout, size: 18, color: AppColors.red),
-            label: const Text('Logout dari Akun Ini', style: TextStyle(color: AppColors.red)),
+            label: const Text('Keluar dari Akun Ini', style: TextStyle(color: AppColors.red)),
             style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.red), foregroundColor: AppColors.red),
           ),
         ),
@@ -190,7 +190,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           child: OutlinedButton.icon(
             onPressed: _logoutAll,
             icon: const Icon(Icons.devices, size: 18, color: AppColors.red),
-            label: const Text('Logout Semua Perangkat', style: TextStyle(color: AppColors.red)),
+            label: const Text('Keluar Semua Perangkat', style: TextStyle(color: AppColors.red)),
             style: OutlinedButton.styleFrom(side: BorderSide(color: AppColors.red.withOpacity(.5)), foregroundColor: AppColors.red),
           ),
         ),

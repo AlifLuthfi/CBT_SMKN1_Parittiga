@@ -28,6 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get ('/auth/me',         [AuthController::class, 'me']);
     Route::post('/auth/logout',     [AuthController::class, 'logout']);
     Route::post('/auth/logout-all', [AuthController::class, 'logoutAll']);
+    Route::patch('/auth/password',  [AuthController::class, 'gantiPassword']);
 
     // Notifikasi (semua role)
     Route::get  ('/notifications',                [NotificationController::class, 'index']);
@@ -130,6 +131,9 @@ Route::middleware('auth:sanctum')->group(function () {
         // Single save (deprecated — backward compat, diteruskan ke bulk)
         Route::patch('/sessions/{session}/answer',  [StudentExamController::class, 'saveAnswer']);
 
+        // Verifikasi password untuk keluar
+        Route::post('/verify-exit', [StudentExamController::class, 'verifyExit']);
+
         // Laporkan pelanggaran
         Route::post('/violations', [ViolationController::class, 'store']);
     });
@@ -140,7 +144,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get   ('/users',                      [AdminController::class, 'users']);
         Route::post  ('/users',                      [AdminController::class, 'createUser']);
         Route::put   ('/users/{user}',               [AdminController::class, 'updateUser']);
-        Route::patch ('/users/{user}/reset-password',[AdminController::class, 'resetPassword']);
+        Route::patch ('/users/{user}/ganti-password',[AdminController::class, 'gantiPassword']);
         Route::patch ('/users/{user}/toggle-status', [AdminController::class, 'toggleStatus']);
         Route::delete('/users/{user}',               [AdminController::class, 'deleteUser']);
         Route::get   ('/classes',                    [AdminController::class, 'classes']);

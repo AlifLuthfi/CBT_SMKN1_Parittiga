@@ -541,6 +541,35 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .toast.err{background:var(--red)}
 .toast svg{width:14px;height:14px}
 
+/* ── Anti-cheat extras ─────────────────────────────────── */
+.password-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);z-index:9999;
+  display:none;place-items:center;padding:20px}
+.password-modal.open{display:grid}
+.password-card{background:var(--surface);border-radius:14px;border:1px solid var(--border);
+  width:100%;max-width:400px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.pw-head{padding:24px 24px 16px;border-bottom:1px solid var(--border);text-align:center}
+.pw-head svg{width:40px;height:40px;color:var(--red);margin-bottom:8px}
+.pw-title{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:4px}
+.pw-sub{font-size:12px;color:var(--ink3)}
+.pw-body{padding:20px 24px}
+.pw-input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;
+  font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);outline:none;
+  transition:border-color .18s;letter-spacing:2px}
+.pw-input:focus{border-color:var(--navy)}
+.pw-error{font-size:12px;color:var(--red);margin-top:8px;display:none}
+.pw-footer{padding:14px 24px;border-top:1px solid var(--border);
+  display:flex;gap:10px;justify-content:flex-end}
+.btn-pw-cancel{padding:9px 18px;border-radius:8px;border:1.5px solid var(--border);
+  background:transparent;color:var(--ink2);font-family:'Inter',sans-serif;
+  font-size:13px;font-weight:600;cursor:pointer}
+.btn-pw-confirm{padding:9px 22px;border-radius:8px;border:none;
+  background:var(--red);color:#fff;font-family:'Inter',sans-serif;
+  font-size:13px;font-weight:700;cursor:pointer;transition:background .15s}
+.btn-pw-confirm:hover{background:#b71c1c}
+.btn-pw-confirm:disabled{opacity:.5;cursor:not-allowed}
+.minimize-btn{background:none;border:none;color:var(--ink3);cursor:pointer;padding:4px;border-radius:4px}
+.minimize-btn:hover{background:var(--bg)}
+
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
@@ -630,9 +659,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
         </div>
         <div class="rule-item"><div class="rule-dot"></div>Dilarang berpindah tab atau membuka aplikasi lain selama ujian berlangsung</div>
         <div class="rule-item"><div class="rule-dot"></div>Dilarang keluar dari mode fullscreen selama mengerjakan soal</div>
+        <div class="rule-item"><div class="rule-dot"></div>Shortcut keyboard (Ctrl+C/V/P/S/F/T/W/R, F12, dll) dinonaktifkan</div>
         <div class="rule-item"><div class="rule-dot"></div>Setiap pelanggaran akan dicatat dan dilaporkan ke guru</div>
-        <div class="rule-item"><div class="rule-dot"></div>Ujian otomatis dikumpulkan saat waktu habis</div>
+        <div class="rule-item"><div class="rule-dot"></div>Ujian otomatis dikumpulkan saat waktu habis atau batas pelanggaran tercapai</div>
         <div class="rule-item"><div class="rule-dot"></div>Jika terjadi gangguan, waktu dan jawaban tersimpan otomatis</div>
+        <div class="rule-item"><div class="rule-dot"></div>Keluar dari halaman ujian memerlukan password guru/admin</div>
       </div>
 
       <button class="btn-start" id="btn-mulai" onclick="mulaiUjian()">
@@ -868,6 +899,26 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal()">Periksa Lagi</button>
       <button class="btn-confirm-submit" onclick="submitUjian()">Ya, Kumpulkan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Password Exit -->
+<div class="password-modal" id="password-modal">
+  <div class="password-card">
+    <div class="pw-head">
+      <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <div class="pw-title">Akses Terkunci</div>
+      <div class="pw-sub">Masukkan password untuk keluar dari ujian</div>
+    </div>
+    <div class="pw-body">
+      <input class="pw-input" id="pw-input" type="password" placeholder="Password admin/guru"
+             autocomplete="off" onkeydown="if(event.key==='Enter')verifyPassword()">
+      <div class="pw-error" id="pw-error">Password salah!</div>
+    </div>
+    <div class="pw-footer">
+      <button class="btn-pw-cancel" onclick="closePasswordModal()">Batal</button>
+      <button class="btn-pw-confirm" id="btn-pw-confirm" onclick="verifyPassword()">Konfirmasi Keluar</button>
     </div>
   </div>
 </div>
@@ -1303,38 +1354,366 @@ function formatTime(seconds) {
 }
 
 /* ══════════════════════════════════════════════════════
-   ANTI-CHEAT
+   ANTI-CHEAT — KOMPREHENSIF
 ══════════════════════════════════════════════════════ */
 function setupAntiCheat() {
-  // Tab switch detection
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden && STATE.phase === 'ujian') {
-      recordViolation('tab_switch', 'Berpindah tab terdeteksi!');
+  if (STATE.phase !== 'ujian') return;
+
+  // ════════════════════════════════════════════════════
+  // 1. FULLSCREEN — PAKSA (harus user gesture)
+  // ════════════════════════════════════════════════════
+  function requestFullscreen() {
+    const el = document.documentElement;
+    if (el.requestFullscreen)       el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    else if (el.msRequestFullscreen)     el.msRequestFullscreen();
+  }
+
+  function exitFullscreen() {
+    if (document.exitFullscreen)        document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    else if (document.msExitFullscreen)      document.msExitFullscreen();
+  }
+
+  function isFullscreen() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+  }
+
+  // Paksa fullscreen
+  requestFullscreen();
+
+  // Deteksi keluar fullscreen → violation
+  document.addEventListener('fullscreenchange', onFSChange);
+  document.addEventListener('webkitfullscreenchange', onFSChange);
+  document.addEventListener('msfullscreenchange', onFSChange);
+  function onFSChange() {
+    if (!isFullscreen() && STATE.phase === 'ujian') {
+      recordViolation('fullscreen_exit', 'Keluar dari mode fullscreen!');
+      // Kembalikan fullscreen
+      requestFullscreen();
     }
-  });
+  }
 
-  // Window blur
-  window.addEventListener('blur', () => {
-    if (STATE.phase === 'ujian') {
-      recordViolation('window_blur', 'Keluar dari jendela ujian!');
-    }
-  });
-
-  // Disable copy-paste
-  document.addEventListener('copy',  e => { if (STATE.phase === 'ujian') e.preventDefault(); });
-  document.addEventListener('paste', e => { if (STATE.phase === 'ujian') e.preventDefault(); });
-  document.addEventListener('cut',   e => { if (STATE.phase === 'ujian') e.preventDefault(); });
-
-  // Disable right click
-  document.addEventListener('contextmenu', e => { if (STATE.phase === 'ujian') e.preventDefault(); });
-
-  // Disable F12
+  // ════════════════════════════════════════════════════
+  // 2. BLOCK SEMUA SHORTKEY BERBAHAYA
+  // ════════════════════════════════════════════════════
   document.addEventListener('keydown', e => {
     if (STATE.phase !== 'ujian') return;
-    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 'u')) {
+
+    const key = e.key;
+    const ctrl  = e.ctrlKey || e.metaKey;
+    const shift = e.shiftKey;
+    const alt   = e.altKey;
+
+    // DAFTAR HITAM SHORTKEY
+    const blocked = [
+      'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12',
+      'PrintScreen','ScrollLock','Pause',
+    ];
+    if (blocked.includes(key)) { e.preventDefault(); e.stopPropagation(); return; }
+
+    // Ctrl+ / Cmd+
+    if (ctrl) {
+      // ⚠️ Block semua shortkey umum browser
+      // Ctrl+N (new window), Ctrl+T (new tab), Ctrl+W (close tab)
+      // Ctrl+Shift+N (incognito), Ctrl+Shift+T (reopen closed)
+      // Ctrl+R / F5 (refresh), Ctrl+F5 / Ctrl+Shift+R (hard refresh)
+      // Ctrl+U (source), Ctrl+S (save), Ctrl+P (print)
+      // Ctrl+H (history), Ctrl+J (downloads), Ctrl+D (bookmark)
+      // Ctrl+Shift+I / F12 (devtools), Ctrl+Shift+J (console)
+      // Ctrl+Shift+C (inspect element), Ctrl+O (open file)
+      // Ctrl+L / F6 (address bar), Ctrl+E (search)
+      // Ctrl+B (bookmarks bar toggle), Ctrl+, (settings)
+      // Ctrl+F (find), Ctrl+G (find next)
+      // Ctrl+A (select all — boleh di textarea? tidak, kita disable)
+      const blockedCtrl = [
+        'n','t','w','r','u','s','p','h','j','d','o','l','e','b','f','g',
+        ',','a',
+      ];
+      if (blockedCtrl.includes(key.toLowerCase())) {
+        e.preventDefault(); e.stopPropagation(); return;
+      }
+
+      // Ctrl+Shift+ kombinasi
+      if (shift) {
+        const blockedCtrlShift = [
+          'n','t','i','j','c','r',  // incognito, reopen tab, devtools, console, inspect, hard refresh
+        ];
+        if (blockedCtrlShift.includes(key.toLowerCase())) {
+          e.preventDefault(); e.stopPropagation(); return;
+        }
+      }
+
+      // Alt combinations
+      if (alt) {
+        // Alt+Left (back), Alt+Right (forward), Alt+D (address bar)
+        // Alt+F4 (close window — tidak bisa di-block via JS)
+        const blockedAlt = ['arrowleft','arrowright','d','f4'];
+        if (blockedAlt.includes(key.toLowerCase()) ||
+            (key.toLowerCase() === 'tab')) {
+          e.preventDefault(); e.stopPropagation(); return;
+        }
+      }
+    }
+
+    // Alt+D / Alt+E / Cmd+E dll
+    if (alt && !ctrl) {
+      const blockedAltOnly = ['d','e','f','home','left','right'];
+      if (blockedAltOnly.includes(key.toLowerCase())) {
+        e.preventDefault(); e.stopPropagation(); return;
+      }
+    }
+
+    // Escape — show password modal instead
+    if (key === 'Escape' && STATE.phase === 'ujian') {
+      e.preventDefault();
+      openPasswordModal('escape');
+      return;
+    }
+
+    // F12 sudah di-block via blocked list
+
+    // Block Alt+Tab (bisa triggered via keydown)
+    // Note: Alt+Tab not reliably blockable in browser
+
+    // Windows key / Meta key
+    if (key === 'Meta' || key === 'Hyper') {
       e.preventDefault();
     }
+
+    // Tab key — only allow inside question options, not to leave app
+    // We keep Tab enabled for accessibility but log it
   });
+
+  // ════════════════════════════════════════════════════
+  // 3. TAB / WINDOW BLUR + VISIBILITY
+  // ════════════════════════════════════════════════════
+  let blurTimer = null;
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && STATE.phase === 'ujian') {
+      recordViolation('tab_switch', 'Berpindah tab / aplikasi terdeteksi!');
+    }
+  });
+
+  window.addEventListener('blur', () => {
+    if (STATE.phase === 'ujian') {
+      // Debounce: multiple blur events in quick succession
+      if (!blurTimer) {
+        blurTimer = setTimeout(() => {
+          blurTimer = null;
+          if (STATE.phase === 'ujian') {
+            recordViolation('window_blur', 'Keluar dari jendela ujian!');
+          }
+        }, 300);
+      }
+    }
+  });
+
+  window.addEventListener('focus', () => {
+    if (blurTimer) { clearTimeout(blurTimer); blurTimer = null; }
+    // Kembali ke fullscreen jika perlu
+    if (STATE.phase === 'ujian' && !isFullscreen()) {
+      requestFullscreen();
+    }
+  });
+
+  // ════════════════════════════════════════════════════
+  // 4. DISABLE COPY-PASTE-CUT
+  // ════════════════════════════════════════════════════
+  document.addEventListener('copy',       e => { if (STATE.phase === 'ujian') e.preventDefault(); });
+  document.addEventListener('paste',      e => { if (STATE.phase === 'ujian') e.preventDefault(); });
+  document.addEventListener('cut',        e => { if (STATE.phase === 'ujian') e.preventDefault(); });
+  document.addEventListener('selectstart', e => { if (STATE.phase === 'ujian') e.preventDefault(); });
+
+  // ════════════════════════════════════════════════════
+  // 5. DISABLE RIGHT CLICK
+  // ════════════════════════════════════════════════════
+  document.addEventListener('contextmenu', e => { if (STATE.phase === 'ujian') e.preventDefault(); });
+
+  // ════════════════════════════════════════════════════
+  // 6. MIDDLE MOUSE / EXTRA BUTTONS
+  // ════════════════════════════════════════════════════
+  document.addEventListener('auxclick', e => {
+    if (STATE.phase === 'ujian' && e.button === 1) e.preventDefault(); // middle click
+  });
+
+  // ════════════════════════════════════════════════════
+  // 7. MOUSE LEAVE — deteksi cursor meninggalkan window
+  // ════════════════════════════════════════════════════
+  let leaveCount = 0;
+  document.addEventListener('mouseleave', () => {
+    if (STATE.phase === 'ujian') {
+      recordViolation('mouse_leave', 'Mouse meninggalkan area ujian!');
+    }
+  });
+
+  // ════════════════════════════════════════════════════
+  // 8. DEVTOOLS DETECTION (heuristic)
+  // ════════════════════════════════════════════════════
+  function detectDevTools() {
+    if (STATE.phase !== 'ujian') return;
+
+    // Method 1: Check element toString
+    const element = new Image();
+    Object.defineProperty(element, 'id', {
+      get: () => {
+        recordViolation('devtools', 'Developer tools terdeteksi!');
+        return '';
+      }
+    });
+    console.log('%c', element); // akan trigger getter if devtools open
+
+    // Method 2: Debugger statement
+    setInterval(() => {
+      if (STATE.phase !== 'ujian') return;
+      const start = performance.now();
+      (function debugCheck() {
+        const diff = performance.now() - start;
+        // If devtools is open with debugger, this will be slow
+        if (diff > 10 && STATE.phase === 'ujian') {
+          // Too many false positives with this method, so we just log
+          console.log('debug check:', Math.round(diff) + 'ms');
+        }
+      })();
+    }, 5000);
+
+    // Method 3: Firebug check
+    if (window.Firebug && window.Firebug.chrome && window.Firebug.chrome.isInitialized) {
+      recordViolation('devtools', 'Firebug terdeteksi!');
+    }
+  }
+
+  // Execute devtools detection (once)
+  setTimeout(detectDevTools, 1000);
+
+  // ════════════════════════════════════════════════════
+  // 9. BEFOREUNLOAD — peringatan keluar halaman
+  // ════════════════════════════════════════════════════
+  window.addEventListener('beforeunload', e => {
+    if (STATE.phase === 'ujian') {
+      e.preventDefault();
+      e.returnValue = 'Ujian sedang berlangsung! Jawaban Anda akan hilang.';
+      return e.returnValue;
+    }
+  });
+
+  // ════════════════════════════════════════════════════
+  // 10. PERIODIC FULLSCREEN RE-ENFORCEMENT
+  // ════════════════════════════════════════════════════
+  setInterval(() => {
+    if (STATE.phase === 'ujian' && !isFullscreen()) {
+      recordViolation('fullscreen_exit', 'Mode fullscreen ditinggalkan!');
+      requestFullscreen();
+    }
+  }, 3000);
+
+  // ════════════════════════════════════════════════════
+  // 11. BLOCK URL DRAG
+  // ════════════════════════════════════════════════════
+  document.addEventListener('dragstart', e => {
+    if (STATE.phase === 'ujian') e.preventDefault();
+  });
+
+  // ════════════════════════════════════════════════════
+  // 12. SCREEN RESIZE MONITORING
+  // ════════════════════════════════════════════════════
+  let lastWidth = window.innerWidth;
+  let lastHeight = window.innerHeight;
+  window.addEventListener('resize', () => {
+    if (STATE.phase === 'ujian') {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      // Suspicious: window minimized (too small)
+      if (w < 400 || h < 300) {
+        recordViolation('window_resize', 'Window terlalu kecil!');
+      }
+      // Check if resolution changed drastically (maybe remote desktop?)
+      if (Math.abs(w - lastWidth) > 200 || Math.abs(h - lastHeight) > 200) {
+        recordViolation('window_resize', 'Resolusi window berubah drastis!');
+      }
+      lastWidth = w;
+      lastHeight = h;
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//   PASSWORD EXIT SYSTEM
+// ══════════════════════════════════════════════════════
+let _pendingExit = false;
+let _exitReason = '';
+
+function openPasswordModal(reason = '') {
+  _exitReason = reason;
+  document.getElementById('password-modal').classList.add('open');
+  document.getElementById('pw-error').style.display = 'none';
+  document.getElementById('pw-input').value = '';
+  document.getElementById('btn-pw-confirm').disabled = false;
+  setTimeout(() => document.getElementById('pw-input').focus(), 100);
+}
+
+function closePasswordModal() {
+  document.getElementById('password-modal').classList.remove('open');
+  _pendingExit = false;
+}
+
+async function verifyPassword() {
+  const pw = document.getElementById('pw-input').value.trim();
+  if (!pw) return;
+
+  const btn = document.getElementById('btn-pw-confirm');
+  btn.disabled = true;
+  btn.textContent = 'Memverifikasi...';
+
+  try {
+    // Kirim ke server untuk verifikasi
+    const res = await fetch(`${API_BASE}/siswa/verify-exit`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${TOKEN}`,
+      },
+      body: JSON.stringify({
+        password: pw,
+        session_id: STATE.sessionId,
+        action: _exitReason === 'escape' ? 'exit_exam' : 'exit_exam',
+      }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.valid) {
+      // Password benar — catat sebagai izin keluar
+      if (_exitReason === 'escape') {
+        // Full exit dengan catatan
+        clearInterval(STATE.timerInterval);
+        clearSession();
+        window.location.href = '/siswa-dashboard.html';
+      }
+    } else {
+      // Password salah — catat violation
+      document.getElementById('pw-error').style.display = 'block';
+      document.getElementById('pw-error').textContent = 'Password salah! ' + (data.remaining || '');
+      btn.disabled = false;
+      btn.textContent = 'Konfirmasi Keluar';
+      recordViolation('wrong_password', 'Percobaan keluar dengan password salah!');
+    }
+  } catch (_) {
+    // Fallback: password default offline
+    if (pw === 'exit2024') {
+      // Password offline hardcoded (hanya emergency)
+      clearInterval(STATE.timerInterval);
+      clearSession();
+      window.location.href = '/siswa-dashboard.html';
+    } else {
+      document.getElementById('pw-error').style.display = 'block';
+      document.getElementById('pw-error').textContent = 'Gagal verifikasi. Coba lagi.';
+      btn.disabled = false;
+      btn.textContent = 'Konfirmasi Keluar';
+      recordViolation('wrong_password', 'Percobaan keluar gagal!');
+    }
+  }
 }
 
 function recordViolation(type, msg) {

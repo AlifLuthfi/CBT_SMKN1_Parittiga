@@ -509,9 +509,9 @@ tbody tr:hover td{background:#f9fafc}
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Export All Data
               </button>
-              <button class="btn-ghost" style="justify-content:flex-start;width:100%;color:var(--red)" onclick="openModal('modal-reset-all')">
+              <button class="btn-ghost" style="justify-content:flex-start;width:100%;color:var(--red)" onclick="openModal('modal-ganti-all')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                Reset Passwords
+                Ganti Passwords
               </button>
             </div>
           </div>
@@ -784,21 +784,21 @@ tbody tr:hover td{background:#f9fafc}
   </div>
 </div>
 
-<!-- ════════ MODAL: RESET ALL ════════ -->
-<div class="overlay" id="modal-reset-all">
+<!-- ════════ MODAL: GANTI ALL ════════ -->
+<div class="overlay" id="modal-ganti-all">
   <div class="modal">
     <div class="modal-head">
-      <span class="modal-title" style="color:var(--red)">⚠ Reset All Passwords</span>
-      <button class="modal-close" onclick="closeModal('modal-reset-all')">✕</button>
+      <span class="modal-title" style="color:var(--red)">⚠ Ganti Semua Password</span>
+      <button class="modal-close" onclick="closeModal('modal-ganti-all')">✕</button>
     </div>
     <div class="modal-body">
       <div class="alert-banner ab-red" style="margin-bottom:14px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
-        Tindakan ini akan reset password semua pengguna. Tidak dapat dibatalkan.
+        Tindakan ini akan ganti password semua pengguna. Tidak dapat dibatalkan.
       </div>
-      <div class="form-group"><label class="form-label">New Default Password *</label><input class="form-input" id="reset-pass" type="password" placeholder="Min. 8 characters"></div>
+      <div class="form-group"><label class="form-label">New Default Password *</label><input class="form-input" id="ganti-pass" type="password" placeholder="Min. 8 characters"></div>
       <div class="form-group"><label class="form-label">Apply to</label>
-        <select class="form-input" id="reset-role">
+        <select class="form-input" id="ganti-role">
           <option value="all">All Users</option>
           <option value="siswa">Students Only</option>
           <option value="guru">Teachers Only</option>
@@ -806,8 +806,8 @@ tbody tr:hover td{background:#f9fafc}
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-ghost" onclick="closeModal('modal-reset-all')">Cancel</button>
-      <button class="btn-danger" onclick="resetAllPasswords()">Reset Passwords</button>
+      <button class="btn-ghost" onclick="closeModal('modal-ganti-all')">Cancel</button>
+      <button class="btn-danger" onclick="gantiSemuaPassword()">Ganti Passwords</button>
     </div>
   </div>
 </div>
@@ -1160,7 +1160,7 @@ function renderUsers(data) {
       <td><span class="badge ${u.status==='active'?'b-green':'b-gray'}">${u.status==='active'?'Active':'Inactive'}</span></td>
       <td>
         <div style="display:flex;gap:5px">
-          <button class="icon-btn" title="Reset Password" onclick="confirmResetPass(${u.id},'${u.name}')">
+          <button class="icon-btn" title="Ganti Password" onclick="gantiPassword(${u.id},'${u.name}')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           </button>
           <button class="icon-btn" title="${u.status==='active'?'Deactivate':'Activate'}" onclick="toggleUser(${u.id},'${u.name}','${u.status}')">
@@ -1294,10 +1294,16 @@ async function addUser() {
   if (document.getElementById('view-users').classList.contains('active')) loadUsers();
 }
 
-function confirmResetPass(id, name) {
-  konfirmasi(`Reset password for "${name}"? A new temporary password will be assigned.`, () => {
-    toast(`Password reset for ${name}`, 'ok');
-  });
+async function gantiPassword(id, name) {
+  const pass = prompt(`Ganti password untuk "${name}".\nMasukkan password baru (min. 8 karakter):`);
+  if (!pass) return;
+  if (pass.length < 8) { toast('Password minimal 8 karakter', 'err'); return; }
+  try {
+    await api('PATCH', `/admin/users/${id}/ganti-password`, { password: pass });
+    toast(`Password diganti untuk ${name}`, 'ok');
+  } catch (e) {
+    toast(e.message || 'Gagal mengganti password', 'err');
+  }
 }
 
 function toggleUser(id, name, status) {
@@ -1328,11 +1334,11 @@ function addSubject() {
   toast(`Subject "${name}" added`, 'ok');
 }
 
-function resetAllPasswords() {
-  const pass = document.getElementById('reset-pass').value;
+function gantiSemuaPassword() {
+  const pass = document.getElementById('ganti-pass').value;
   if (!pass || pass.length < 8) { toast('Password must be at least 8 characters','err'); return; }
-  closeModal('modal-reset-all');
-  toast('All passwords reset successfully', 'ok');
+  closeModal('modal-ganti-all');
+  toast('Semua password berhasil diganti', 'ok');
 }
 
 function exportData() {

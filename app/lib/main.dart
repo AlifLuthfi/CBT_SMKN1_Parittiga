@@ -18,7 +18,7 @@ class ExamCoreApp extends ConsumerWidget {
     final themeMode = ref.watch(themeProvider);
 
     return MaterialApp.router(
-      title: 'ExamCore',
+      title: 'CBT SMKN 1 Parittiga',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,

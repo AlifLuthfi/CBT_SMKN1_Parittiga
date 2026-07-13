@@ -1,5 +1,6 @@
-import 'dart:io';
 import 'dart:typed_data';
+import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import 'guru_models.dart';
@@ -184,5 +185,53 @@ class GuruRepository {
       'search': search, 'difficulty': difficulty, 'subject_id': subjectId, 'page': page, 'per_page': 100,
     });
     return ((data['data'] as List?) ?? []).map((e) => QuestionModel.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  // ── Import Soal ─────────────────────────────────────────
+  Future<QuestionImportPreview> previewImport(String filePath, String fileName) async {
+    final data = await ApiClient.uploadFile('/guru/question-imports/preview', 'file', filePath, {});
+    return QuestionImportPreview.fromJson(data['preview'] as Map<String, dynamic>);
+  }
+
+  Future<QuestionImportPreview> previewImportBytes(Uint8List bytes, String fileName) async {
+    final data = await ApiClient.uploadFileBytes('/guru/question-imports/preview', 'file', bytes, fileName, {});
+    return QuestionImportPreview.fromJson(data['preview'] as Map<String, dynamic>);
+  }
+
+  Future<QuestionImportModel> executeImport(String filePath, String fileName, {int? categoryId, int? subjectId}) async {
+    final fields = <String, dynamic>{};
+    if (categoryId != null) fields['category_id'] = categoryId;
+    if (subjectId != null) fields['subject_id'] = subjectId;
+    final data = await ApiClient.uploadFile('/guru/question-imports', 'file', filePath, fields);
+    return QuestionImportModel.fromJson(data['import'] as Map<String, dynamic>);
+  }
+
+  Future<QuestionImportModel> executeImportBytes(Uint8List bytes, String fileName, {int? categoryId, int? subjectId}) async {
+    final fields = <String, dynamic>{};
+    if (categoryId != null) fields['category_id'] = categoryId;
+    if (subjectId != null) fields['subject_id'] = subjectId;
+    final data = await ApiClient.uploadFileBytes('/guru/question-imports', 'file', bytes, fileName, fields);
+    return QuestionImportModel.fromJson(data['import'] as Map<String, dynamic>);
+  }
+
+  Future<void> downloadTemplate() async {
+    final dio = await ApiClient.getInstance();
+    final response = await dio.get('/guru/question-imports/template',
+      options: Options(responseType: ResponseType.bytes),
+    );
+    final bytes = response.data as Uint8List;
+    final fileName = 'template-import-soal.csv';
+    final result = await FilePicker.platform.saveFile(
+      dialogTitle: 'Simpan Template Import',
+      fileName: fileName,
+      type: FileType.any,
+      bytes: bytes,
+    );
+    if (result == null) throw Exception('Batal menyimpan file');
+  }
+
+  Future<List<QuestionImportModel>> getImportHistory() async {
+    final data = await ApiClient.get('/guru/question-imports');
+    return ((data['data'] as List?) ?? []).map((e) => QuestionImportModel.fromJson(e as Map<String, dynamic>)).toList();
   }
 }

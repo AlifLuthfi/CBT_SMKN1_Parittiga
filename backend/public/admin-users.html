@@ -273,28 +273,38 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
       </div>
       <div class="form-group" id="pass-group">
         <label class="form-label">Password <span class="req">*</span></label>
-        <input class="form-input" id="inp-password" type="password" placeholder="Minimal 8 karakter">
+        <div style="position:relative">
+          <input class="form-input" id="inp-password" type="password" placeholder="Minimal 8 karakter" style="padding-right:36px">
+          <button type="button" onclick="togglePw('inp-password',this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;color:var(--ink3);line-height:1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;display:block"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
       </div>
       <button onclick="saveUser()" style="width:100%;padding:11px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;margin-top:4px" id="save-btn">Simpan User</button>
     </div>
   </div>
 </div>
 
-<!-- RESET PASSWORD MODAL -->
-<div class="modal-overlay" id="reset-modal" onclick="if(event.target===this)closeResetModal()">
+<!-- GANTI PASSWORD MODAL -->
+<div class="modal-overlay" id="ganti-modal" onclick="if(event.target===this)closeGantiModal()">
   <div class="modal" style="max-width:380px">
     <div class="modal-head">
-      <div class="modal-title">Reset Password</div>
-      <button class="modal-close" onclick="closeResetModal()">×</button>
+      <div class="modal-title">Ganti Password</div>
+      <button class="modal-close" onclick="closeGantiModal()">×</button>
     </div>
     <div class="modal-body">
-      <p style="font-size:13px;color:var(--ink2);margin-bottom:14px">Reset password untuk: <strong id="reset-name"></strong></p>
-      <input type="hidden" id="reset-id">
+      <p style="font-size:13px;color:var(--ink2);margin-bottom:14px">Ganti password untuk: <strong id="ganti-name"></strong></p>
+      <input type="hidden" id="ganti-id">
       <div class="form-group">
         <label class="form-label">Password Baru <span class="req">*</span></label>
-        <input class="form-input" id="reset-pass" type="password" placeholder="Min. 8 karakter">
+        <div style="position:relative">
+          <input class="form-input" id="ganti-pass" type="password" placeholder="Min. 8 karakter" style="padding-right:36px">
+          <button type="button" onclick="togglePw('ganti-pass',this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;color:var(--ink3);line-height:1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;display:block"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
       </div>
-      <button onclick="doResetPassword()" style="width:100%;padding:10px;background:var(--sky);color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer">Reset Password</button>
+      <button onclick="doGantiPassword()" style="width:100%;padding:10px;background:var(--sky);color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer">Ganti Password</button>
     </div>
   </div>
 </div>
@@ -303,6 +313,17 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 
 <script src="auth.js"></script>
 <script>
+// ── Toggle Password Visibility ──
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  if (!inp) return;
+  const isPass = inp.type === 'password';
+  inp.type = isPass ? 'text' : 'password';
+  btn.innerHTML = isPass
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;display:block"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;display:block"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+}
+
 let USERS = [
   {id:1, name:'Administrator', email:'admin@examcore.id',     role:'admin', status:'active',   nip:null,             nis:null,      last_login:'2026-06-07 08:00'},
   {id:2, name:'Budi Santoso',  email:'guru@examcore.id',      role:'guru',  status:'active',   nip:'198501012010011001',nis:null,    last_login:'2026-06-07 07:30'},
@@ -386,9 +407,9 @@ function userRow(u) {
         <button class="action-btn" onclick="openEditModal(${u.id})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           Edit</button>
-        <button class="action-btn" onclick="openResetModal(${u.id},'${u.name}')">
+        <button class="action-btn" onclick="openGantiModal(${u.id},'${u.name}')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          Reset</button>
+          Ganti</button>
         <button class="action-btn ${u.status==='active'?'':'green'}" onclick="toggleStatus(${u.id})">
           ${u.status==='active'?'Nonaktifkan':'Aktifkan'}</button>
         ${u.id!==1?`<button class="action-btn red" onclick="deleteUser(${u.id})">
@@ -482,18 +503,32 @@ function saveUser() {
   renderTable();
 }
 
-function openResetModal(id, name) {
-  document.getElementById('reset-id').value = id;
-  document.getElementById('reset-name').textContent = name;
-  document.getElementById('reset-pass').value = '';
-  document.getElementById('reset-modal').classList.add('open');
+function openGantiModal(id, name) {
+  document.getElementById('ganti-id').value = id;
+  document.getElementById('ganti-name').textContent = name;
+  document.getElementById('ganti-pass').value = '';
+  document.getElementById('ganti-modal').classList.add('open');
 }
-function closeResetModal() { document.getElementById('reset-modal').classList.remove('open'); }
-function doResetPassword() {
-  const pass = document.getElementById('reset-pass').value;
-  if (pass.length < 8) { toast('Password minimal 8 karakter','err'); return; }
-  closeResetModal();
-  toast('Password berhasil direset & semua sesi dicabut','ok');
+function closeGantiModal() { document.getElementById('ganti-modal').classList.remove('open'); }
+async function doGantiPassword() {
+  const id   = document.getElementById('ganti-id').value;
+  const pass = document.getElementById('ganti-pass').value;
+  if (!pass || pass.length < 8) { toast('Password minimal 8 karakter','err'); return; }
+
+  const btn = document.querySelector('#ganti-modal button[onclick^="doGantiPassword"]');
+  if (btn) { btn.disabled = true; btn.dataset.label = btn.textContent; btn.textContent = 'Menyimpan...'; }
+
+  try {
+    await api('PATCH', `/admin/users/${id}/ganti-password`, { password: pass });
+    closeGantiModal();
+    toast('Password berhasil diganti','ok');
+    const u = USERS.find(x => x.id == id);
+    if (u) { u.last_login = '—'; }
+  } catch (e) {
+    toast(e.message || 'Gagal mengganti password','err');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = btn.dataset.label; }
+  }
 }
 
 function toggleStatus(id) {

@@ -98,7 +98,11 @@ class SecurityService {
              uri.host.startsWith('172.') ||
              uri.host == '10.0.2.2' ||
              uri.host.endsWith('.school.id') ||
-             uri.host.endsWith('.sch.id');
+             uri.host.endsWith('.sch.id') ||
+             uri.host.endsWith('.ngrok-free.app') ||
+             uri.host.endsWith('.ngrok-free.dev') ||
+             uri.host.endsWith('.ngrok.app') ||
+             uri.host.endsWith('.ngrok.io');
     } catch (_) { return false; }
   }
 }

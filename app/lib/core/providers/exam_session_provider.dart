@@ -100,9 +100,12 @@ class ExamSessionState {
 class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
   ExamSessionNotifier() : super(const ExamSessionState());
 
-  final _repo   = SiswaRepository();
+  final _repo     = SiswaRepository();
   Timer? _timer;
   Timer? _autoSaveTimer;
+  int _totalSeconds   = 0;      // wall-clock anchor — total duration
+  int _timeElapsed    = 0;      // seconds elapsed before current tick window
+  DateTime? _timerStartedAt;    // when current timer window started
 
   // ── Load exam detail ─────────────────────────────────
   Future<void> loadExam(int examId) async {
@@ -130,6 +133,9 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
             seed:         saved['seed'] as int? ?? 0,
             loading:      false,
           );
+          // Restore wall-clock anchor
+          _totalSeconds = saved['totalSeconds'] as int? ?? exam.durationMinutes * 60;
+          _timeElapsed  = saved['timeElapsed'] as int? ?? (_totalSeconds - remaining);
           return;
         }
       }
@@ -158,6 +164,11 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
 
       final answers      = result.isResumed ? Map<int, String>.from(session.savedAnswers) : <int, String>{};
       final secondsLeft = result.isResumed ? session.remainingSeconds : state.exam!.durationMinutes * 60;
+
+      // Wall-clock anchor
+      _totalSeconds  = state.exam!.durationMinutes * 60;
+      _timeElapsed   = _totalSeconds - secondsLeft;
+      _timerStartedAt = null;
 
       state = state.copyWith(
         phase:        SessionPhase.running,
@@ -228,16 +239,21 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
     }
   }
 
-  // ── Timer ─────────────────────────────────────────────
+  // ── Timer (wall-clock based) ────────────────────────
   void _startTimer() {
+    _timerStartedAt = DateTime.now();
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (state.secondsLeft <= 0) {
+      final wallElapsed = _timeElapsed + DateTime.now().difference(_timerStartedAt!).inSeconds;
+      final remaining = _totalSeconds - wallElapsed;
+      if (remaining <= 0) {
         _timer?.cancel();
+        _autoSaveTimer?.cancel();
+        state = state.copyWith(secondsLeft: 0);
         autoSubmit();
         return;
       }
-      state = state.copyWith(secondsLeft: state.secondsLeft - 1);
+      state = state.copyWith(secondsLeft: remaining);
     });
   }
 
@@ -259,6 +275,8 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
       'flagged':      state.flagged.toList(),
       'currentIndex': state.currentIndex,
       'secondsLeft':  state.secondsLeft,
+      'totalSeconds': _totalSeconds,
+      'timeElapsed':  _timeElapsed + (_timerStartedAt != null ? DateTime.now().difference(_timerStartedAt!).inSeconds : 0),
       'savedAt':      DateTime.now().toIso8601String(),
     });
   }

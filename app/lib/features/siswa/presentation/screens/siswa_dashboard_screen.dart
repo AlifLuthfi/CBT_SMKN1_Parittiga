@@ -21,7 +21,7 @@ class SiswaDashboardScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
-        title: const Text('ExamCore'),
+        title: const Text('CBT SMKN 1 Parittiga'),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: () => ref.invalidate(_availableExamsProvider)),
           PopupMenuButton(

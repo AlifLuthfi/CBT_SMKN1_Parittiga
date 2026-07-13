@@ -31,9 +31,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _errorMsg;
 
   final _demos = [
-    {'name': 'Budi Santoso',  'email': 'guru@examcore.id',     'role': 'guru',  'pass': 'password123'},
+    {'name': 'Budi Santoso',  'email': 'guru@cbt.sch.id',     'role': 'guru',  'pass': 'password123'},
     {'name': 'Ahmad Naufal',  'email': 'ahmadnaufal@siswa.id', 'role': 'siswa', 'pass': 'password123'},
-    {'name': 'Administrator', 'email': 'admin@examcore.id',     'role': 'admin', 'pass': 'password123'},
+    {'name': 'Administrator', 'email': 'admin@cbt.sch.id',     'role': 'admin', 'pass': 'password123'},
   ];
 
   @override
@@ -100,7 +100,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _loginWithBiometric() async {
-    final ok = await SecurityService.authenticateWithBiometric(reason: 'Login ke ExamCore');
+    final ok = await SecurityService.authenticateWithBiometric(reason: 'Login ke CBT SMKN 1 Parittiga');
     if (!ok || !mounted) return;
     final token = await SecureStorage.getToken();
     final role  = await SecureStorage.getRole();
@@ -147,7 +147,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ),
             const SizedBox(height: 14),
-            Text('ExamCore', style: AppTextStyles.h2),
+            Text('CBT SMKN 1 Parittiga', style: AppTextStyles.h2),
             Text('Sistem Ujian Online', style: AppTextStyles.bodySmall),
             const SizedBox(height: 28),
 
@@ -172,7 +172,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(width: 10),
                     Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text('Masuk ke Sistem', style: AppTextStyles.h4.copyWith(color: Colors.white, fontSize: 15)),
-                      Text('Exam Management System', style: AppTextStyles.bodySmall.copyWith(color: Colors.white60)),
+                      Text('Sistem Manajemen Ujian', style: AppTextStyles.bodySmall.copyWith(color: Colors.white60)),
                     ]),
                     const Spacer(),
                     if (_biometricAvail)
@@ -255,7 +255,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Wrap(spacing: 6, children: [
                         _urlChip('Chrome', 'http://localhost:8000/api'),
                         _urlChip('Android Emu', 'http://10.0.2.2:8000/api'),
-                        _urlChip('LAN HP', 'http://192.168.1.5:8000/api'),
+                        _urlChip('LAN HP', 'http://192.168.74.128:8000/api'),
+                        _urlChip('Hosting', ' https://enlighten-ascension-unseen.ngrok-free.dev/api'),
                       ]),
                     ],
                     const SizedBox(height: 14),
@@ -300,7 +301,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ]),
             ),
             const SizedBox(height: 20),
-            Text('v1.0.0 · ExamCore', style: AppTextStyles.bodySmall.copyWith(fontSize: 11)),
+            Text('v1.0.0 · CBT SMKN 1 Parittiga', style: AppTextStyles.bodySmall.copyWith(fontSize: 11)),
           ]),
         ),
       ),

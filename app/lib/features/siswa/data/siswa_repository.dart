@@ -51,4 +51,24 @@ class SiswaRepository {
     try { await ApiClient.post('/siswa/violations', data: {'session_id': sessionId, 'violation_type': type}); }
     catch (_) {}
   }
+
+  Future<({int remainingSeconds})?> getSessionState(int sessionId) async {
+    try {
+      final data = await ApiClient.get('/siswa/sessions/$sessionId/state');
+      final session = data['session'] as Map<String, dynamic>;
+      final remaining = session['remaining_seconds'];
+      return (remainingSeconds: (remaining is int) ? remaining : (remaining as num).toInt());
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>> verifyExitPassword(int? sessionId, String password) async {
+    final data = await ApiClient.post('/siswa/verify-exit', data: {
+      'password': password,
+      'session_id': sessionId,
+      'action': 'exit_exam',
+    });
+    return data;
+  }
 }

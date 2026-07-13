@@ -7,7 +7,7 @@ class ClassRoom extends Model
 {
     use SoftDeletes;
     protected $table = 'classes';
-    protected $fillable = ['teacher_id','name','subject','academic_year','semester','description'];
+    protected $fillable = ['teacher_id','name','subject','level','academic_year','semester','description'];
 
     public function teacher()  { return $this->belongsTo(User::class,'teacher_id'); }
     public function students() { return $this->belongsToMany(User::class,'class_student','class_id','student_id')->withPivot('status','enrolled_at')->withTimestamps(); }

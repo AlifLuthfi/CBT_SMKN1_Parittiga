@@ -36,10 +36,11 @@ class AdminController extends Controller
 
     public function users(Request $request)
     {
-        $users = User::with('teacherProfile')
+        $users = User::with(['teacherProfile', 'classRooms', 'enrolledClasses'])
             ->when($request->role,   fn($q,$v) => $q->where('role',$v))
             ->when($request->status, fn($q,$v) => $q->where('status',$v))
             ->when($request->search, fn($q,$v) => $q->where(fn($q) => $q->where('name','like',"%$v%")->orWhere('email','like',"%$v%")))
+            ->when($request->level, fn($q,$v) => $q->whereHas('enrolledClasses', fn($q) => $q->where('level', $v)))
             ->orderByDesc('created_at')
             ->paginate($request->per_page ?? 15);
         return response()->json($users);
@@ -66,21 +67,25 @@ class AdminController extends Controller
     public function updateUser(Request $request, User $user)
     {
         $data = $request->validate([
-            'name'   => 'sometimes|string|max:255',
-            'email'  => "sometimes|email|unique:users,email,{$user->id}",
-            'status' => 'sometimes|in:active,inactive',
-            'role'   => 'sometimes|in:admin,guru,siswa',
+            'name'     => 'sometimes|string|max:255',
+            'email'    => "sometimes|email|unique:users,email,{$user->id}",
+            'status'   => 'sometimes|in:active,inactive',
+            'role'     => 'sometimes|in:admin,guru,siswa',
+            'password' => 'sometimes|string|min:8',
         ]);
+        if (isset($data['password'])) {
+            $data['password'] = Hash::make($data['password']);
+        }
         $user->update($data);
         return response()->json(['message'=>'Akun diperbarui.','user'=>$user->fresh()]);
     }
 
-    public function resetPassword(Request $request, User $user)
+    public function gantiPassword(Request $request, User $user)
     {
         $data = $request->validate(['password'=>'required|min:8']);
         $user->update(['password'=>Hash::make($data['password'])]);
-        ActivityLog::create(['user_id'=>auth()->id(),'action'=>'password_reset','description'=>"Reset password: {$user->name}"]);
-        return response()->json(['message'=>"Password {$user->name} berhasil direset."]);
+        ActivityLog::create(['user_id'=>auth()->id(),'action'=>'ganti_password','description'=>"Ganti password: {$user->name}"]);
+        return response()->json(['message'=>"Password {$user->name} berhasil diganti."]);
     }
 
     public function toggleStatus(User $user)
@@ -103,7 +108,7 @@ class AdminController extends Controller
 
     public function classes()
     {
-        return response()->json(['data' => ClassRoom::with(['teacher'])->withCount(['students','exams'])->get()]);
+        return response()->json(['data' => ClassRoom::with(['teacher'])->withCount(['students','exams'])->orderBy('level')->get()]);
     }
 
     public function createClass(Request $request)
@@ -168,7 +173,8 @@ class AdminController extends Controller
 
     public function violations(Request $request)
     {
-        $viols = Violation::with(['student','session.exam'])
+        $viols = Violation::with(['student','session.exam.classRoom'])
+            ->when($request->class_id, fn($q, $v) => $q->whereHas('session.exam', fn($q) => $q->where('class_id', $v)))
             ->latest()->paginate(20);
         return response()->json($viols);
     }
@@ -181,17 +187,12 @@ class AdminController extends Controller
     public function updateClass(Request $request, ClassRoom $class)
     {
         $data = $request->validate([
-            'teacher_id'    => 'sometimes|exists:users,id',
             'name'          => 'sometimes|string|max:100',
             'subject'       => 'sometimes|string|max:100',
             'academic_year' => 'nullable|string|max:20',
             'semester'      => 'nullable|string|max:20',
             'description'   => 'nullable|string',
         ]);
-
-        if (isset($data['teacher_id'])) {
-            User::where('id', $data['teacher_id'])->where('role', 'guru')->firstOrFail();
-        }
 
         $class->update($data);
 

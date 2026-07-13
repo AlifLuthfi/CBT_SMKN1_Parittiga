@@ -7,24 +7,27 @@ class ApiException implements Exception {
   ApiException({required this.message, this.statusCode});
 
   factory ApiException.fromDioError(DioException error) {
-    String message = 'Terjadi kesalahan pada server. Silakan coba lagi.';
+    String message = 'Terjadi kesalahan server. Coba lagi.';
     int? statusCode = error.response?.statusCode;
 
-    if (error.type == DioExceptionType.connectionTimeout ||
-        error.type == DioExceptionType.sendTimeout ||
-        error.type == DioExceptionType.receiveTimeout) {
-      message = 'Koneksi ke server timeout. Periksa jaringan Anda.';
-    } else if (error.type == DioExceptionType.connectionError) {
-      message = 'Tidak dapat terhubung ke server. Periksa URL dan jaringan Anda.';
-    } else if (error.response != null) {
-      final data = error.response?.data;
-      if (data is Map) {
-        if (data.containsKey('message')) {
-          message = data['message'].toString();
-        } else if (data.containsKey('error')) {
-          message = data['error'].toString();
+    switch (error.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        message = 'Koneksi timeout — pastikan server backend running dan URL benar.';
+        break;
+      case DioExceptionType.connectionError:
+        message = 'Server tidak dapat dijangkau. Periksa koneksi & pastikan backend jalan.';
+        break;
+      case DioExceptionType.badResponse:
+        final data = error.response?.data;
+        if (data is Map) {
+          if (data['message'] != null) message = data['message'].toString();
+          else if (data['error'] != null) message = data['error'].toString();
         }
-      }
+        break;
+      default:
+        message = 'Kesalahan: ${error.message ?? "tidak diketahui"}';
     }
     return ApiException(message: message, statusCode: statusCode);
   }

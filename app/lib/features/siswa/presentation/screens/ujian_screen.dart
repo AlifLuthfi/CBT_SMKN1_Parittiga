@@ -8,6 +8,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/security/lcg_randomizer.dart';
 import '../../../../core/security/security_service.dart';
+import '../../../../core/security/anti_cheat_service.dart';
 import '../../../../core/storage/secure_storage.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../data/siswa_models.dart';
@@ -31,6 +32,9 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
   Set<int>             _flagged       = {};
   int                  _currentIndex  = 0;
   int                  _secondsLeft   = 0;
+  int                  _totalSeconds  = 0;   // total exam duration (wall-clock anchor)
+  int                  _timeElapsed   = 0;   // cumulative seconds elapsed before current tick period
+  DateTime?            _timerStartedAt;      // when current timer period started (wall-clock)
   int                  _violCount     = 0;
   int                  _seed          = 0;
   ExamRandomizer?      _randomizer;
@@ -59,12 +63,36 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
     _timer?.cancel();
     _autoSaveTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
+    AntiCheatService.disableSecureFlag();
     WakelockPlus.disable();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setPreferredOrientations(DeviceOrientation.values); // reset
     _namaCtrl.dispose();
     _nisCtrl.dispose();
     _kelasCtrl.dispose();
     super.dispose();
+  }
+
+  // ── Multi-window / split-screen detection ──────────
+  bool _wasInMultiWindow = false;
+
+  Future<void> _checkMultiWindow() async {
+    if (!mounted || _phase != 'ujian') return;
+    final isMulti = await AntiCheatService.isInMultiWindow();
+    if (isMulti && !_wasInMultiWindow) {
+      _wasInMultiWindow = true;
+      _recordViolation('split_screen');
+    } else if (!isMulti && _wasInMultiWindow) {
+      _wasInMultiWindow = false;
+    }
+  }
+
+  Future<void> _checkScreenRecording() async {
+    if (!mounted || _phase != 'ujian') return;
+    final recording = await AntiCheatService.isScreenRecording();
+    if (recording) {
+      _recordViolation('screen_record');
+    }
   }
 
   // ── Anti-cheat: detect app background ─────────────────
@@ -72,7 +100,24 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (_phase != 'ujian') return;
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      // Freeze wall-clock tracking: absorb elapsed time into _timeElapsed
+      if (_timerStartedAt != null) {
+        _timeElapsed += DateTime.now().difference(_timerStartedAt!).inSeconds;
+        _timerStartedAt = null;
+      }
       _recordViolation('blur');
+    } else if (state == AppLifecycleState.resumed) {
+      // Resync timer — restart wall-clock from now, fetch server time for correctness
+      _timer?.cancel();
+      _syncTimerFromServer();
+      // Re-check multi-window status
+      _checkMultiWindow();
+      _checkScreenRecording();
+    }
+
+    // Deteksi screenshots (iOS)
+    if (state == AppLifecycleState.inactive) {
+      // iOS screenshot detection — user took screenshot
     }
   }
 
@@ -103,6 +148,9 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
             _seed        = saved['seed'] as int? ?? 0;
             _loading     = false;
           });
+          // Restore wall-clock anchor
+          _totalSeconds = saved['totalSeconds'] as int? ?? exam.durationMinutes * 60;
+          _timeElapsed  = saved['timeElapsed'] as int? ?? (_totalSeconds - remaining);
           if (_seed != 0) {
             _randomizer = ExamRandomizer(_seed);
           }
@@ -165,9 +213,12 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
       if (result.isResumed) {
         _answers     = Map<int, String>.from(_session!.savedAnswers);
         _secondsLeft = _session!.remainingSeconds;
+        _timeElapsed = _totalSeconds - _secondsLeft;
       } else {
         _answers     = {};
-        _secondsLeft = _exam!.durationMinutes * 60;
+        _totalSeconds = _exam!.durationMinutes * 60;
+        _secondsLeft  = _totalSeconds;
+        _timeElapsed  = 0;
       }
 
       _flagged       = {};
@@ -179,9 +230,24 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
 
       // Sistem ujian
       WakelockPlus.enable();
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+      // FLAG_SECURE — block screenshot & recording
+      AntiCheatService.enableSecureFlag();
+      // Multi-window listener
+      AntiCheatService.onMultiWindowChanged((isMulti) {
+        if (isMulti && _phase == 'ujian') _recordViolation('split_screen');
+      });
       _startTimer();
       _startAutoSave();
+      // Periodic checks
+      Timer.periodic(const Duration(seconds: 10), (_) {
+        _checkMultiWindow();
+        _checkScreenRecording();
+      });
 
     } catch (e) {
       setState(() { _loading = false; _error = e.toString(); });
@@ -189,16 +255,49 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
   }
 
   void _startTimer() {
+    _timerStartedAt = DateTime.now();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (_secondsLeft <= 0) {
+      final wallElapsed = _timeElapsed + DateTime.now().difference(_timerStartedAt!).inSeconds;
+      final remaining = _totalSeconds - wallElapsed;
+      if (remaining <= 0) {
         _timer?.cancel();
+        _autoSaveTimer?.cancel();
+        setState(() => _secondsLeft = 0);
         _autoSubmit();
         return;
       }
-      setState(() => _secondsLeft--);
+      setState(() => _secondsLeft = remaining);
       // Auto-save tiap 30 detik dari timer
-      if (_secondsLeft % 30 == 0) _saveSession();
+      if (wallElapsed % 30 == 0) _saveSession();
     });
+  }
+
+  Future<void> _syncTimerFromServer() async {
+    // Pull authoritative remaining time from server after resume
+    if (_session == null) return;
+    try {
+      final repo = ref.read(_ujianRepoProvider);
+      final state = await repo.getSessionState(_session!.sessionId);
+      if (state != null) {
+        final remaining = state.remainingSeconds;
+        setState(() {
+          _secondsLeft  = remaining;
+          _timeElapsed  = _totalSeconds - remaining;
+          _timerStartedAt = DateTime.now();
+        });
+        _startTimer();
+      }
+    } catch (_) {
+      // Server unreachable — resume from best local estimate
+      final bestEstimate = _totalSeconds - _timeElapsed;
+      if (bestEstimate > 0) {
+        setState(() => _secondsLeft = bestEstimate);
+        _timerStartedAt = DateTime.now();
+        _startTimer();
+      } else {
+        _autoSubmit();
+      }
+    }
   }
 
   void _startAutoSave() {
@@ -219,6 +318,8 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
       'flagged':      _flagged.toList(),
       'currentIndex': _currentIndex,
       'secondsLeft':  _secondsLeft,
+      'totalSeconds': _totalSeconds,
+      'timeElapsed':  _timeElapsed + (_timerStartedAt != null ? DateTime.now().difference(_timerStartedAt!).inSeconds : 0),
       'savedAt':      DateTime.now().toIso8601String(),
     });
   }
@@ -293,7 +394,132 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
     return '${m.toString().padLeft(2,'0')}:${ss.toString().padLeft(2,'0')}';
   }
 
-  // ── BUILD ─────────────────────────────────────────────
+  // ── PASSWORD EXIT DIALOG ──────────────────────────────
+  bool _exitDialogOpen = false;
+
+  Future<bool> _onWillPop() async {
+    if (_phase != 'ujian' || _exitDialogOpen) return false;
+    _exitDialogOpen = true;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Row(children: [
+          Icon(Icons.lock_outline, color: Colors.red, size: 22),
+          SizedBox(width: 8),
+          Text('Akses Terkunci'),
+        ]),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Text('Masukkan password untuk keluar dari ujian:', style: TextStyle(fontSize: 13)),
+          const SizedBox(height: 12),
+          TextField(
+            key: const Key('exit-password-field'),
+            obscureText: true,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: 'Password admin/guru',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+            textInputAction: TextInputAction.go,
+            onSubmitted: (_) => Navigator.pop(ctx, true),
+          ),
+          const SizedBox(height: 8),
+          Text('Catatan: Keluar tanpa password akan dicatat sebagai pelanggaran',
+            style: TextStyle(fontSize: 11, color: Colors.grey[600]), textAlign: TextAlign.center),
+        ]),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () => Navigator.pop(ctx, true),
+            icon: const Icon(Icons.logout, size: 16),
+            label: const Text('Keluar'),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+          ),
+        ],
+      ),
+    );
+
+    _exitDialogOpen = false;
+
+    if (confirmed == true) {
+      // Attempt to verify password
+      final pwCtrl = TextEditingController();
+      final verified = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx2) => AlertDialog(
+          title: const Row(children: [
+            Icon(Icons.password_outlined, size: 22),
+            SizedBox(width: 8),
+            Text('Verifikasi Password'),
+          ]),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Text('Masukkan password admin/guru untuk keluar:', style: TextStyle(fontSize: 13)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: pwCtrl,
+              obscureText: true,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: 'Password',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx2, false), child: const Text('Batal')),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx2, true),
+              child: const Text('Verifikasi & Keluar'),
+            ),
+          ],
+        ),
+      );
+
+      if (verified == true && pwCtrl.text.isNotEmpty) {
+        await _verifyExitPassword(pwCtrl.text);
+      }
+      pwCtrl.dispose();
+    } else {
+      _recordViolation('tab_switch');
+    }
+
+    return false; // never allow direct pop
+  }
+
+  Future<void> _verifyExitPassword(String password) async {
+    try {
+      final repo = ref.read(_ujianRepoProvider);
+      final result = await repo.verifyExitPassword(
+        _session!.sessionId,
+        password,
+      );
+      if (result['valid'] == true) {
+        // Password benar — izinkan keluar
+        await SecureStorage.clearExamSession();
+        AntiCheatService.disableSecureFlag();
+        WakelockPlus.disable();
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+        if (mounted) context.go('/siswa');
+      } else {
+        // Salah — catat violation
+        _recordViolation('wrong_password');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Password salah! Pelanggaran dicatat.'),
+            backgroundColor: Colors.red,
+          ));
+        }
+      }
+    } catch (_) {
+      // Offline fallback — masih catat violation
+      _recordViolation('wrong_password');
+    }
+  }
   @override
   Widget build(BuildContext context) {
     if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -407,15 +633,21 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
     final isDanger    = _secondsLeft <= 60;
     final timerColor  = isDanger ? AppColors.red : isWarning ? AppColors.amber : AppColors.navy;
 
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        titleSpacing: 12,
-        title: Text(_exam?.title ?? 'Ujian', style: AppTextStyles.bodySmall.copyWith(color: AppColors.ink, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
-        actions: [
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop || _phase != 'ujian') return;
+        await _onWillPop();
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.bg,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          titleSpacing: 12,
+          title: Text(_exam?.title ?? 'Ujian', style: AppTextStyles.bodySmall.copyWith(color: AppColors.ink, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
+          actions: [
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
               color: isDanger ? AppColors.redLight : isWarning ? AppColors.amberLight : AppColors.navyLight,
@@ -568,7 +800,7 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
           ]),
         ),
       ]),
-    );
+    ));
   }
 
   Widget _diffBadge(String diff) {

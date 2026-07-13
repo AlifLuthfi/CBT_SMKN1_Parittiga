@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
@@ -179,6 +180,7 @@ class _SoalScreenState extends ConsumerState<SoalScreen> {
     });
     String correctKey = existing?.correctAnswer ?? 'A';
     String? imageFile;
+    Uint8List? imageBytes; String? imageFileName;
 
     showModalBottomSheet(
       context: context,
@@ -219,10 +221,10 @@ class _SoalScreenState extends ConsumerState<SoalScreen> {
                 Expanded(child: TextField(
                   readOnly: true,
                   decoration: InputDecoration(
-                    hintText: imageFile != null ? 'Gambar dipilih' : 'Gambar soal (opsional)',
+                    hintText: imageFile != null || imageBytes != null ? 'Gambar dipilih' : 'Gambar soal (opsional)',
                     prefixIcon: const Icon(Icons.image_outlined, size: 18),
-                    suffixIcon: imageFile != null
-                        ? IconButton(icon: const Icon(Icons.clear, size: 16), onPressed: () => setS(() { imageFile = null; }))
+                    suffixIcon: imageFile != null || imageBytes != null
+                        ? IconButton(icon: const Icon(Icons.clear, size: 16), onPressed: () => setS(() { imageFile = null; imageBytes = null; imageFileName = null; }))
                         : null,
                   ),
                 )),
@@ -234,8 +236,13 @@ class _SoalScreenState extends ConsumerState<SoalScreen> {
                       type: FileType.image,
                       allowMultiple: false,
                     );
-                    if (picked != null && picked.files.single.path != null) {
-                      setS(() { imageFile = picked.files.single.path!; });
+                    if (picked != null && picked.files.isNotEmpty) {
+                      final f = picked.files.single;
+                      if (f.bytes != null) {
+                        setS(() { imageBytes = f.bytes; imageFileName = f.name; });
+                      } else if (f.path != null) {
+                        setS(() { imageFile = f.path; });
+                      }
                     }
                   },
                 ),
@@ -244,6 +251,13 @@ class _SoalScreenState extends ConsumerState<SoalScreen> {
                 Padding(padding: const EdgeInsets.only(top: 8), child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.file(File(imageFile!), height: 120, width: double.infinity, fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Text('Gagal memuat gambar', style: TextStyle(color: AppColors.red, fontSize: 11)),
+                  ),
+                ))
+              else if (imageBytes != null)
+                Padding(padding: const EdgeInsets.only(top: 8), child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.memory(imageBytes!, height: 120, width: double.infinity, fit: BoxFit.contain,
                     errorBuilder: (_, __, ___) => const Text('Gagal memuat gambar', style: TextStyle(color: AppColors.red, fontSize: 11)),
                   ),
                 ))
@@ -368,17 +382,20 @@ class _SoalScreenState extends ConsumerState<SoalScreen> {
                   if (options.values.any((v) => v.isEmpty)) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Semua opsi A-D wajib diisi'))); return; }
                   try {
                     final repo = GuruRepository();
+                    final hasImage = imageFile != null || imageBytes != null;
                     if (existing != null) {
-                      if (imageFile != null) {
+                      if (hasImage) {
                         await repo.updateQuestionWithImage(
                           id: existing.id,
                           questionText: text,
                           options: options,
                           correctAnswer: correctKey,
                           difficulty: diff,
-                          weight: ({'easy': 1, 'medium': 2, 'hard': 3}[diff] ?? 1).toDouble(),  // backend abaikan, auto dari difficulty
+                          weight: ({'easy': 1, 'medium': 2, 'hard': 3}[diff] ?? 1).toDouble(),
                           explanation: explCtrl.text.trim().isEmpty ? null : explCtrl.text.trim(),
                           imagePath: imageFile,
+                          imageBytes: imageBytes,
+                          imageName: imageFileName,
                         );
                       } else {
                         await repo.updateQuestion(existing.id, {
@@ -395,9 +412,11 @@ class _SoalScreenState extends ConsumerState<SoalScreen> {
                         options: options,
                         correctAnswer: correctKey,
                         difficulty: diff,
-                        weight: ({'easy': 1, 'medium': 2, 'hard': 3}[diff] ?? 1).toDouble(),  // backend abaikan, auto dari difficulty
+                        weight: ({'easy': 1, 'medium': 2, 'hard': 3}[diff] ?? 1).toDouble(),
                         explanation: explCtrl.text.trim().isEmpty ? null : explCtrl.text.trim(),
                         imagePath: imageFile,
+                        imageBytes: imageBytes,
+                        imageName: imageFileName,
                       );
                     }
                     ref.invalidate(_soalProvider(_filterDiff));

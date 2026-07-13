@@ -275,8 +275,9 @@ class _UjianManagementScreenState extends ConsumerState<UjianManagementScreen> {
                 const SizedBox(height: 5),
                 DropdownButtonFormField<int>(
                   initialValue: selectedClassId,
+                  hint: const Text('Pilih kelas'),
                   decoration: const InputDecoration(hintText: 'Pilih kelas'),
-                  items: classes.map((c) => DropdownMenuItem(value: c.id, child: Text('${c.name} · ${c.subject ?? ''}'))).toList(),
+                  items: classes.map((c) => DropdownMenuItem(value: c.id, child: Text('${c.name} · ${c.subject ?? ''} (${c.studentCount ?? 0} siswa)'))).toList(),
                   onChanged: (v) => setS(() => selectedClassId = v),
                 ),
                 const SizedBox(height: 14),
@@ -284,6 +285,7 @@ class _UjianManagementScreenState extends ConsumerState<UjianManagementScreen> {
                 const SizedBox(height: 5),
                 DropdownButtonFormField<int>(
                   initialValue: selectedSubjectId,
+                  hint: const Text('Pilih mata pelajaran'),
                   decoration: const InputDecoration(hintText: 'Pilih mata pelajaran'),
                   items: subjects.map((s) => DropdownMenuItem(value: s.id, child: Text('${s.name} (${s.questionsCount ?? 0} soal)'))).toList(),
                   onChanged: (v) => setS(() => selectedSubjectId = v),
@@ -424,7 +426,7 @@ class _UjianManagementScreenState extends ConsumerState<UjianManagementScreen> {
                 DropdownButtonFormField<int>(
                   initialValue: selectedClassId,
                   decoration: const InputDecoration(hintText: 'Pilih kelas'),
-                  items: classes.map((c) => DropdownMenuItem(value: c.id, child: Text('${c.name} · ${c.subject ?? ''}'))).toList(),
+                  items: classes.map((c) => DropdownMenuItem(value: c.id, child: Text('${c.name} · ${c.subject ?? ''} (${c.studentCount ?? 0} siswa)'))).toList(),
                   onChanged: (v) => setS(() => selectedClassId = v),
                 ),
                 const SizedBox(height: 14),

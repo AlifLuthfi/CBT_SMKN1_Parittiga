@@ -27,7 +27,7 @@ class QuestionImportService
 
     // ─── Import utama (CSV atau XLSX) ────────────────────────────────────────
 
-    public function import(UploadedFile $file, int $teacherId, ?int $categoryId = null): QuestionImport
+    public function import(UploadedFile $file, int $teacherId, ?int $categoryId = null, ?int $subjectId = null): QuestionImport
     {
         $record = QuestionImport::create([
             'teacher_id' => $teacherId,
@@ -44,7 +44,7 @@ class QuestionImportService
 
             $record->update(['total_rows' => count($rows)]);
 
-            [$success, $errors] = $this->processRows($rows, $teacherId, $categoryId);
+            [$success, $errors] = $this->processRows($rows, $teacherId, $categoryId, $subjectId);
 
             $record->update([
                 'success_count' => $success,
@@ -137,7 +137,7 @@ class QuestionImportService
 
     // ─── Proses baris data ──────────────────────────────────────────────────
 
-    private function processRows(array $rows, int $teacherId, ?int $categoryId): array
+    private function processRows(array $rows, int $teacherId, ?int $categoryId, ?int $subjectId = null): array
     {
         $success = 0;
         $errors  = [];
@@ -172,8 +172,9 @@ class QuestionImportService
                 continue;
             }
 
-            Question::create([
+            Question::create(array_filter([
                 'teacher_id'     => $teacherId,
+                'subject_id'     => $subjectId,
                 'category_id'    => $catId,
                 'question_text'  => $data['question_text'],
                 'question_type'  => $data['question_type'],
@@ -183,7 +184,7 @@ class QuestionImportService
                 'difficulty'     => $data['difficulty'],
                 'weight'         => $data['weight'],
                 'tags'           => $data['tags'],
-            ]);
+            ]));
 
             $success++;
         }

@@ -20,7 +20,7 @@ class GuruDashboardScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
-        title: const Text('ExamCore'),
+        title: const Text('CBT SMKN 1 Parittiga'),
         actions: [
           IconButton(icon: const Icon(Icons.notifications_outlined), onPressed: () {}),
           IconButton(icon: const Icon(Icons.refresh), onPressed: () => ref.invalidate(_dashboardProvider)),
@@ -90,7 +90,7 @@ class GuruDashboardScreen extends ConsumerWidget {
           StatCard(label: 'Total Ujian',  value: '${stats.totalExams}',    subtitle: '${stats.activeExams} aktif', accentColor: AppColors.orange),
           StatCard(label: 'Total Soal',   value: '${stats.totalQuestions}', subtitle: 'Tersimpan',                  accentColor: AppColors.navy),
           StatCard(label: 'Total Siswa',  value: '${stats.totalStudents}',  subtitle: 'Terdaftar',                  accentColor: AppColors.green),
-          StatCard(label: 'Rata-rata',    value: stats.averageScore.toStringAsFixed(1), subtitle: 'Nilai ujian',   accentColor: AppColors.sky),
+          StatCard(label: 'Mata Pelajaran', value: '${stats.totalSubjects}', subtitle: 'Terdaftar',               accentColor: AppColors.sky),
         ],
       ),
       const SizedBox(height: 20),

@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\Exam;
 use App\Models\ExamSession;
 use App\Models\Question;
+use App\Models\Subject;
 use App\Models\User;
 use App\Models\Violation;
 use Illuminate\Http\Request;
@@ -24,6 +25,7 @@ class DashboardController extends Controller
             'active_exams'    => Exam::where('teacher_id', $teacher->id)->where('status','active')->count(),
             'violations_today'=> Violation::whereHas('session.exam', fn($q) => $q->where('teacher_id',$teacher->id))
                                     ->whereDate('created_at', today())->count(),
+            'total_subjects'  => Subject::where('teacher_id', $teacher->id)->count(),
         ];
 
         $activeExams = Exam::where('teacher_id', $teacher->id)

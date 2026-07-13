@@ -199,18 +199,23 @@ function simpanProfil(){
   document.getElementById('avatar-name').textContent=name;
   showAlert('save-alert','Profil berhasil disimpan!','ok');
 }
-function gantiPassword(){
+async function gantiPassword(){
   const oldP=document.getElementById('pass-old').value;
   const newP=document.getElementById('pass-new').value;
   const conf=document.getElementById('pass-conf').value;
   if(!oldP){showAlert('pass-alert','Password lama wajib diisi','err');return;}
   if(newP.length<8){showAlert('pass-alert','Minimal 8 karakter','err');return;}
   if(newP!==conf){showAlert('pass-alert','Konfirmasi tidak cocok','err');return;}
-  document.getElementById('pass-old').value='';
-  document.getElementById('pass-new').value='';
-  document.getElementById('pass-conf').value='';
-  document.getElementById('pass-strength').style.display='none';
-  showAlert('pass-alert','Password berhasil diubah!','ok');
+  try {
+    await api('PATCH', '/auth/password', { current_password: oldP, password: newP, password_confirmation: conf });
+    document.getElementById('pass-old').value='';
+    document.getElementById('pass-new').value='';
+    document.getElementById('pass-conf').value='';
+    document.getElementById('pass-strength').style.display='none';
+    showAlert('pass-alert','Password berhasil diubah!','ok');
+  } catch(e) {
+    showAlert('pass-alert',e.message||'Gagal mengubah password','err');
+  }
 }
 function checkStrength(p){
   const w=document.getElementById('pass-strength');

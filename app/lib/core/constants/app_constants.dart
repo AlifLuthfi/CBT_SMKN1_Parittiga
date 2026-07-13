@@ -3,10 +3,11 @@ import 'package:flutter/foundation.dart';
 class AppConstants {
   AppConstants._();
 
-  static const String baseUrlWeb          = 'http://localhost:8000/api';
+  static const String baseUrlWeb          = 'http://127.0.0.1:8000/api';
   static const String baseUrlLocal        = 'http://127.0.0.1:8000/api';
   static const String baseUrlAndroidEmu   = 'http://10.0.2.2:8000/api';
-  static const String baseUrlLocalNetwork = 'http://192.168.1.5:8000/api';
+  static const String baseUrlLocalNetwork = 'http://192.168.74.128:8000/api';
+  static const String baseUrlHosting    = 'https://enlighten-ascension-unseen.ngrok-free.dev/api';
   static String get baseUrlDefault => kIsWeb || defaultTargetPlatform != TargetPlatform.android
       ? baseUrlWeb
       : baseUrlAndroidEmu;

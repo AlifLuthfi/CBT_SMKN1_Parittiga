@@ -18,7 +18,7 @@ class AdminDashboardScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
-        title: const Text('Admin — ExamCore'),
+        title: const Text('Admin — CBT SMKN 1 Parittiga'),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: () => ref.invalidate(_adminDashProvider)),
           PopupMenuButton(
@@ -65,12 +65,13 @@ class AdminDashboardScreen extends ConsumerWidget {
 
   Widget _adminMenu(BuildContext context, WidgetRef ref) {
     final items = [
-      (Icons.people_outline,    'Manajemen User',  AppColors.navy,   () => context.go('/admin/users')),
-      (Icons.class_outlined,    'Manajemen Kelas', AppColors.green,  () => context.go('/admin/kelas')),
-      (Icons.quiz_outlined,     'Semua Ujian',     AppColors.orange, () => context.go('/admin/exams')),
-      (Icons.warning_outlined,  'Log Pelanggaran', AppColors.red,    () => _showViolationsSheet(context)),
-      (Icons.history,           'Activity Log',    AppColors.sky,    () => _showActivityLogSheet(context)),
-      (Icons.download_outlined, 'Export Data',     AppColors.ink2,   () => _showExportSheet(context)),
+      (Icons.people_outline,     'Manajemen User',  AppColors.navy,   () => context.go('/admin/users')),
+      (Icons.class_outlined,     'Manajemen Kelas', AppColors.green,  () => context.go('/admin/kelas')),
+      (Icons.quiz_outlined,      'Semua Ujian',     AppColors.orange, () => context.go('/admin/exams')),
+      (Icons.warning_outlined,   'Pelanggaran',     AppColors.red,    () => context.go('/admin/violations')),
+      (Icons.download_outlined,  'Export Data',     AppColors.ink2,   () => _showExportDialog(context)),
+      (Icons.notifications_none,'Notifikasi',       AppColors.ink2,   () => context.go('/admin/notifications')),
+      (Icons.person_outline,     'Profil',         AppColors.ink2,   () => context.go('/admin/profile')),
     ];
     return GridView.count(
       crossAxisCount: 3, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
@@ -90,111 +91,34 @@ class AdminDashboardScreen extends ConsumerWidget {
     );
   }
 
-  // ── Log Pelanggaran ─────────────────────────────────
-  void _showViolationsSheet(BuildContext ctx) {
-    showModalBottomSheet(
-      context: ctx, isScrollControlled: true, backgroundColor: Colors.transparent,
-      builder: (_) => Container(
-        height: MediaQuery.of(ctx).size.height * .86,
-        decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-        child: Column(children: [
-          Container(width: 40, height: 4, margin: const EdgeInsets.symmetric(vertical: 12), decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
-          Padding(padding: const EdgeInsets.fromLTRB(18,0,18,12), child: Text('Log Pelanggaran', style: AppTextStyles.h4)),
-          const Divider(height: 1),
-          Expanded(child: FutureBuilder<dynamic>(
-            future: ApiClient.get('/admin/violations'),
-            builder: (_, snap) {
-              if (snap.connectionState != ConnectionState.done) return ListView(children: const [SkeletonListTile(), SkeletonListTile()]);
-              if (snap.hasError) return ErrorState(message: snap.error.toString(), onRetry: () => Navigator.pop(ctx));
-              final viols = ((snap.data as Map<String, dynamic>)['data'] as List? ?? []);
-              if (viols.isEmpty) return const EmptyState(title: 'Belum ada pelanggaran', icon: Icons.check_circle_outline);
-              return ListView.separated(
-                itemCount: viols.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (_, i) {
-                  final v = viols[i] as Map<String, dynamic>;
-                  final student = v['student'] as Map<String, dynamic>?;
-                  return ListTile(
-                    leading: CircleAvatar(backgroundColor: AppColors.redLight, child: const Icon(Icons.warning, color: AppColors.red, size: 18)),
-                    title: Text(student?['name']?.toString() ?? '-', style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600)),
-                    subtitle: Text('${v['violation_type'] ?? '-'} · ${v['created_at'] ?? '-'}'),
-                  );
-                },
-              );
-            },
-          )),
-        ]),
-      ),
-    );
-  }
-
-  // ── Activity Log ────────────────────────────────────
-  void _showActivityLogSheet(BuildContext ctx) {
-    showModalBottomSheet(
-      context: ctx, isScrollControlled: true, backgroundColor: Colors.transparent,
-      builder: (_) => Container(
-        height: MediaQuery.of(ctx).size.height * .86,
-        decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-        child: Column(children: [
-          Container(width: 40, height: 4, margin: const EdgeInsets.symmetric(vertical: 12), decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
-          Padding(padding: const EdgeInsets.fromLTRB(18,0,18,12), child: Text('Activity Log', style: AppTextStyles.h4)),
-          const Divider(height: 1),
-          Expanded(child: FutureBuilder<dynamic>(
-            future: ApiClient.get('/admin/activity-logs'),
-            builder: (_, snap) {
-              if (snap.connectionState != ConnectionState.done) return ListView(children: const [SkeletonListTile(), SkeletonListTile()]);
-              if (snap.hasError) return ErrorState(message: snap.error.toString(), onRetry: () => Navigator.pop(ctx));
-              final logs = ((snap.data as Map<String, dynamic>)['data'] as List? ?? []);
-              if (logs.isEmpty) return const EmptyState(title: 'Belum ada aktivitas', icon: Icons.history_outlined);
-              return ListView.separated(
-                itemCount: logs.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (_, i) {
-                  final l = logs[i] as Map<String, dynamic>;
-                  final actor = l['user'] as Map<String, dynamic>?;
-                  return ListTile(
-                    dense: true,
-                    leading: CircleAvatar(radius: 16, backgroundColor: AppColors.bg, child: Icon(Icons.person_outline, size: 16, color: AppColors.ink3)),
-                    title: Text(l['description']?.toString() ?? '-', style: AppTextStyles.bodySmall.copyWith(fontSize: 12)),
-                    subtitle: Text(actor?['name']?.toString() ?? '-', style: AppTextStyles.bodySmall.copyWith(fontSize: 10.5)),
-                    trailing: Text(l['created_at']?.toString() ?? '', style: AppTextStyles.bodySmall.copyWith(fontSize: 10)),
-                  );
-                },
-              );
-            },
-          )),
-        ]),
-      ),
-    );
-  }
-
-  // ── Export Data ──────────────────────────────────────
-  void _showExportSheet(BuildContext ctx) {
-    showModalBottomSheet(
-      context: ctx, backgroundColor: Colors.transparent,
-      builder: (_) => Container(
-        padding: const EdgeInsets.all(18),
-        decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 16), decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
-          Text('Export Data', style: AppTextStyles.h4),
-          const SizedBox(height: 14),
-          ListTile(
-            leading: const Icon(Icons.people_outline, color: AppColors.navy),
-            title: const Text('Export Users (CSV)'),
-            trailing: const Icon(Icons.download),
-            onTap: () async {
+  // ── Export Data (dialog ringkas) ─────────────────────
+  void _showExportDialog(BuildContext ctx) {
+    showDialog(
+      context: ctx,
+      builder: (_) => AlertDialog(
+        title: const Text('Export Data'),
+        content: const ListTile(
+          leading: Icon(Icons.people_outline, color: AppColors.navy),
+          title: Text('Export Data User (CSV)'),
+          trailing: Icon(Icons.download),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          ElevatedButton(
+            onPressed: () async {
               try {
                 await ApiClient.get('/admin/export/users');
                 if (ctx.mounted) Navigator.pop(ctx);
-                if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Download dimulai — cek folder download')));
+                if (ctx.mounted) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Download dimulai — cek folder download')));
+                }
               } catch (e) {
                 if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.toString())));
               }
             },
+            child: const Text('Download'),
           ),
-          const SizedBox(height: 8),
-        ]),
+        ],
       ),
     );
   }
