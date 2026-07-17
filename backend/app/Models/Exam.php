@@ -8,7 +8,7 @@ class Exam extends Model
     use SoftDeletes;
     protected $fillable = [
         'teacher_id','class_id','package_id','title','description','duration_minutes','total_questions',
-        'randomize_questions','randomize_options','show_result_immediately','allow_review',
+        'randomize_questions','randomize_options','show_result_immediately',
         'passing_grade','status','start_time','end_time','auto_activate','auto_end',
         'max_violations','question_blueprint','notified_ending_soon_at',
     ];
@@ -16,7 +16,6 @@ class Exam extends Model
         'start_time'=>'datetime','end_time'=>'datetime','notified_ending_soon_at'=>'datetime',
         'question_blueprint'=>'array','randomize_questions'=>'boolean',
         'randomize_options'=>'boolean','show_result_immediately'=>'boolean',
-        'allow_review'=>'boolean','auto_activate'=>'boolean','auto_end'=>'boolean',
         'passing_grade'=>'decimal:2',
     ];
 
@@ -28,8 +27,13 @@ class Exam extends Model
     public function violations() { return $this->hasManyThrough(Violation::class, ExamSession::class, 'exam_id', 'session_id'); }
     public function pauses()     { return $this->hasMany(ExamPause::class,'exam_id'); }
 
-    public function getSessionsCountAttribute()    { return $this->sessions()->count(); }
-    public function getViolationsCountAttribute()  { return Violation::whereHas('session',fn($q)=>$q->where('exam_id',$this->id))->count(); }
-    public function getSubmittedCountAttribute()   { return $this->sessions()->whereIn('status',['submitted','timeout','force_submitted'])->count(); }
+    // ── Accessor ──
+    // Catatan: accessor ini override nilai dari withCount().
+    // Pake withCount('relation') + akses langsung attribute biar gak N+1
+    // Kalo mau fallback value, tambah '?? $this->attributes["sessions_count"] ?? 0'
+    // di body accessor. Buat sekarang hapus comment aja — gak dipanggil langsung.
+    // public function getSessionsCountAttribute()    { return $this->sessions()->count(); }
+    // public function getViolationsCountAttribute()  { return Violation::whereHas('session',fn($q)=>$q->where('exam_id',$this->id))->count(); }
+    // public function getSubmittedCountAttribute()   { return $this->sessions()->whereIn('status',['submitted','timeout','force_submitted'])->count(); }
     public function getActivePauseAttribute()      { return $this->pauses()->where('is_active',true)->first(); }
 }

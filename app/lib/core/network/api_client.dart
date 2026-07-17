@@ -5,42 +5,53 @@ import 'api_exception.dart';
 
 class ApiClient {
   static Dio? _dio;
+  static bool _initializing = false;
 
   static Future<Dio> getInstance() async {
     if (_dio != null) return _dio!;
+    if (_initializing) {
+      // tunggu bentar lalu coba lagi
+      await Future.delayed(const Duration(milliseconds: 50));
+      if (_dio != null) return _dio!;
+    }
 
-    final baseUrl = await SecureStorage.getBaseUrl();
-    final options = BaseOptions(
-      baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-      headers: {
-        'Accept': 'application/json',
-      },
-    );
-
-    _dio = Dio(options);
-
-    _dio!.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          final token = await SecureStorage.getToken();
-          if (token != null && token.isNotEmpty) {
-            options.headers['Authorization'] = 'Bearer $token';
-          }
-          return handler.next(options);
+    _initializing = true;
+    try {
+      final baseUrl = await SecureStorage.getBaseUrl();
+      final options = BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+        headers: {
+          'Accept': 'application/json',
         },
-        onError: (DioException e, handler) async {
-          if (e.response?.statusCode == 401) {
-            await SecureStorage.clearAuth();
-            reset();
-          }
-          return handler.next(e);
-        },
-      ),
-    );
+      );
 
-    return _dio!;
+      _dio = Dio(options);
+
+      _dio!.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) async {
+            final token = await SecureStorage.getToken();
+            if (token != null && token.isNotEmpty) {
+              options.headers['Authorization'] = 'Bearer $token';
+            }
+            return handler.next(options);
+          },
+          onError: (DioException e, handler) async {
+            if (e.response?.statusCode == 401) {
+              await SecureStorage.clearAuth();
+              reset();
+            }
+            return handler.next(e);
+          },
+        ),
+      );
+
+      return _dio!;
+    } finally {
+      _initializing = false;
+    }
   }
 
   static void reset() {
@@ -111,7 +122,7 @@ class ApiClient {
         ...fields.map((k, v) => MapEntry(k, v is List ? v.map((e) => e.toString()).join(',') : (v?.toString() ?? ''))),
       });
       final response = method == 'PUT'
-          ? await dio.put(path, data: form)
+          ? await dio.post(path, data: form, queryParameters: {'_method': 'PUT'})
           : await dio.post(path, data: form);
       return response.data;
     } on DioException catch (e) {
@@ -128,7 +139,7 @@ class ApiClient {
         ...fields.map((k, v) => MapEntry(k, v is List ? v.map((e) => e.toString()).join(',') : (v?.toString() ?? ''))),
       });
       final response = method == 'PUT'
-          ? await dio.put(path, data: form)
+          ? await dio.post(path, data: form, queryParameters: {'_method': 'PUT'})
           : await dio.post(path, data: form);
       return response.data;
     } on DioException catch (e) {

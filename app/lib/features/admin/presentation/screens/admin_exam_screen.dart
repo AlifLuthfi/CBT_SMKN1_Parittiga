@@ -18,6 +18,7 @@ class AdminExamScreen extends ConsumerWidget {
       backgroundColor: AppColors.bg,
       appBar: AppBar(
         title: const Text('Manajemen Ujian'),
+        leading: const AppBackButton(),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: () => ref.invalidate(_adminExamsProvider)),
         ],
@@ -55,7 +56,7 @@ class AdminExamScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: exam.isActive ? AppColors.green.withOpacity(.4) : AppColors.border, width: exam.isActive ? 1.5 : 1),
+        border: Border.all(color: exam.isActive ? AppColors.green.withValues(alpha:.4) : AppColors.border, width: exam.isActive ? 1.5 : 1),
       ),
       child: Column(children: [
         // Header
@@ -133,7 +134,9 @@ class AdminExamScreen extends ConsumerWidget {
     final dayName = days[dt.weekday - 1];
     final d = dt.day.toString().padLeft(2,'0');
     final m = dt.month.toString().padLeft(2,'0');
-    return '$dayName, $d/$m/${dt.year}';
+    final jam = dt.hour.toString().padLeft(2,'0');
+    final menit = dt.minute.toString().padLeft(2,'0');
+    return '$dayName, $d/$m/${dt.year} • $jam:$menit WIB';
   }
 
   Widget _miniStat(String label, String value, Color color) => Column(children: [
@@ -149,7 +152,7 @@ class AdminExamScreen extends ConsumerWidget {
       backgroundColor: color,
       minimumSize:     const Size(0, 38),
       padding:         const EdgeInsets.symmetric(horizontal: 12),
-      disabledBackgroundColor: color.withOpacity(.4),
+      disabledBackgroundColor: color.withValues(alpha:.4),
     ),
   );
 

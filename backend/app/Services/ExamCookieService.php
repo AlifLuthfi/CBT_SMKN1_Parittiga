@@ -49,7 +49,6 @@ class ExamCookieService
             'started_at'        => $session->started_at?->toIso8601String(),
             'expires_at'        => $expiresAt->toIso8601String(),
             'randomize_options' => (bool)$exam->randomize_options,
-            'allow_review'      => (bool)$exam->allow_review,
             'max_violations'    => $exam->max_violations,
         ];
 

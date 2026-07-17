@@ -81,7 +81,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         child: Container(
           decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
           child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Container(width: 44, height: 44, decoration: BoxDecoration(color: item.$3.withOpacity(.1), borderRadius: BorderRadius.circular(12)),
+            Container(width: 44, height: 44, decoration: BoxDecoration(color: item.$3.withValues(alpha:.1), borderRadius: BorderRadius.circular(12)),
               child: Icon(item.$1, color: item.$3, size: 22)),
             const SizedBox(height: 8),
             Text(item.$2, style: AppTextStyles.bodySmall.copyWith(fontSize: 11, color: AppColors.ink, fontWeight: FontWeight.w500), textAlign: TextAlign.center),

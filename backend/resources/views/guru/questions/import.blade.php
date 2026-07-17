@@ -4,7 +4,7 @@
 @section('content')
 <div class="flex items-center justify-between mb-6" style="flex-wrap:wrap;gap:12px">
   <div class="page-sub" style="margin:0">Upload file Excel/CSV untuk import soal massal</div>
-  <a href="{{ route('guru.questions') }}" class="btn btn-ghost">
+  <a href="{{ isset($subject) ? route('guru.subjects.questions', $subject) : route('guru.subjects') }}" class="btn btn-ghost">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
     Kembali
   </a>
@@ -41,7 +41,10 @@
     </div>
 
     {{-- Preview --}}
-    <div class="card" id="card-preview" style="display:none">
+    <div class="card" id="card-preview" style="display:none"
+         data-preview="{{ route('guru.questions.import.preview') }}"
+         data-execute="{{ route('guru.questions.import.execute') }}"
+         data-history="{{ route('guru.questions.import.history') }}">
       <div class="card-head">
         <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Preview Soal</div>
         <div style="display:flex;gap:8px;align-items:center">
@@ -78,7 +81,7 @@
       {{-- Preview table --}}
       <div class="table-wrap">
         <table>
-          <thead><tr><th>#</th><th>Pertanyaan</th><th>Opsi</th><th>Kunci</th><th>Sulit</th><th>Status</th></tr></thead>
+          <thead><tr><th>#</th><th>Pertanyaan</th><th>Opsi</th><th>Kunci</th><th>Status</th></tr></thead>
           <tbody id="tbody-preview"></tbody>
         </table>
       </div>
@@ -94,29 +97,28 @@
     </div>
   </div>
 
-  {{-- RIGHT: Settings --}}
+  {{-- RIGHT: Subject info --}}
   <div>
     <div class="card mb-4">
-      <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Pengaturan</div></div>
+      <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Mata Pelajaran</div></div>
       <div class="card-body">
-        <div class="form-group">
-          <label class="form-label">Mata Pelajaran</label>
-          <select id="import-subject" class="form-input">
-            <option value="">— Pilih mapel —</option>
+        @if(isset($subject))
+        <div style="text-align:center;padding:12px 0">
+          <div style="font-size:28px;font-weight:700;color:var(--navy);margin-bottom:4px">{{ $subject->name }}</div>
+          <div style="font-size:12px;color:var(--ink3)">Soal akan masuk ke mapel ini</div>
+        </div>
+        <input type="hidden" id="import-subject" value="{{ $subject->id }}">
+        @else
+        <div style="padding:12px 0">
+          <div style="font-size:12px;color:var(--ink3);margin-bottom:6px">Pilih mapel tujuan</div>
+          <select id="import-subject" class="form-input" required>
+            <option value="">-- Pilih Mapel --</option>
             @foreach($subjects as $s)
             <option value="{{ $s->id }}">{{ $s->name }}</option>
             @endforeach
           </select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Kategori Default</label>
-          <select id="import-category" class="form-input">
-            <option value="">— Tidak ada —</option>
-            @foreach($categories as $c)
-            <option value="{{ $c->id }}">{{ $c->name }}</option>
-            @endforeach
-          </select>
-        </div>
+        @endif
       </div>
     </div>
 
@@ -125,12 +127,12 @@
       <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Template</div></div>
       <div class="card-body">
         <div style="font-size:12.5px;color:var(--ink2);margin-bottom:12px">Download template untuk format yang benar:</div>
-        <a href="{{ asset('api/guru/question-imports/template') }}" class="btn btn-ghost w-full" style="justify-content:center;margin-bottom:8px">
+        <a href="{{ route('guru.questions.import.template') }}" class="btn btn-ghost w-full" style="justify-content:center;margin-bottom:8px">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Download Template CSV
+          Download Template Excel
         </a>
         <div style="font-size:11px;color:var(--ink3);line-height:1.7">
-          <strong>Kolom:</strong> question_text, option_a, option_b, option_c, option_d, option_e, correct_answer, difficulty, weight, explanation, category, tags
+          <strong>Kolom:</strong> question_text, option_a, option_b, option_c, option_d, option_e, correct_answer, explanation.
         </div>
       </div>
     </div>
@@ -155,6 +157,10 @@
 
 @push('scripts')
 <script>
+const CARD_PREVIEW = document.getElementById('card-preview');
+const PREVIEW_URL = CARD_PREVIEW.dataset.preview;
+const EXECUTE_URL = CARD_PREVIEW.dataset.execute;
+const HISTORY_URL = CARD_PREVIEW.dataset.history;
 let currentFile = null;
 let previewData = null;
 
@@ -196,7 +202,7 @@ async function uploadPreview(file) {
   document.getElementById('tbody-preview').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--ink3)">Memproses...</td></tr>';
 
   try {
-    const res = await fetch('{{ route('guru.questions.import.preview') }}', {
+    const res = await fetch(PREVIEW_URL, {
       method: 'POST',
       headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
       body: form,
@@ -225,7 +231,6 @@ function renderPreview() {
   document.getElementById('s-preview').textContent = rows.length;
 
   // Table
-  const diffLabel = {easy:'Mudah', medium:'Sedang', hard:'Sulit'};
   document.getElementById('tbody-preview').innerHTML = filtered.map(r => {
     const isOk = r.status === 'ok';
     const opts = r.options || {};
@@ -237,18 +242,17 @@ function renderPreview() {
         <td class="td-main" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.question_text || ''}</td>
         <td style="font-size:11px">${optStr}</td>
         <td style="font-family:monospace;font-weight:700;color:var(--green)">${r.correct_answer || ''}</td>
-        <td><span class="badge ${ {easy:'b-green',medium:'b-amber',hard:'b-red'}[r.difficulty] || 'b-gray'}">${diffLabel[r.difficulty] || r.difficulty}</span></td>
         <td><span class="badge b-green">Valid</span></td>
       </tr>`;
     } else {
       const errors = (r.errors || []).join('; ');
       return `<tr style="border-left:3px solid var(--red)">
         <td style="font-family:monospace;color:var(--ink3);font-size:12px">${r.row}</td>
-        <td colspan="4" style="color:var(--red);font-size:12px">${errors}</td>
+        <td colspan="3" style="color:var(--red);font-size:12px">${errors}</td>
         <td><span class="badge b-red">Error</span></td>
       </tr>`;
     }
-  }).join('') || '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--ink3)">Tidak ada data</td></tr>';
+  }).join('') || '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--ink3)">Tidak ada data</td></tr>';
 
   // Footer
   const validCount = previewData.valid_count || 0;
@@ -267,10 +271,9 @@ async function executeImport() {
   const form = new FormData();
   form.append('file', currentFile);
   form.append('subject_id', document.getElementById('import-subject').value || '');
-  form.append('category_id', document.getElementById('import-category').value || '');
 
   try {
-    const res = await fetch('{{ route('guru.questions.import.execute') }}', {
+    const res = await fetch(EXECUTE_URL, {
       method: 'POST',
       headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
       body: form,
@@ -314,7 +317,7 @@ async function executeImport() {
 
 async function loadHistory() {
   try {
-    const res = await fetch('{{ route('guru.questions.import.history') }}', {
+    const res = await fetch(HISTORY_URL, {
       headers: { 'Accept': 'application/json' },
     });
     const data = await res.json();

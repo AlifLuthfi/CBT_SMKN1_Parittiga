@@ -44,8 +44,6 @@ class ExamQuestion {
   final int                  id;
   final String               questionText;
   final String               questionType;
-  final String               difficulty;
-  final double               weight;
   final Map<String, String>? options;
   final String?              correctAnswer;
   final String?              shuffledCorrect;
@@ -57,8 +55,6 @@ class ExamQuestion {
     required this.id,
     required this.questionText,
     required this.questionType,
-    required this.difficulty,
-    required this.weight,
     this.options,
     this.correctAnswer,
     this.shuffledCorrect,
@@ -71,8 +67,6 @@ class ExamQuestion {
     id:           j['id'] as int,
     questionText: j['question_text'] as String? ?? j['text'] as String? ?? '',
     questionType: j['question_type'] as String? ?? 'multiple_choice',
-    difficulty:   j['difficulty']    as String? ?? 'medium',
-    weight:       ((j['weight'] is num ? (j['weight'] as num) : double.tryParse(j['weight']?.toString() ?? ''))?.toDouble() ?? 1.0),
     options:      ((j['options'] is Map) ? (j['options'] as Map).cast<String, String>() : null),
     correctAnswer:j['correct_answer'] as String?,
     explanation:  j['explanation']   as String?,
@@ -86,7 +80,7 @@ class ExamQuestion {
     String?              imageUrl,
   }) => ExamQuestion(
     id: id, questionText: questionText, questionType: questionType,
-    difficulty: difficulty, weight: weight, explanation: explanation,
+    explanation: explanation,
     correctAnswer:   correctAnswer,
     options:         options         ?? this.options,
     shuffledCorrect: shuffledCorrect ?? this.shuffledCorrect,
@@ -104,10 +98,10 @@ class ExamRandomizer {
   ShuffledOptions shuffleOptions(Map<String, String> options, String correctAnswer, int questionId) {
     if (options.isEmpty) return ShuffledOptions(options: options, correctKey: correctAnswer, keyMap: {});
     final seedForQ = (globalSeed + questionId) & 0xFFFFFFFF;
-    final lcq      = LCG(seedForQ);
+    final lcg      = LCG(seedForQ);
     final origKeys   = options.keys.toList();
     final origValues = options.values.toList();
-    final shuffVals  = lcq.shuffle(origValues);
+    final shuffVals  = lcg.shuffle(origValues);
     final newOptions = <String, String>{};
     final keyMap     = <String, String>{};
     for (int i = 0; i < origKeys.length; i++) {

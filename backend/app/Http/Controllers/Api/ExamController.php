@@ -33,22 +33,20 @@ class ExamController extends Controller
             'subject_id'               => 'required|exists:subjects,id',
             'duration_minutes'         => 'required|integer|min:5|max:300',
             'passing_grade'            => 'required|numeric|min:0|max:100',
-            'max_violations'           => 'integer|min:1|max:20',
             'start_time'               => 'nullable|date',
             'end_time'                 => 'nullable|date|after:start_time',
             'auto_activate'            => 'boolean',
             'auto_end'                 => 'boolean',
         ]);
 
-        // LCG otomatis — acak urutan soal & opsi, hasil hanya tampilkan salah
+        // LCG otomatis — acak urutan soal & opsi, hasil hanya lihat salah
         $data['randomize_questions']     = true;
         $data['randomize_options']       = true;
         $data['show_result_immediately'] = false;
-        $data['allow_review']            = true;
 
         $data['teacher_id'] = $request->user()->id;
 
-        // Ambil soal dari subject yang dipilih, milik teacher ini
+        // Ambil semua soal dari subject yang dipilih, milik teacher ini
         $questionIds = \App\Models\Question::where('teacher_id', $request->user()->id)
             ->where('subject_id', $data['subject_id'])
             ->pluck('id')
@@ -79,6 +77,8 @@ class ExamController extends Controller
         $data = $request->validate([
             'title'               => 'sometimes|string|max:255',
             'description'         => 'nullable|string',
+            'class_id'            => 'sometimes|exists:classes,id',
+            'subject_id'          => 'sometimes|exists:subjects,id',
             'duration_minutes'    => 'sometimes|integer|min:5|max:300',
             'passing_grade'       => 'sometimes|numeric|min:0|max:100',
             'status'              => 'sometimes|in:draft,scheduled,active,paused,ended',
@@ -86,7 +86,6 @@ class ExamController extends Controller
             'end_time'            => 'nullable|date',
             'auto_activate'       => 'boolean',
             'auto_end'            => 'boolean',
-            'max_violations'      => 'integer|min:1|max:20',
             'randomize_questions' => 'boolean',
             'randomize_options'   => 'boolean',
         ]);
@@ -161,8 +160,9 @@ class ExamController extends Controller
         $this->authorizeExam($request, $exam);
         $data = $request->validate(['question_ids'=>'required|array','question_ids.*'=>'exists:questions,id']);
         $added = 0;
+        $order = $exam->questions()->count();
         foreach ($data['question_ids'] as $qId) {
-            \App\Models\ExamQuestion::firstOrCreate(['exam_id'=>$exam->id,'question_id'=>$qId],['display_order'=>$exam->questions()->count()+1]);
+            \App\Models\ExamQuestion::firstOrCreate(['exam_id'=>$exam->id,'question_id'=>$qId],['display_order'=>++$order]);
             $added++;
         }
         $exam->update(['total_questions'=>$exam->questions()->count()]);
@@ -185,7 +185,7 @@ class ExamController extends Controller
     {
         $this->authorizeExam($request, $exam);
         $csv = $service->exportCsv($exam);
-        $filename = 'analisis-butir-' . str_slug($exam->title) . '-' . now()->format('Ymd') . '.csv';
+        $filename = 'analisis-butir-' . \Illuminate\Support\Str::slug($exam->title) . '-' . now()->format('Ymd') . '.csv';
         return response($csv, 200, [
             'Content-Type'        => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',

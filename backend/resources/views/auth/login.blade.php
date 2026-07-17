@@ -37,6 +37,15 @@ body{background:var(--bg);display:flex;align-items:center;justify-content:center
 .alert-err{background:var(--red-light);border-color:rgba(198,40,40,.2);color:var(--red)}
 .alert-ok{background:var(--green-light);border-color:rgba(46,125,50,.2);color:var(--green)}
 .alert-box svg{width:14px;height:14px;flex-shrink:0}
+.demo-btn{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;font-family:'Inter',sans-serif;font-size:12.5px;color:var(--ink2);transition:all .2s cubic-bezier(.34,1.56,.64,1);text-align:left;width:100%}
+.demo-btn:hover{background:#f7f9fc;border-color:var(--border2);transform:translateY(-1.5px);box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.demo-btn:active{transform:translateY(0)}
+.demo-avatar{width:30px;height:30px;border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.demo-info{flex:1;min-width:0}
+.demo-name{display:block;font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:1px}
+.demo-sub{font-size:10.5px;color:var(--ink3)}
+.demo-arrow{font-size:13px;color:var(--ink3);transition:transform .2s}
+.demo-btn:hover .demo-arrow{transform:translateX(3px)}
 </style>
 
 <div class="login-card">
@@ -89,20 +98,20 @@ body{background:var(--bg);display:flex;align-items:center;justify-content:center
     </div>
 
     <div style="display:flex;flex-direction:column;gap:6px">
-      <button type="button" class="demo-btn" data-email="admin@examcore.id" data-pass="password123" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);background:transparent;cursor:pointer;font-family:'Inter',sans-serif;font-size:12.5px;color:var(--ink2);transition:all .15s;text-align:left;width:100%">
-        <span style="width:28px;height:28px;border-radius:6px;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;background:#0f766e">A</span>
-        <span style="flex:1"><span style="display:block;font-size:12.5px;font-weight:600;color:var(--ink)">Administrator</span><span style="font-size:11px;color:var(--ink3)">admin@examcore.id &middot; Admin</span></span>
-        <span style="font-size:11px;color:var(--ink3)">&rarr;</span>
+      <button type="button" class="demo-btn" data-email="admin@examcore.id" data-pass="password123">
+        <span class="demo-avatar" style="background:#0f766e">A</span>
+        <span class="demo-info"><span class="demo-name">Administrator</span><span class="demo-sub">admin@examcore.id &middot; Admin</span></span>
+        <span class="demo-arrow">&rarr;</span>
       </button>
-      <button type="button" class="demo-btn" data-email="guru@examcore.id" data-pass="password123" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);background:transparent;cursor:pointer;font-family:'Inter',sans-serif;font-size:12.5px;color:var(--ink2);transition:all .15s;text-align:left;width:100%">
-        <span style="width:28px;height:28px;border-radius:6px;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;background:var(--navy)">G</span>
-        <span style="flex:1"><span style="display:block;font-size:12.5px;font-weight:600;color:var(--ink)">Budi Santoso</span><span style="font-size:11px;color:var(--ink3)">guru@examcore.id &middot; Guru</span></span>
-        <span style="font-size:11px;color:var(--ink3)">&rarr;</span>
+      <button type="button" class="demo-btn" data-email="guru@examcore.id" data-pass="password123">
+        <span class="demo-avatar" style="background:var(--navy)">G</span>
+        <span class="demo-info"><span class="demo-name">Budi Santoso</span><span class="demo-sub">guru@examcore.id &middot; Guru</span></span>
+        <span class="demo-arrow">&rarr;</span>
       </button>
-      <button type="button" class="demo-btn" data-email="ahmadnaufal@siswa.id" data-pass="password123" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);background:transparent;cursor:pointer;font-family:'Inter',sans-serif;font-size:12.5px;color:var(--ink2);transition:all .15s;text-align:left;width:100%">
-        <span style="width:28px;height:28px;border-radius:6px;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;background:var(--orange)">S</span>
-        <span style="flex:1"><span style="display:block;font-size:12.5px;font-weight:600;color:var(--ink)">Ahmad Naufal</span><span style="font-size:11px;color:var(--ink3)">ahmadnaufal@siswa.id &middot; Siswa</span></span>
-        <span style="font-size:11px;color:var(--ink3)">&rarr;</span>
+      <button type="button" class="demo-btn" data-email="ahmadnaufal@siswa.id" data-pass="password123">
+        <span class="demo-avatar" style="background:var(--orange)">S</span>
+        <span class="demo-info"><span class="demo-name">Ahmad Naufal</span><span class="demo-sub">ahmadnaufal@siswa.id &middot; Siswa</span></span>
+        <span class="demo-arrow">&rarr;</span>
       </button>
     </div>
 

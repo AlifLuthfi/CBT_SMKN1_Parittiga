@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_text_styles.dart';
@@ -40,6 +41,31 @@ class SkeletonListTile extends StatelessWidget {
       SizedBox(width:12), SkeletonBox(width:60, height:24, radius:12),
     ]),
   );
+}
+
+class AppBackButton extends StatelessWidget {
+  final Color? color;
+  const AppBackButton({super.key, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      color: color,
+      tooltip: 'Kembali',
+      onPressed: () {
+        final nav = Navigator.of(context);
+        if (nav.canPop()) {
+          nav.pop();
+        } else {
+          final path = GoRouterState.of(context).matchedLocation;
+          final segs = path.split('/').where((s) => s.isNotEmpty).toList();
+          segs.removeLast();
+          context.go(segs.isEmpty ? '/' : '/${segs.join('/')}');
+        }
+      },
+    );
+  }
 }
 
 class StatusBadge extends StatelessWidget {
@@ -103,7 +129,7 @@ class EmptyState extends StatelessWidget {
   const EmptyState({super.key, required this.title, this.subtitle='', this.icon=Icons.inbox_outlined, this.action});
   @override
   Widget build(BuildContext context) => Center(child:Padding(padding:const EdgeInsets.all(32), child:Column(mainAxisSize:MainAxisSize.min, children:[
-    Icon(icon, size:64, color:AppColors.ink3.withOpacity(.4)),
+    Icon(icon, size:64, color:AppColors.ink3.withValues(alpha:.4)),
     const SizedBox(height:16),
     Text(title, style:AppTextStyles.h4.copyWith(color:AppColors.ink3), textAlign:TextAlign.center),
     if (subtitle.isNotEmpty)...[const SizedBox(height:6), Text(subtitle, style:AppTextStyles.bodySmall, textAlign:TextAlign.center)],
@@ -116,7 +142,7 @@ class ErrorState extends StatelessWidget {
   const ErrorState({super.key, required this.message, this.onRetry});
   @override
   Widget build(BuildContext context) => Center(child:Padding(padding:const EdgeInsets.all(32), child:Column(mainAxisSize:MainAxisSize.min, children:[
-    Icon(Icons.error_outline, size:56, color:AppColors.red.withOpacity(.5)),
+    Icon(Icons.error_outline, size:56, color:AppColors.red.withValues(alpha:.5)),
     const SizedBox(height:14),
     Text('Terjadi Kesalahan', style:AppTextStyles.h4),
     const SizedBox(height:6),

@@ -18,7 +18,7 @@ class ClassManagementController extends Controller
                 'students as student_count' => fn($q) => $q->where('class_student.status', 'active'),
                 'exams as exam_count',
             ])
-            ->orderBy('level')->orderByDesc('created_at')->get();
+            ->orderBy('level')->orderBy('name')->get();
         return response()->json(['data'=>$classes]);
     }
 

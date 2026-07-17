@@ -11,8 +11,8 @@ class GradeReportController extends Controller
 
     public function classReport(Request $request, int $classId)
     {
-        $year     = $request->year     ?? '2024/2025';
-        $semester = $request->semester ?? 'Ganjil';
+        $year     = $request->input('year', date('Y') . '/' . (date('Y') + 1));
+        $semester = $request->input('semester', date('n') <= 6 ? 'Genap' : 'Ganjil');
         $this->service->recalculateForClass($classId, $year, $semester);
         return response()->json($this->service->getClassReport($classId, $year, $semester));
     }
@@ -20,8 +20,8 @@ class GradeReportController extends Controller
     public function studentReport(Request $request, int $studentId)
     {
         $classId  = $request->validate(['class_id' => 'required|exists:classes,id'])['class_id'];
-        $year     = $request->year     ?? '2024/2025';
-        $semester = $request->semester ?? 'Ganjil';
+        $year     = $request->input('year', date('Y') . '/' . (date('Y') + 1));
+        $semester = $request->input('semester', date('n') <= 6 ? 'Genap' : 'Ganjil');
         $this->service->recalculateForStudent($studentId, $classId, $year, $semester);
         return response()->json($this->service->getStudentReport($studentId, $classId, $year, $semester));
     }

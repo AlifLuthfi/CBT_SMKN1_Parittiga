@@ -24,17 +24,39 @@
   </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Ujian</th><th>Nilai</th><th>Status</th><th>Tanggal</th></tr></thead>
+      <thead><tr><th>Ujian</th><th>Nilai</th><th>Status</th><th>Tanggal</th><th class="right">Detail</th></tr></thead>
       <tbody>
         @forelse($history as $item)
+        @php
+          $scoreColor   = $item->is_passed ? 'var(--green)' : 'var(--red)';
+          $passedText   = $item->is_passed ? 'Lulus' : 'Tidak Lulus';
+          $badgeClass   = $item->is_passed ? 'b-green' : 'b-gray';
+          $submittedAt  = $item->submitted_at ? $item->submitted_at->locale('id')->isoFormat('dddd, DD/MM/YYYY • HH:mm') : '-';
+        @endphp
         <tr>
           <td class="td-main">{{ $item->exam?->title ?? '-' }}</td>
-          <td><span style="font-weight:700;color:{{ $item->is_passed ? 'var(--green)' : 'var(--red)' }}">{{ $item->score !== null ? number_format($item->score, 1) : '-' }}</span></td>
-          <td><span class="badge {{ $item->is_passed ? 'b-green' : 'b-gray' }}">{{ $item->is_passed ? 'Lulus' : 'Tidak' }}</span></td>
-          <td class="td-sm">{{ $item->submitted_at ? $item->submitted_at->format('d/m/Y H:i') : '-' }}</td>
+          <td><span style="font-weight:700;color:{{ $scoreColor }}">{{ $item->score !== null ? number_format($item->score, 1) : '-' }}</span></td>
+          <td>
+            @if($item->status === 'timeout')
+              <span class="badge b-orange">Waktu Habis</span>
+            @else
+              <span class="badge {{ $badgeClass }}">{{ $passedText }}</span>
+            @endif
+          </td>
+          <td class="td-sm" style="white-space:nowrap">{{ $submittedAt }}</td>
+          <td class="right">
+            @if($item->score !== null)
+            <a href="{{ route('siswa.exams.result', $item->id) }}" class="btn btn-sm btn-ghost">Lihat</a>
+            @else
+            <span style="color:var(--ink3);font-size:12px">—</span>
+            @endif
+          </td>
         </tr>
         @empty
-        <tr><td colspan="4" style="text-align:center;padding:24px;color:var(--ink3)">Belum ada riwayat</td></tr>
+        <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink3)">
+          <p style="margin-bottom:12px">Belum ada riwayat ujian</p>
+          <a href="{{ route('siswa.exams') }}" class="btn btn-sm btn-primary">Lihat Ujian Tersedia</a>
+        </td></tr>
         @endforelse
       </tbody>
     </table>

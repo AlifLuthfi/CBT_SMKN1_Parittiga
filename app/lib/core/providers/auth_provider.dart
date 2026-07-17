@@ -28,7 +28,7 @@ class AuthState {
   }) => AuthState(
     status:       status       ?? this.status,
     user:         user         ?? this.user,
-    errorMessage: errorMessage,
+    errorMessage: errorMessage ?? this.errorMessage,
     loading:      loading      ?? this.loading,
   );
 

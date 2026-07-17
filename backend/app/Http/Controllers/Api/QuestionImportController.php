@@ -50,15 +50,13 @@ class QuestionImportController extends Controller
     {
         $request->validate([
             'file'        => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
-            'category_id' => 'nullable|exists:question_categories,id',
             'subject_id'  => 'nullable|exists:subjects,id',
         ]);
 
         $result = $this->service->import(
             $request->file('file'),
             $request->user()->id,
-            $request->category_id,
-            $request->subject_id
+            subjectId: $request->subject_id
         );
 
         $status = $result->error_count === 0 ? 200 : 207; // 207 Multi-Status jika ada sebagian error

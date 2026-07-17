@@ -82,7 +82,7 @@ class SiswaDashboardScreen extends ConsumerWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: inProgress ? AppColors.green : AppColors.border, width: inProgress ? 1.5 : 1),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(.04), blurRadius: 8, offset: const Offset(0, 2))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha:.04), blurRadius: 8, offset: const Offset(0, 2))],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // Header
@@ -143,7 +143,9 @@ class SiswaDashboardScreen extends ConsumerWidget {
     final dt = DateTime.tryParse(iso);
     if (dt == null) return iso.substring(0, 10);
     const days = ['Senin','Selasa','Rabu','Kamis',"Jum'at",'Sabtu','Minggu'];
-    return '${days[dt.weekday - 1]}, ${dt.day.toString().padLeft(2,'0')}/${dt.month.toString().padLeft(2,'0')}/${dt.year}';
+    final jam = dt.hour.toString().padLeft(2,'0');
+    final menit = dt.minute.toString().padLeft(2,'0');
+    return '${days[dt.weekday - 1]}, ${dt.day.toString().padLeft(2,'0')}/${dt.month.toString().padLeft(2,'0')}/${dt.year} • $jam:$menit';
   }
 
   Widget _infoChip(IconData icon, String label) => Row(mainAxisSize: MainAxisSize.min, children: [

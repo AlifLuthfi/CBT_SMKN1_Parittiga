@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/guru/presentation/screens/guru_dashboard_screen.dart';
-import '../../features/guru/presentation/screens/paket_soal_screen.dart';
 import '../../features/guru/presentation/screens/ujian_management_screen.dart';
-import '../../features/guru/presentation/screens/kelas_screen.dart';
+import '../../features/guru/presentation/screens/rekap_nilai_screen.dart';
+import '../../features/guru/presentation/screens/soal_screen.dart';
+import '../../features/guru/presentation/screens/paket_soal_screen.dart';
+import '../../features/guru/presentation/screens/input_soal_screen.dart';
 import '../../features/siswa/presentation/screens/siswa_dashboard_screen.dart';
 import '../../features/siswa/presentation/screens/ujian_screen.dart';
 import '../../features/siswa/presentation/screens/hasil_screen.dart';
@@ -31,30 +33,32 @@ final appRouter = GoRouter(
     return null;
   },
   routes: [
-    GoRoute(path: '/splash',          builder: (_, __) => const _SplashScreen()),
-    GoRoute(path: '/login',           builder: (_, __) => const LoginScreen()),
+    GoRoute(path: '/splash',          builder: (_, _) => const _SplashScreen()),
+    GoRoute(path: '/login',           builder: (_, _) => const LoginScreen()),
 
     // ── GURU ─────────────────────────────────────────────
     ShellRoute(
-      builder: (_, __, child) => _GuruShell(child: child),
+      builder: (_, _, child) => _GuruShell(child: child),
       routes: [
-        GoRoute(path: '/guru/dashboard', builder: (_, __) => const GuruDashboardScreen()),
-        GoRoute(path: '/guru/paket',     builder: (_, __) => const PaketSoalScreen()),
-        GoRoute(path: '/guru/exams',     builder: (_, __) => const UjianManagementScreen()),
-        GoRoute(path: '/guru/kelas',     builder: (_, __) => const KelasScreen()),
+        GoRoute(path: '/guru/dashboard', builder: (_, _) => const GuruDashboardScreen()),
+        GoRoute(path: '/guru/input-soal',   builder: (_, _) => const InputSoalScreen()),
+        GoRoute(path: '/guru/exams',        builder: (_, _) => const UjianManagementScreen()),
+        GoRoute(path: '/guru/rekap-nilai',  builder: (_, _) => const RekapNilaiScreen()),
+        GoRoute(path: '/guru/soal',         builder: (_, _) => const SoalScreen()),
+        GoRoute(path: '/guru/paket-soal',   builder: (_, _) => const PaketSoalScreen()),
       ],
     ),
     // Guru routes tanpa shell (full screen)
-    GoRoute(path: '/guru/exam/create', builder: (_, __) => const UjianManagementScreen()),
-    GoRoute(path: '/guru/notifications', builder: (_, __) => const NotificationScreen()),
-    GoRoute(path: '/guru/profile',       builder: (_, __) => const ProfileScreen()),
+    GoRoute(path: '/guru/exam/create', builder: (_, _) => const UjianManagementScreen()),
+    GoRoute(path: '/guru/notifications', builder: (_, _) => const NotificationScreen()),
+    GoRoute(path: '/guru/profile',       builder: (_, _) => const ProfileScreen()),
 
     // ── SISWA ─────────────────────────────────────────────
     ShellRoute(
-      builder: (_, __, child) => _SiswaShell(child: child),
+      builder: (_, _, child) => _SiswaShell(child: child),
       routes: [
-        GoRoute(path: '/siswa/dashboard', builder: (_, __) => const SiswaDashboardScreen()),
-        GoRoute(path: '/siswa/riwayat',   builder: (_, __) => const RiwayatScreen()),
+        GoRoute(path: '/siswa/dashboard', builder: (_, _) => const SiswaDashboardScreen()),
+        GoRoute(path: '/siswa/riwayat',   builder: (_, _) => const RiwayatScreen()),
       ],
     ),
     // Siswa routes tanpa shell (full screen)
@@ -69,26 +73,26 @@ final appRouter = GoRouter(
         result:    state.extra as ExamResultModel?,
       ),
     ),
-    GoRoute(path: '/siswa/notifications', builder: (_, __) => const NotificationScreen()),
-    GoRoute(path: '/siswa/profile',       builder: (_, __) => const ProfileScreen()),
+    GoRoute(path: '/siswa/notifications', builder: (_, _) => const NotificationScreen()),
+    GoRoute(path: '/siswa/profile',       builder: (_, _) => const ProfileScreen()),
 
     // ── ADMIN ─────────────────────────────────────────────
     ShellRoute(
-      builder: (_, __, child) => _AdminShell(child: child),
+      builder: (_, _, child) => _AdminShell(child: child),
       routes: [
-        GoRoute(path: '/admin/dashboard', builder: (_, __) => const AdminDashboardScreen()),
-        GoRoute(path: '/admin/users',         builder: (_, __) => const UserManagementScreen()),
+        GoRoute(path: '/admin/dashboard', builder: (_, _) => const AdminDashboardScreen()),
+        GoRoute(path: '/admin/users',         builder: (_, _) => const UserManagementScreen()),
         GoRoute(path: '/admin/users/:role',    builder: (_, state) => RoleUserListScreen(
           roleKey: state.pathParameters['role'] ?? 'siswa',
         )),
-        GoRoute(path: '/admin/kelas',     builder: (_, __) => const AdminClassManagementScreen()),
-        GoRoute(path: '/admin/exams',         builder: (_, __) => const AdminExamScreen()),
-        GoRoute(path: '/admin/violations',    builder: (_, __) => const AdminViolationsScreen()),
-        GoRoute(path: '/admin/activity-log',  builder: (_, __) => const AdminActivityLogScreen()),
+        GoRoute(path: '/admin/kelas',     builder: (_, _) => const AdminClassManagementScreen()),
+        GoRoute(path: '/admin/exams',         builder: (_, _) => const AdminExamScreen()),
+        GoRoute(path: '/admin/violations',    builder: (_, _) => const AdminViolationsScreen()),
+        GoRoute(path: '/admin/activity-log',  builder: (_, _) => const AdminActivityLogScreen()),
       ],
     ),
-    GoRoute(path: '/admin/notifications', builder: (_, __) => const NotificationScreen()),
-    GoRoute(path: '/admin/profile',       builder: (_, __) => const ProfileScreen()),
+    GoRoute(path: '/admin/notifications', builder: (_, _) => const NotificationScreen()),
+    GoRoute(path: '/admin/profile',       builder: (_, _) => const ProfileScreen()),
   ],
   errorBuilder: (_, state) => Scaffold(
     body: Center(child: Text('Halaman tidak ditemukan: ${state.error}')),
@@ -166,7 +170,7 @@ class __SplashScreenState extends State<_SplashScreen> {
                   child: Image.asset(
                     'assets/images/smk_parittiga_logo.png',
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.school, color: Color(0xFF0B2242), size: 88)),
+                    errorBuilder: (_, _, _) => const Center(child: Icon(Icons.school, color: Color(0xFF0B2242), size: 88)),
                   ),
                 ),
               ),
@@ -204,20 +208,20 @@ class _GuruShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = GoRouterState.of(context).matchedLocation;
-    final idx = ['/guru/dashboard','/guru/paket','/guru/exams','/guru/kelas'].indexOf(loc).clamp(0, 3);
+    final idx = ['/guru/dashboard','/guru/input-soal','/guru/exams','/guru/rekap-nilai'].indexOf(loc).clamp(0, 3);
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: idx,
         onDestinationSelected: (i) {
-          const routes = ['/guru/dashboard','/guru/paket','/guru/exams','/guru/kelas'];
+          const routes = ['/guru/dashboard','/guru/input-soal','/guru/exams','/guru/rekap-nilai'];
           context.go(routes[i]);
         },
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard), label: 'Beranda'),
-          NavigationDestination(icon: Icon(Icons.folder_outlined),    selectedIcon: Icon(Icons.folder),    label: 'Paket Soal'),
-          NavigationDestination(icon: Icon(Icons.assignment_outlined),selectedIcon: Icon(Icons.assignment), label: 'Ujian'),
-          NavigationDestination(icon: Icon(Icons.group_outlined),     selectedIcon: Icon(Icons.group),     label: 'Kelas'),
+          NavigationDestination(icon: Icon(Icons.dashboard_outlined),  selectedIcon: Icon(Icons.dashboard),     label: 'Beranda'),
+          NavigationDestination(icon: Icon(Icons.edit_note_outlined),  selectedIcon: Icon(Icons.edit_note),     label: 'Input Soal'),
+          NavigationDestination(icon: Icon(Icons.calendar_month_outlined), selectedIcon: Icon(Icons.calendar_month), label: 'Jadwal Ujian'),
+          NavigationDestination(icon: Icon(Icons.grade_outlined),      selectedIcon: Icon(Icons.grade),       label: 'Rekap Nilai'),
         ],
       ),
     );

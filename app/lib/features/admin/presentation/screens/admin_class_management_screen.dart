@@ -17,6 +17,7 @@ class AdminClassManagementScreen extends ConsumerWidget {
       backgroundColor: AppColors.bg,
       appBar: AppBar(
         title: const Text('Manajemen Kelas'),
+        leading: const AppBackButton(),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: () => ref.invalidate(_adminClassesProvider)),
         ],
@@ -38,13 +39,18 @@ class AdminClassManagementScreen extends ConsumerWidget {
   Widget _buildContent(BuildContext context, WidgetRef ref, Map<String, dynamic> data) {
     final list = data['data'] as List? ?? [];
     if (list.isEmpty) return const EmptyState(title: 'Belum ada kelas', icon: Icons.class_outlined);
+    final sorted = List.from(list)..sort((a, b) {
+      final na = (a as Map)['name']?.toString() ?? '';
+      final nb = (b as Map)['name']?.toString() ?? '';
+      return _compareClassNames(na, nb);
+    });
     return RefreshIndicator(
       onRefresh: () async => ref.invalidate(_adminClassesProvider),
       child: ListView.separated(
         padding: const EdgeInsets.all(14),
-        itemCount: list.length,
+        itemCount: sorted.length,
         separatorBuilder: (_, _) => const SizedBox(height: 10),
-        itemBuilder: (_, i) => _classCard(context, ref, list[i] as Map<String, dynamic>),
+        itemBuilder: (_, i) => _classCard(context, ref, sorted[i] as Map<String, dynamic>),
       ),
     );
   }
@@ -146,6 +152,28 @@ class AdminClassManagementScreen extends ConsumerWidget {
       ],
     ));
   }
+}
+
+/// Sort by grade level (X < XI < XII) then suffix alphabetically.
+int _compareClassNames(String a, String b) {
+  final levelA = _gradeLevel(a);
+  final levelB = _gradeLevel(b);
+  if (levelA != levelB) return levelA.compareTo(levelB);
+  return _classSuffix(a).compareTo(_classSuffix(b));
+}
+
+int _gradeLevel(String name) {
+  if (name.startsWith('XII')) return 3;
+  if (name.startsWith('XI'))  return 2;
+  if (name.startsWith('X'))   return 1;
+  return 0;
+}
+
+String _classSuffix(String name) {
+  if (name.startsWith('XII')) return name.substring(3);
+  if (name.startsWith('XI'))  return name.substring(2);
+  if (name.startsWith('X'))   return name.substring(1);
+  return name;
 }
 
 // ─── SHARED FORM SHEET ──────────────────────────────────

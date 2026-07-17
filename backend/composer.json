@@ -8,7 +8,9 @@
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.3",
         "laravel/tinker": "^2.9",
-        "shuchkin/simplexlsx": "^1.1"
+        "phpoffice/phpspreadsheet": "*",
+        "shuchkin/simplexlsx": "^1.1",
+        "shuchkin/simplexlsxgen": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

@@ -5,10 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/security/lcg_randomizer.dart';
-import '../../../../core/security/security_service.dart';
 import '../../../../core/security/anti_cheat_service.dart';
+import '../../../../core/security/exam_alarm_service.dart';
+import '../../../../core/security/windows_anti_cheat.dart';
 import '../../../../core/storage/secure_storage.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../data/siswa_models.dart';
@@ -32,19 +34,24 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
   Set<int>             _flagged       = {};
   int                  _currentIndex  = 0;
   int                  _secondsLeft   = 0;
-  int                  _totalSeconds  = 0;   // total exam duration (wall-clock anchor)
-  int                  _timeElapsed   = 0;   // cumulative seconds elapsed before current tick period
-  DateTime?            _timerStartedAt;      // when current timer period started (wall-clock)
+  int                  _totalSeconds  = 0;   // total exam duration
+  int                  _timeElapsed   = 0;   // elapsed before current tick window
+  DateTime?            _timerStartedAt;      // when current timer window started
   int                  _violCount     = 0;
+  String?              _alarmPin;                        // NIS siswa - PIN untuk matikan alarm
+  bool                 _alarmTriggered = false;           // alarm sedang berbunyi
   int                  _seed          = 0;
-  ExamRandomizer?      _randomizer;
   Timer?               _timer;
   Timer?               _autoSaveTimer;
+  Timer?               _bulkSyncTimer;
+  Timer?               _fullscreenEnforcer;
+  Timer?               _periodicCheckTimer;
+  Timer?               _saveDebounce;
+  bool                 _bulkSyncing = false;
   bool                 _loading       = true;
   bool                 _submitting    = false;
   String?              _error;
   String               _phase         = 'biodata'; // biodata | ujian | result
-  ExamResultModel?     _result;
 
   // Biodata form
   final _namaCtrl  = TextEditingController();
@@ -62,7 +69,15 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
   void dispose() {
     _timer?.cancel();
     _autoSaveTimer?.cancel();
+    _bulkSyncTimer?.cancel();
+    _fullscreenEnforcer?.cancel();
+    _periodicCheckTimer?.cancel();
+    _saveDebounce?.cancel();
     WidgetsBinding.instance.removeObserver(this);
+    ExamAlarmService.stopAlarm();
+    AntiCheatService.exitLockTask();
+    AntiCheatService.disableKeyboardBlock();
+    WindowsAntiCheat.unlock();
     AntiCheatService.disableSecureFlag();
     WakelockPlus.disable();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -100,25 +115,38 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (_phase != 'ujian') return;
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
-      // Freeze wall-clock tracking: absorb elapsed time into _timeElapsed
+      // Record elapsed so far before pause
       if (_timerStartedAt != null) {
         _timeElapsed += DateTime.now().difference(_timerStartedAt!).inSeconds;
         _timerStartedAt = null;
       }
-      _recordViolation('blur');
-    } else if (state == AppLifecycleState.resumed) {
-      // Resync timer — restart wall-clock from now, fetch server time for correctness
       _timer?.cancel();
+      _recordViolation('blur');
+      _triggerAlarm();
+    } else if (state == AppLifecycleState.resumed) {
+      // Enforce fullscreen SEKARANG, bukan nunggu tick 500ms
+      _enterImmersiveMode();
+      AntiCheatService.enterLockTask();
+      WindowsAntiCheat.lock();
+      // Restart timer LOCAL dulu biar ga freeze — server sync sebagai koreksi
+      if (_secondsLeft > 0) {
+        _startTimer();
+      }
+      // Server sync background
       _syncTimerFromServer();
-      // Re-check multi-window status
       _checkMultiWindow();
       _checkScreenRecording();
+      if (_alarmTriggered) {
+        _showAlarmUnlockDialog();
+      }
     }
+  }
 
-    // Deteksi screenshots (iOS)
-    if (state == AppLifecycleState.inactive) {
-      // iOS screenshot detection — user took screenshot
-    }
+  Future<void> _triggerAlarm() async {
+    if (_alarmTriggered) return;
+    _alarmTriggered = true;
+    ExamAlarmService.startAlarm();
+    if (mounted) _showAlarmUnlockDialog();
   }
 
   // ── Init exam ─────────────────────────────────────────
@@ -139,22 +167,21 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
           _namaCtrl.text  = saved['student']?['nama'] as String? ?? user?['name'] as String? ?? '';
           _nisCtrl.text   = saved['student']?['nis']  as String? ?? user?['nis']  as String? ?? '';
           _kelasCtrl.text = saved['student']?['kelas'] as String? ?? '';
+          _totalSeconds = saved['totalSeconds'] as int? ?? exam.durationMinutes * 60;
           setState(() {
             _exam        = exam;
             _answers     = (saved['answers'] as Map? ?? {}).map((k, v) => MapEntry(int.parse(k.toString()), v.toString()));
             _flagged     = Set<int>.from((saved['flagged'] as List? ?? []).map((e) => e as int));
             _currentIndex= saved['currentIndex'] as int? ?? 0;
             _secondsLeft = remaining;
+            _timeElapsed = saved['timeElapsed'] as int? ?? (_totalSeconds - remaining);
             _seed        = saved['seed'] as int? ?? 0;
             _loading     = false;
           });
-          // Restore wall-clock anchor
-          _totalSeconds = saved['totalSeconds'] as int? ?? exam.durationMinutes * 60;
-          _timeElapsed  = saved['timeElapsed'] as int? ?? (_totalSeconds - remaining);
-          if (_seed != 0) {
-            _randomizer = ExamRandomizer(_seed);
-          }
+          // _randomizer not needed — LCG done server-side
           _showResumeSnackbar();
+          // Validasi waktu dari server setelah restore (jangan start timer — masih biodata)
+          _syncTimerFromServer(startTimers: false);
           return;
         }
       }
@@ -201,7 +228,7 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
 
       // Gunakan seed dari server (authoritative)
       _seed       = _session!.seed;
-      _randomizer = ExamRandomizer(_seed);
+      // LCG done server-side, raw questions already shuffled
 
       // Build ExamQuestion dari data server
       final rawQuestions = _session!.questions.map((q) => ExamQuestion.fromJson(q)).toList();
@@ -213,49 +240,83 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
       if (result.isResumed) {
         _answers     = Map<int, String>.from(_session!.savedAnswers);
         _secondsLeft = _session!.remainingSeconds;
-        _timeElapsed = _totalSeconds - _secondsLeft;
       } else {
         _answers     = {};
         _totalSeconds = _exam!.durationMinutes * 60;
-        _secondsLeft  = _totalSeconds;
-        _timeElapsed  = 0;
+        _secondsLeft  = _session!.remainingSeconds > 0 ? _session!.remainingSeconds : _totalSeconds;
       }
 
       _flagged       = {};
       _currentIndex  = 0;
       _violCount     = 0;
+      _alarmPin      = _nisCtrl.text.isNotEmpty ? _nisCtrl.text : null;
+      _alarmTriggered = false;
+
+      // Wall-clock anchor
+      _timeElapsed    = _totalSeconds - _secondsLeft;
+      _timerStartedAt = null;
 
       await _saveSession();
       setState(() { _loading = false; _phase = 'ujian'; });
 
-      // Sistem ujian
+      // Sistem ujian — fullscreen paksa + lock task (kiosk)
       WakelockPlus.enable();
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-      SystemChrome.setPreferredOrientations([
-        DeviceOrientation.portraitUp,
-        DeviceOrientation.portraitDown,
-      ]);
-      // FLAG_SECURE — block screenshot & recording
+      AntiCheatService.enterLockTask();
+      _enterImmersiveMode();
+      WindowsAntiCheat.lock();
       AntiCheatService.enableSecureFlag();
+      AntiCheatService.enableKeyboardBlock();
       // Multi-window listener
       AntiCheatService.onMultiWindowChanged((isMulti) {
         if (isMulti && _phase == 'ujian') _recordViolation('split_screen');
       });
+      // Aggressive enforcer — burst 50ms first 2s, then 150ms untuk respon cepat
+      int burstCount = 0;
+      _fullscreenEnforcer = Timer.periodic(const Duration(milliseconds: 50), (_) {
+        if (_phase != 'ujian') return;
+        _enterImmersiveMode();
+        AntiCheatService.enterLockTask();
+        WindowsAntiCheat.lock();
+        burstCount++;
+        if (burstCount >= 40) {
+          // switch ke 150ms setelah ~2s burst
+          _fullscreenEnforcer?.cancel();
+          _fullscreenEnforcer = Timer.periodic(const Duration(milliseconds: 150), (_) {
+            if (_phase != 'ujian') return;
+            _enterImmersiveMode();
+            AntiCheatService.enterLockTask();
+          });
+        }
+      });
       _startTimer();
       _startAutoSave();
-      // Periodic checks
-      Timer.periodic(const Duration(seconds: 10), (_) {
+      // Periodic checks — simpan ref biar bisa dicancel di dispose
+      _periodicCheckTimer?.cancel();
+      _periodicCheckTimer = Timer.periodic(const Duration(seconds: 10), (_) {
         _checkMultiWindow();
         _checkScreenRecording();
       });
+      // Koreksi timer dari server setelah start (untuk resume case)
+      if (result.isResumed) {
+        _syncTimerFromServer();
+      }
 
     } catch (e) {
       setState(() { _loading = false; _error = e.toString(); });
     }
   }
 
+  void _enterImmersiveMode() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  }
+
   void _startTimer() {
     _timerStartedAt = DateTime.now();
+    _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       final wallElapsed = _timeElapsed + DateTime.now().difference(_timerStartedAt!).inSeconds;
       final remaining = _totalSeconds - wallElapsed;
@@ -267,36 +328,33 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
         return;
       }
       setState(() => _secondsLeft = remaining);
-      // Auto-save tiap 30 detik dari timer
-      if (wallElapsed % 30 == 0) _saveSession();
     });
   }
 
-  Future<void> _syncTimerFromServer() async {
-    // Pull authoritative remaining time from server after resume
+  Future<void> _syncTimerFromServer({bool startTimers = true}) async {
     if (_session == null) return;
     try {
       final repo = ref.read(_ujianRepoProvider);
       final state = await repo.getSessionState(_session!.sessionId);
       if (state != null) {
-        final remaining = state.remainingSeconds;
         setState(() {
-          _secondsLeft  = remaining;
-          _timeElapsed  = _totalSeconds - remaining;
-          _timerStartedAt = DateTime.now();
+          _secondsLeft = state.remainingSeconds;
+          _timeElapsed = _totalSeconds - state.remainingSeconds;
+          _timerStartedAt = null;
         });
-        _startTimer();
+        if (startTimers && _secondsLeft > 0) {
+          // restart timer with corrected anchor
+          _startTimer();
+          _autoSaveTimer?.cancel();
+          _bulkSyncTimer?.cancel();
+          _startAutoSave();
+        }
       }
     } catch (_) {
-      // Server unreachable — resume from best local estimate
-      final bestEstimate = _totalSeconds - _timeElapsed;
-      if (bestEstimate > 0) {
-        setState(() => _secondsLeft = bestEstimate);
-        _timerStartedAt = DateTime.now();
-        _startTimer();
-      } else {
-        _autoSubmit();
-      }
+      // Server unreachable — local timer still running, fine
+    }
+    if (_secondsLeft <= 0) {
+      _autoSubmit();
     }
   }
 
@@ -305,28 +363,45 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
       const Duration(seconds: 10),
       (_) => _saveSession(),
     );
+    // Periodic bulk sync to server every 60s
+    _bulkSyncTimer = Timer.periodic(
+      const Duration(seconds: 60),
+      (_) async {
+        if (_session == null || _answers.isEmpty || _bulkSyncing) return;
+        _bulkSyncing = true;
+        await ref.read(_ujianRepoProvider).bulkSaveAnswers(_session!.sessionId, _answers.cast<int, String?>());
+        _bulkSyncing = false;
+      },
+    );
   }
 
   Future<void> _saveSession() async {
     if (_session == null || _seed == 0) return;
+    final elapsed = _timeElapsed +
+        (_timerStartedAt != null ? DateTime.now().difference(_timerStartedAt!).inSeconds : 0);
     await SecureStorage.saveExamSession({
       'examId':       widget.examId,
       'sessionId':    _session!.sessionId,
       'seed':         _seed,
       'student':      {'nama': _namaCtrl.text, 'nis': _nisCtrl.text, 'kelas': _kelasCtrl.text},
-      'answers':      _answers.map((k, v) => MapEntry(k.toString(), v)),
-      'flagged':      _flagged.toList(),
+      'answers':      Map<String, String>.from(_answers.map((k, v) => MapEntry(k.toString(), v))),
+      'flagged':      List<int>.from(_flagged),
       'currentIndex': _currentIndex,
       'secondsLeft':  _secondsLeft,
       'totalSeconds': _totalSeconds,
-      'timeElapsed':  _timeElapsed + (_timerStartedAt != null ? DateTime.now().difference(_timerStartedAt!).inSeconds : 0),
+      'timeElapsed':  elapsed,
       'savedAt':      DateTime.now().toIso8601String(),
     });
   }
 
+  void _scheduleSave() {
+    _saveDebounce?.cancel();
+    _saveDebounce = Timer(const Duration(milliseconds: 500), _saveSession);
+  }
+
   void _selectAnswer(int questionId, String key) {
     setState(() => _answers[questionId] = key);
-    _saveSession();
+    _scheduleSave();
     if (_session != null) {
       ref.read(_ujianRepoProvider).saveAnswer(_session!.sessionId, questionId, key);
     }
@@ -358,6 +433,10 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
   Future<void> _autoSubmit() async {
     _timer?.cancel();
     _autoSaveTimer?.cancel();
+    _bulkSyncTimer?.cancel();
+    _fullscreenEnforcer?.cancel();
+    _periodicCheckTimer?.cancel();
+    await ExamAlarmService.stopAlarm();
     await _doSubmit(auto: true);
   }
 
@@ -365,10 +444,14 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
     if (_session == null || _submitting) return;
     setState(() => _submitting = true);
     try {
+      await ExamAlarmService.stopAlarm();
+      AntiCheatService.exitLockTask();
+      AntiCheatService.disableKeyboardBlock();
       // Bulk save semua jawaban sebelum submit
       await ref.read(_ujianRepoProvider).bulkSaveAnswers(_session!.sessionId, _answers.cast<int, String?>());
       final result = await ref.read(_ujianRepoProvider).submitExam(_session!.sessionId);
       await SecureStorage.clearExamSession();
+      WindowsAntiCheat.unlock();
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
       WakelockPlus.disable();
       if (mounted) {
@@ -382,10 +465,6 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
     }
   }
 
-  void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: AppColors.red));
-  }
-
   String _formatTime(int s) {
     final h = s ~/ 3600;
     final m = (s % 3600) ~/ 60;
@@ -394,12 +473,122 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
     return '${m.toString().padLeft(2,'0')}:${ss.toString().padLeft(2,'0')}';
   }
 
+  // ── ALARM UNLOCK DIALOG ────────────────────────────────
+  bool _unlockDialogOpen = false;
+
+  Future<void> _showAlarmUnlockDialog() async {
+    if (_unlockDialogOpen || !mounted) return;
+    _unlockDialogOpen = true;
+
+    final pwCtrl = TextEditingController();
+    var busy = false;
+    String? errorText;
+
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          void tryUnlock() {
+            final pin = pwCtrl.text;
+            if (pin.isEmpty || busy) return;
+            busy = true;
+            errorText = null;
+            setDialogState(() {});
+            // Async unlock
+            Future.microtask(() async {
+              if (pin == _alarmPin) {
+                await ExamAlarmService.stopAlarm();
+                if (ctx.mounted) {
+                  setDialogState(() {});
+                  Navigator.pop(ctx, true);
+                }
+              } else {
+                _recordViolation('wrong_password');
+                if (ctx.mounted) {
+                  busy = false;
+                  errorText = 'NIS salah! Alarm tetap berbunyi.';
+                  setDialogState(() {});
+                }
+              }
+            });
+          }
+
+          return AlertDialog(
+            title: const Row(children: [
+              Icon(Icons.alarm_on, color: Colors.red, size: 22),
+              SizedBox(width: 8),
+              Text('Alarm Keamanan'),
+            ]),
+            content: Column(mainAxisSize: MainAxisSize.min, children: [
+              const Icon(Icons.warning_amber_rounded, size: 56, color: Colors.red),
+              const SizedBox(height: 12),
+              const Text(
+                'Anda meninggalkan layar ujian!\nAlarm akan berbunyi terus sampai dimatikan.',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              const Text('Masukkan NIS Anda untuk mematikan alarm:', style: TextStyle(fontSize: 13)),
+              const SizedBox(height: 10),
+              TextField(
+                controller: pwCtrl,
+                obscureText: true,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  hintText: 'NIS',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  prefixIcon: const Icon(Icons.vpn_key_outlined, size: 18),
+                  errorText: errorText,
+                ),
+                textInputAction: TextInputAction.go,
+                enabled: !busy,
+                onSubmitted: (_) => tryUnlock(),
+              ),
+              if (busy) const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+              ),
+            ]),
+            actions: [
+              TextButton(
+                onPressed: busy ? null : () => Navigator.pop(ctx, false),
+                child: const Text('Kembali ke Ujian'),
+              ),
+              ElevatedButton.icon(
+                onPressed: busy ? null : tryUnlock,
+                icon: const Icon(Icons.volume_up, size: 16),
+                label: const Text('Matikan Alarm'),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    _unlockDialogOpen = false;
+    pwCtrl.dispose();
+
+    if (!mounted) return;
+    if (result != true && _phase == 'ujian') {
+      final playing = await ExamAlarmService.isAlarmPlaying();
+      if (playing && mounted && _phase == 'ujian') {
+        _showAlarmUnlockDialog();
+      }
+    }
+  }
+
   // ── PASSWORD EXIT DIALOG ──────────────────────────────
   bool _exitDialogOpen = false;
 
   Future<bool> _onWillPop() async {
     if (_phase != 'ujian' || _exitDialogOpen) return false;
     _exitDialogOpen = true;
+
+    final pwCtrl = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -410,19 +599,21 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
           Text('Akses Terkunci'),
         ]),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('Masukkan password untuk keluar dari ujian:', style: TextStyle(fontSize: 13)),
+          const Text('Masukkan password admin/guru untuk keluar dari ujian:', style: TextStyle(fontSize: 13)),
           const SizedBox(height: 12),
           TextField(
-            key: const Key('exit-password-field'),
+            controller: pwCtrl,
             obscureText: true,
             autofocus: true,
             decoration: InputDecoration(
-              hintText: 'Password admin/guru',
+              hintText: 'Password',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
             textInputAction: TextInputAction.go,
-            onSubmitted: (_) => Navigator.pop(ctx, true),
+            onSubmitted: (_) {
+              if (pwCtrl.text.isNotEmpty) Navigator.pop(ctx, true);
+            },
           ),
           const SizedBox(height: 8),
           Text('Catatan: Keluar tanpa password akan dicatat sebagai pelanggaran',
@@ -434,9 +625,11 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
             child: const Text('Batal'),
           ),
           ElevatedButton.icon(
-            onPressed: () => Navigator.pop(ctx, true),
+            onPressed: () {
+              if (pwCtrl.text.isNotEmpty) Navigator.pop(ctx, true);
+            },
             icon: const Icon(Icons.logout, size: 16),
-            label: const Text('Keluar'),
+            label: const Text('Verifikasi & Keluar'),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
           ),
         ],
@@ -444,48 +637,11 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
     );
 
     _exitDialogOpen = false;
+    final password = pwCtrl.text;
+    pwCtrl.dispose();
 
-    if (confirmed == true) {
-      // Attempt to verify password
-      final pwCtrl = TextEditingController();
-      final verified = await showDialog<bool>(
-        context: context,
-        barrierDismissible: false,
-        builder: (ctx2) => AlertDialog(
-          title: const Row(children: [
-            Icon(Icons.password_outlined, size: 22),
-            SizedBox(width: 8),
-            Text('Verifikasi Password'),
-          ]),
-          content: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text('Masukkan password admin/guru untuk keluar:', style: TextStyle(fontSize: 13)),
-            const SizedBox(height: 12),
-            TextField(
-              controller: pwCtrl,
-              obscureText: true,
-              autofocus: true,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-            ),
-          ]),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx2, false), child: const Text('Batal')),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx2, true),
-              child: const Text('Verifikasi & Keluar'),
-            ),
-          ],
-        ),
-      );
-
-      if (verified == true && pwCtrl.text.isNotEmpty) {
-        await _verifyExitPassword(pwCtrl.text);
-      }
-      pwCtrl.dispose();
-    } else {
-      _recordViolation('tab_switch');
+    if (confirmed == true && password.isNotEmpty) {
+      await _verifyExitPassword(password);
     }
 
     return false; // never allow direct pop
@@ -499,12 +655,21 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
         password,
       );
       if (result['valid'] == true) {
-        // Password benar — izinkan keluar
+        // Password benar — stop alarm + auto-submit ujian
+        await ExamAlarmService.stopAlarm();
+        AntiCheatService.exitLockTask();
+        AntiCheatService.disableKeyboardBlock();
         await SecureStorage.clearExamSession();
+        WindowsAntiCheat.unlock();
         AntiCheatService.disableSecureFlag();
         WakelockPlus.disable();
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-        if (mounted) context.go('/siswa');
+        if (result['submitted'] == true && mounted) {
+          final res = ExamResultModel.fromJson(result['result'] as Map<String, dynamic>);
+          context.pushReplacement('/siswa/result/${_session!.sessionId}', extra: res);
+        } else if (mounted) {
+          context.go('/siswa');
+        }
       } else {
         // Salah — catat violation
         _recordViolation('wrong_password');
@@ -542,7 +707,7 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
             padding: const EdgeInsets.all(18),
             decoration: const BoxDecoration(color: AppColors.navy, borderRadius: BorderRadius.vertical(top: Radius.circular(13))),
             child: Row(children: [
-              Container(width: 42, height: 42, decoration: BoxDecoration(color: Colors.white.withOpacity(.15), borderRadius: BorderRadius.circular(10)),
+              Container(width: 42, height: 42, decoration: BoxDecoration(color: Colors.white.withValues(alpha:.15), borderRadius: BorderRadius.circular(10)),
                 child: const Icon(Icons.assignment, color: Colors.white, size: 22)),
               const SizedBox(width: 12),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -574,7 +739,7 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
             // Peraturan
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: AppColors.amberLight, borderRadius: BorderRadius.circular(9), border: Border.all(color: AppColors.amber.withOpacity(.3))),
+              decoration: BoxDecoration(color: AppColors.amberLight, borderRadius: BorderRadius.circular(9), border: Border.all(color: AppColors.amber.withValues(alpha:.3))),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [const Icon(Icons.warning_amber_rounded, size: 15, color: Color(0xFF92400E)), const SizedBox(width: 6), Text('Peraturan Ujian', style: AppTextStyles.bodySmall.copyWith(color: const Color(0xFF92400E), fontWeight: FontWeight.w700))]),
                 const SizedBox(height: 8),
@@ -656,12 +821,13 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(Icons.timer_outlined, size: 13, color: timerColor),
               const SizedBox(width: 4),
-              Text(_formatTime(_secondsLeft), style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 15, fontWeight: FontWeight.w700, color: timerColor)),
+              Text(_formatTime(_secondsLeft > 0 ? _secondsLeft : 0), style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 15, fontWeight: FontWeight.w700, color: timerColor)),
             ]),
           ),
         ],
       ),
-      body: Column(children: [
+      body: Stack(children: [
+        Column(children: [
         // Progress
         Container(color: AppColors.surface, padding: const EdgeInsets.fromLTRB(14, 8, 14, 10), child: Column(children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -679,7 +845,7 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
             Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3), decoration: BoxDecoration(color: AppColors.navy, borderRadius: BorderRadius.circular(20)),
               child: Text('Soal ${_currentIndex + 1}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600))),
             const SizedBox(width: 8),
-            _diffBadge(q.difficulty),
+            // difficulty removed
             if (_seed != 0) ...[
               const SizedBox(width: 8),
               Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
@@ -693,8 +859,8 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
             const SizedBox(height: 12),
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: Image.network(q.imageUrl!, height: 180, width: double.infinity, fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              child: Image.network(AppConstants.resolveImageUrl(q.imageUrl)!, height: 180, width: double.infinity, fit: BoxFit.contain,
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
                 loadingBuilder: (_, child, progress) => progress == null ? child : const SizedBox(height: 180, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
               ),
             ),
@@ -752,7 +918,7 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
                 Color tx = AppColors.ink3;
                 if (isCur)       { bg = AppColors.navy; bd = AppColors.navy; tx = Colors.white; }
                 else if (isFlag) { bg = AppColors.amberLight; bd = AppColors.amber; tx = const Color(0xFF92400E); }
-                else if (isAns)  { bg = AppColors.navyLight; bd = AppColors.navy.withOpacity(.3); tx = AppColors.navy; }
+                else if (isAns)  { bg = AppColors.navyLight; bd = AppColors.navy.withValues(alpha:.3); tx = AppColors.navy; }
                 return GestureDetector(
                   onTap: () => setState(() => _currentIndex = i),
                   child: Container(
@@ -777,7 +943,7 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
                 label: Text(isFlagged ? 'Ditandai' : 'Tandai'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.amber,
-                  side: BorderSide(color: AppColors.amber.withOpacity(.5)),
+                  side: BorderSide(color: AppColors.amber.withValues(alpha:.5)),
                   minimumSize: const Size(0, 38),
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                 ),
@@ -800,16 +966,29 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
           ]),
         ),
       ]),
+        if (_submitting)
+          Container(
+            color: Colors.black38,
+            child: const Center(
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                CircularProgressIndicator(color: Colors.white),
+                SizedBox(height: 12),
+                Text('Mengumpulkan...', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600)),
+              ]),
+            ),
+          ),
+      ]),
     ));
   }
 
-  Widget _diffBadge(String diff) {
-    final map = {'easy': (AppColors.green, AppColors.greenLight, 'Mudah'), 'medium': (AppColors.amber, AppColors.amberLight, 'Sedang'), 'hard': (AppColors.red, AppColors.redLight, 'Sulit')};
-    final e = map[diff] ?? (AppColors.ink3, AppColors.bg, diff);
-    return Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-      decoration: BoxDecoration(color: e.$2, borderRadius: BorderRadius.circular(20)),
-      child: Text(e.$3, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: e.$1)));
-  }
+  // unused — dipertahankan untuk referensi, hapus kalau mau
+  // Widget _diffBadge(String diff) {
+  //   final map = {'easy': (AppColors.green, AppColors.greenLight, 'Mudah'), 'medium': (AppColors.amber, AppColors.amberLight, 'Sedang'), 'hard': (AppColors.red, AppColors.redLight, 'Sulit')};
+  //   final e = map[diff] ?? (AppColors.ink3, AppColors.bg, diff);
+  //   return Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+  //     decoration: BoxDecoration(color: e.$2, borderRadius: BorderRadius.circular(20)),
+  //     child: Text(e.$3, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: e.$1)));
+  // }
 
   void _showSubmitDialog() {
     final total     = _questions.length;

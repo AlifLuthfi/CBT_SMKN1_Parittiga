@@ -25,7 +25,8 @@ class _UjianManagementScreenState extends ConsumerState<UjianManagementScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
-        title: const Text('Manajemen Ujian'),
+        title: const Text('Jadwal Ujian'),
+        leading: const AppBackButton(),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: () => ref.invalidate(_examListProvider(_filterStatus))),
         ],
@@ -98,7 +99,7 @@ class _UjianManagementScreenState extends ConsumerState<UjianManagementScreen> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: exam.isActive ? AppColors.green.withOpacity(.4) : AppColors.border, width: exam.isActive ? 1.5 : 1),
+        border: Border.all(color: exam.isActive ? AppColors.green.withValues(alpha:.4) : AppColors.border, width: exam.isActive ? 1.5 : 1),
       ),
       child: Column(children: [
         // Header
@@ -137,7 +138,6 @@ class _UjianManagementScreenState extends ConsumerState<UjianManagementScreen> {
 
           // Stats row
           Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-            _miniStat('Soal',     '${exam.totalQuestions}',     AppColors.navy),
             _miniStat('Peserta',  '$total',                     AppColors.ink),
             _miniStat('Submit',   '$submitted',                 AppColors.green),
             _miniStat('Langgar',  '${exam.violationsCount ?? 0}', AppColors.red),
@@ -177,13 +177,72 @@ class _UjianManagementScreenState extends ConsumerState<UjianManagementScreen> {
 
   String _formatDate(String? iso) {
     if (iso == null) return '—';
-    final dt = DateTime.tryParse(iso);
+    final dt = DateTime.tryParse(iso)?.toLocal();
     if (dt == null) return '—';
     const days = ['Senin','Selasa','Rabu','Kamis',"Jum'at",'Sabtu','Minggu'];
     final dayName = days[dt.weekday - 1];
     final d = dt.day.toString().padLeft(2,'0');
     final m = dt.month.toString().padLeft(2,'0');
-    return '$dayName, $d/$m/${dt.year}';
+    final jam = dt.hour.toString().padLeft(2,'0');
+    final menit = dt.minute.toString().padLeft(2,'0');
+    return '$dayName, $d/$m/${dt.year} • $jam:$menit WIB';
+  }
+
+  Widget _datePickerField(BuildContext ctx, DateTime? examDate, ValueChanged<DateTime?> onChanged) {
+    return GestureDetector(
+      onTap: () async {
+        final d = await showDatePicker(context: ctx, initialDate: examDate ?? DateTime.now(), firstDate: DateTime(2024), lastDate: DateTime(2030));
+        if (d != null) onChanged(examDate != null ? DateTime(d.year, d.month, d.day, examDate.hour, examDate.minute) : d);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.border)),
+        child: Row(children: [
+          const Icon(Icons.calendar_today, size: 15, color: AppColors.navy),
+          const SizedBox(width: 6),
+          Expanded(child: Text(
+            examDate != null ? '${examDate.day.toString().padLeft(2,'0')}/${examDate.month.toString().padLeft(2,'0')}/${examDate.year}' : 'Tanggal',
+            style: TextStyle(fontSize: 12, color: examDate != null ? AppColors.ink : AppColors.ink3),
+          )),
+          if (examDate != null) GestureDetector(
+            onTap: () => onChanged(null),
+            child: const Icon(Icons.clear, size: 14, color: AppColors.ink3),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _timePickerField(BuildContext ctx, TimeOfDay? time, ValueChanged<TimeOfDay?> onChanged) {
+    return GestureDetector(
+      onTap: () async {
+        final t = await showTimePicker(context: ctx, initialTime: time ?? const TimeOfDay(hour: 7, minute: 30));
+        if (t != null) onChanged(t);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: time != null ? AppColors.navyLight : AppColors.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: time != null ? AppColors.navy.withValues(alpha: .3) : AppColors.border),
+        ),
+        child: Row(children: [
+          Icon(Icons.access_time, size: 15, color: time != null ? AppColors.navy : AppColors.ink3),
+          const SizedBox(width: 6),
+          Expanded(child: Text(
+            time != null
+                ? '${time.hour.toString().padLeft(2,'0')}:${time.minute.toString().padLeft(2,'0')}'
+                : 'Jam mulai',
+            style: TextStyle(fontSize: 12, fontWeight: time != null ? FontWeight.w600 : FontWeight.normal, color: time != null ? AppColors.ink : AppColors.ink3),
+          )),
+          if (time != null)
+            GestureDetector(
+              onTap: () => onChanged(null),
+              child: const Icon(Icons.clear, size: 14, color: AppColors.ink3),
+            ),
+        ]),
+      ),
+    );
   }
 
   Widget _miniStat(String label, String value, Color color) => Column(children: [
@@ -235,8 +294,9 @@ class _UjianManagementScreenState extends ConsumerState<UjianManagementScreen> {
     int? selectedSubjectId;
     int duration = exam.durationMinutes;
     double passingGrade = exam.passingGrade;
-    int maxViol = 5;
-    DateTime? examDate = exam.startTime != null ? DateTime.tryParse(exam.startTime!) : null;
+    final raw = exam.startTime != null ? DateTime.tryParse(exam.startTime!)?.toLocal() : null;
+    DateTime? startDate = raw;
+    TimeOfDay? startTime = raw != null ? TimeOfDay.fromDateTime(raw) : null;
 
     showModalBottomSheet(
       context: ctx,
@@ -274,6 +334,7 @@ class _UjianManagementScreenState extends ConsumerState<UjianManagementScreen> {
                 const Text('Kelas', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ink2)),
                 const SizedBox(height: 5),
                 DropdownButtonFormField<int>(
+                  key: ValueKey(selectedClassId),
                   initialValue: selectedClassId,
                   hint: const Text('Pilih kelas'),
                   decoration: const InputDecoration(hintText: 'Pilih kelas'),
@@ -284,6 +345,7 @@ class _UjianManagementScreenState extends ConsumerState<UjianManagementScreen> {
                 const Text('Mata Pelajaran', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ink2)),
                 const SizedBox(height: 5),
                 DropdownButtonFormField<int>(
+                  key: ValueKey(selectedSubjectId),
                   initialValue: selectedSubjectId,
                   hint: const Text('Pilih mata pelajaran'),
                   decoration: const InputDecoration(hintText: 'Pilih mata pelajaran'),
@@ -308,42 +370,24 @@ class _UjianManagementScreenState extends ConsumerState<UjianManagementScreen> {
                 ]),
                 const SizedBox(height: 16),
 
-                // Tanggal ujian
-                const Text('Tanggal Ujian', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ink2)),
+                // Tanggal & Jam ujian
+                const Text('Jadwal Ujian', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ink2)),
                 const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: () async {
-                    final d = await showDatePicker(context: ctx2, initialDate: examDate ?? DateTime.now(), firstDate: DateTime(2024), lastDate: DateTime(2030));
-                    if (d != null) setS(() => examDate = d);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.border)),
-                    child: Row(children: [
-                      const Icon(Icons.calendar_today, size: 15, color: AppColors.navy),
-                      const SizedBox(width: 8),
-                      Text(
-                        examDate != null ? '${examDate!.day.toString().padLeft(2,'0')}/${examDate!.month.toString().padLeft(2,'0')}/${examDate!.year}' : 'Pilih tanggal',
-                        style: TextStyle(fontSize: 13, color: examDate != null ? AppColors.ink : AppColors.ink3),
-                      ),
-                      if (examDate != null) const Spacer(),
-                      if (examDate != null) GestureDetector(
-                        onTap: () => setS(() => examDate = null),
-                        child: const Icon(Icons.clear, size: 16, color: AppColors.ink3),
-                      ),
-                    ]),
-                  ),
-                ),
+                Row(children: [
+                  Expanded(child: _datePickerField(ctx2, startDate, (d) => setS(() => startDate = d))),
+                  const SizedBox(width: 10),
+                  Expanded(child: _timePickerField(ctx2, startTime, (t) => setS(() => startTime = t))),
+                ]),
                 const SizedBox(height: 16),
 
-                // Info LCG
+                // Info LCG — default acak, tidak review
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(color: AppColors.navyLight, borderRadius: BorderRadius.circular(8)),
                   child: Row(children: [
-                    const Icon(Icons.auto_fix_high, size: 16, color: AppColors.navy),
+                    const Icon(Icons.shield_outlined, size: 16, color: AppColors.navy),
                     const SizedBox(width: 8),
-                    Expanded(child: Text('Soal dan opsi jawaban diacak otomatis (LCG)', style: AppTextStyles.bodySmall.copyWith(color: AppColors.navy, fontSize: 11.5))),
+                    Expanded(child: Text('Soal dan opsi diacak otomatis (LCG). Hasil hanya menampilkan jawaban salah.', style: AppTextStyles.bodySmall.copyWith(color: AppColors.navy, fontSize: 11.5))),
                   ]),
                 ),
               ]));
@@ -356,14 +400,15 @@ class _UjianManagementScreenState extends ConsumerState<UjianManagementScreen> {
               onPressed: () async {
                 if (titleCtrl.text.trim().isEmpty) { ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Judul wajib diisi'))); return; }
                 try {
-                  final eDate = examDate;
+                  final eDate = startDate != null && startTime != null
+                    ? DateTime(startDate!.year, startDate!.month, startDate!.day, startTime!.hour, startTime!.minute)
+                    : null;
                   await repo.updateExam(exam.id, {
                     'title': titleCtrl.text.trim(),
                     if (selectedClassId != null) 'class_id': selectedClassId,
                     if (selectedSubjectId != null) 'subject_id': selectedSubjectId,
                     'duration_minutes': duration,
                     'passing_grade': passingGrade,
-                    'max_violations': maxViol,
                     if (eDate != null) 'start_time': eDate.toIso8601String(),
                   });
                   ref.invalidate(_examListProvider(_filterStatus));
@@ -386,7 +431,9 @@ class _UjianManagementScreenState extends ConsumerState<UjianManagementScreen> {
     final formData = Future.wait<dynamic>([repo.getClasses(), repo.getSubjects()]);
     int? selectedClassId;
     int? selectedSubjectId;
-    int duration = 90; double passingGrade = 70; int maxViol = 5;
+    int duration = 90; double passingGrade = 70;
+    DateTime? startDate;
+    TimeOfDay? startTime;
 
     showModalBottomSheet(
       context: ctx,
@@ -446,7 +493,7 @@ class _UjianManagementScreenState extends ConsumerState<UjianManagementScreen> {
                     child: Row(children: [
                       const Icon(Icons.info_outline, size: 13, color: AppColors.navy),
                       const SizedBox(width: 6),
-                      Text('Soal akan diambil dari bank soal mata pelajaran ini', style: AppTextStyles.bodySmall.copyWith(color: AppColors.navy, fontSize: 11.5)),
+                      Text('${subjects.firstWhere((s) => s.id == selectedSubjectId).questionsCount ?? 0} soal tersedia', style: AppTextStyles.bodySmall.copyWith(color: AppColors.navy, fontSize: 11.5)),
                     ]),
                   ),
                 ],
@@ -466,17 +513,27 @@ class _UjianManagementScreenState extends ConsumerState<UjianManagementScreen> {
                 ]),
                 const SizedBox(height: 16),
 
-                // Info LCG otomatis
+                // Tanggal & Jam ujian
+                const Text('Jadwal Ujian', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ink2)),
+                const SizedBox(height: 8),
+                Row(children: [
+                  Expanded(child: _datePickerField(ctx2, startDate, (d) => setS(() => startDate = d))),
+                  const SizedBox(width: 10),
+                  Expanded(child: _timePickerField(ctx2, startTime, (t) => setS(() => startTime = t))),
+                ]),
+                const SizedBox(height: 16),
+
+                // Info LCG — default acak, tidak review
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(color: AppColors.navyLight, borderRadius: BorderRadius.circular(8)),
                   child: Row(children: [
-                    const Icon(Icons.auto_fix_high, size: 16, color: AppColors.navy),
+                    const Icon(Icons.shield_outlined, size: 16, color: AppColors.navy),
                     const SizedBox(width: 8),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('Pengacakan LCG Otomatis', style: AppTextStyles.bodySmall.copyWith(color: AppColors.navy, fontWeight: FontWeight.w600, fontSize: 12)),
+                      Text('Pengaturan Default', style: AppTextStyles.bodySmall.copyWith(color: AppColors.navy, fontWeight: FontWeight.w600, fontSize: 12)),
                       const SizedBox(height: 2),
-                      Text('Soal dan opsi jawaban akan diacak otomatis menggunakan metode LCG. Hasil hanya menampilkan jawaban salah.', style: AppTextStyles.bodySmall.copyWith(color: AppColors.navy, fontSize: 11)),
+                      Text('Soal dan opsi diacak otomatis (LCG). Hasil hanya menampilkan jawaban salah.', style: AppTextStyles.bodySmall.copyWith(color: AppColors.navy, fontSize: 11)),
                     ])),
                   ]),
                 ),
@@ -498,7 +555,8 @@ class _UjianManagementScreenState extends ConsumerState<UjianManagementScreen> {
                     'subject_id': selectedSubjectId,
                     'duration_minutes': duration,
                     'passing_grade': passingGrade,
-                    'max_violations': maxViol,
+                    if (startDate != null && startTime != null)
+                      'start_time': DateTime(startDate!.year, startDate!.month, startDate!.day, startTime!.hour, startTime!.minute).toIso8601String(),
                   });
                   ref.invalidate(_examListProvider(_filterStatus));
                   if (ctx2.mounted) { Navigator.pop(ctx2); ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Ujian dibuat'))); }

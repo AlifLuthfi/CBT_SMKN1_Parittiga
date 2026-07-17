@@ -1,6 +1,5 @@
-@extends('layouts.app')
-@section('title', 'Ujian')
-@section('page-title', 'Ujian: ' . $exam->title)
+@extends('layouts.bare')
+@section('title', 'Ujian: ' . $exam->title)
 
 @push('styles')
 <style>
@@ -117,42 +116,144 @@
 <script>
 const TOTAL_QS = {{ count($questions) }};
 const SESSION_ID = '{{ $sessionId }}';
+const MAX_VIOLATIONS = {{ $exam->max_violations ?? 5 }};
+const TOTAL_SECONDS = {{ $remainingSeconds }};
 const CSRF = document.querySelector('meta[name="csrf-token"]')?.content;
-let remainingSeconds = {{ $remainingSeconds }};
-const savedAnswers = JSON.parse(localStorage.getItem('exam_answers_' + SESSION_ID) || '{}');
 
-// Restore saved answers
+function getApiToken() { return localStorage.getItem('api_token'); }
+function apiHeaders() {
+  const h = {'Content-Type':'application/json','X-CSRF-TOKEN':CSRF,'Accept':'application/json'};
+  const t = getApiToken(); if (t) h['Authorization'] = 'Bearer ' + t;
+  return h;
+}
+function getStorageKey(s) { return 'exam_' + s + '_' + SESSION_ID; }
+
+// ── Restore answers + wall-clock timer ──────────────────────
+const savedAnswers = JSON.parse(localStorage.getItem(getStorageKey('answers')) || '{}');
+let timeElapsed = parseInt(localStorage.getItem(getStorageKey('timeElapsed')), 10) || 0;
+let timerStartedAt = Date.now();
+let remainingSeconds = TOTAL_SECONDS - timeElapsed;
+if (remainingSeconds <= 0 || remainingSeconds > TOTAL_SECONDS) { remainingSeconds = TOTAL_SECONDS; timeElapsed = 0; }
+
 document.querySelectorAll('.answer-input').forEach(input => {
   if (savedAnswers[input.dataset.qid] === input.value) {
-    input.checked = true;
-    input.closest('.option-label')?.classList.add('selected');
+    input.checked = true; input.closest('.option-label')?.classList.add('selected');
   }
 });
 updateProgress();
 
-// Timer
-const timerEl = document.getElementById('timer');
-setInterval(() => {
-  remainingSeconds--;
-  const m = Math.floor(remainingSeconds / 60);
-  const s = remainingSeconds % 60;
-  timerEl.textContent = m + ':' + String(s).padStart(2, '0');
-  if (remainingSeconds <= 300) timerEl.style.color = 'var(--amber)';
-  if (remainingSeconds <= 60) timerEl.style.color = 'var(--red)';
-  if (remainingSeconds <= 0) { alert('Waktu habis!'); window.location.href = '/siswa/exams'; }
-}, 1000);
+// ── Violation ───────────────────────────────────────────────
+let violationCount = parseInt(localStorage.getItem(getStorageKey('violations')), 10) || 0;
+let violationMsgShowing = false;
 
-// Auto save
-setInterval(saveAnswers, 15000);
+async function recordViolation(type) {
+  violationCount++;
+  localStorage.setItem(getStorageKey('violations'), violationCount.toString());
+  try {
+    await fetch('/api/siswa/violations', { method:'POST', headers: apiHeaders(),
+      body: JSON.stringify({ session_id: SESSION_ID, violation_type: type }) });
+  } catch(e) {}
+  if (violationCount >= MAX_VIOLATIONS) { submitExam(); return; }
+  if (violationMsgShowing) return;
+  violationMsgShowing = true;
+  alert('⚠ Pelanggaran! (' + violationCount + '/' + MAX_VIOLATIONS + ')');
+  setTimeout(() => { violationMsgShowing = false; }, 5000);
+}
+
+// ── Fullscreen: burst 50ms → 150ms ─────────────────────────
+function enterFs() {
+  const e = document.documentElement;
+  if (e.requestFullscreen) e.requestFullscreen();
+  else if (e.webkitRequestFullscreen) e.webkitRequestFullscreen();
+  else if (e.msRequestFullscreen) e.msRequestFullscreen();
+}
+let fsViolated = false;
+document.addEventListener('fullscreenchange', function() {
+  if (!document.fullscreenElement && !document.webkitIsFullScreen) {
+    if (!fsViolated) { fsViolated = true; recordViolation('fullscreen_exit'); }
+    setTimeout(enterFs, 100);
+  } else { fsViolated = false; }
+});
+let fc = 0;
+const fsBurst = setInterval(function() {
+  if (remainingSeconds <= 0) { clearInterval(fsBurst); return; }
+  if (!document.fullscreenElement && !document.webkitIsFullScreen) enterFs();
+  if (++fc >= 40) clearInterval(fsBurst);
+}, 50);
+setInterval(function() {
+  if (remainingSeconds <= 0) return;
+  if (!document.fullscreenElement && !document.webkitIsFullScreen) enterFs();
+}, 150);
+
+// ── Visibility / focus loss ───────────────────────────────
+document.addEventListener('visibilitychange', function() { if (document.hidden) recordViolation('blur'); });
+let blurCooldown = false;
+window.addEventListener('blur', function() {
+  if (!blurCooldown) { blurCooldown = true; recordViolation('tab_switch'); setTimeout(() => { blurCooldown = false; }, 5000); }
+});
+document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+document.addEventListener('copy', function(e) { e.preventDefault(); });
+document.addEventListener('paste', function(e) { e.preventDefault(); });
+document.addEventListener('cut', function(e) { e.preventDefault(); });
+
+window.addEventListener('beforeunload', function(e) { e.preventDefault(); e.returnValue = 'Ujian sedang berlangsung!'; });
+
+// ── Keyboard block ─────────────────────────────────────────
+document.addEventListener('keydown', function(e) {
+  const c = e.ctrlKey || e.metaKey, a = e.altKey, s = e.shiftKey;
+  if (e.key === 'F12' || (c && s && (e.key==='I'||e.key==='J'||e.key==='C')) ||
+      (c && (e.key==='u'||e.key==='U'||e.key==='s'||e.key==='S')) ||
+      e.key==='PrintScreen' || e.keyCode===44) { e.preventDefault(); recordViolation('devtools'); }
+  if (a && (e.key==='Tab'||e.key==='F4'||e.key==='Escape')) { e.preventDefault(); recordViolation('tab_switch'); }
+  if (e.key==='Meta'||e.key==='OS'||e.keyCode===91||e.keyCode===92) { e.preventDefault(); }
+  if (c && e.key==='Escape') { e.preventDefault(); }
+  if (e.key==='Escape') { e.preventDefault(); }
+});
+try { enterFs(); } catch(e) {}
+
+// ── Timer (wall-clock based) ───────────────────────────────
+const timerEl = document.getElementById('timer');
+let timerInt;
+function showTimer(s) {
+  const m = Math.floor(s/60), sec = s%60;
+  timerEl.textContent = m + ':' + String(sec).padStart(2,'0');
+  timerEl.style.color = s<=60 ? 'var(--red)' : s<=300 ? 'var(--amber)' : 'var(--navy)';
+}
+showTimer(remainingSeconds);
+
+function startTimer() {
+  timerStartedAt = Date.now();
+  timerInt = setInterval(function() {
+    const wall = timeElapsed + Math.floor((Date.now()-timerStartedAt)/1000);
+    remainingSeconds = TOTAL_SECONDS - wall;
+    if (remainingSeconds <= 0) {
+      remainingSeconds = 0; clearInterval(timerInt);
+      localStorage.removeItem(getStorageKey('timeElapsed'));
+      showTimer(0); submitExam(); return;
+    }
+    localStorage.setItem(getStorageKey('timeElapsed'), wall.toString());
+    showTimer(remainingSeconds);
+  }, 1000);
+}
+startTimer();
+
+// ── Auto-save + bulk sync ─────────────────────────────────
+let isBulkSync = false;
+setInterval(async function() {
+  if (isBulkSync) return; isBulkSync = true;
+  try {
+    const a = []; document.querySelectorAll('.answer-input:checked').forEach(i => a.push({question_id:i.dataset.qid,answer:i.value}));
+    if (a.length) await fetch('/api/siswa/sessions/'+SESSION_ID+'/answers',{method:'POST',headers:apiHeaders(),body:JSON.stringify({answers:a})});
+  } catch(e) {} isBulkSync = false;
+}, 60000);
 
 document.querySelectorAll('.answer-input').forEach(input => {
   input.addEventListener('change', function() {
     savedAnswers[this.dataset.qid] = this.value;
-    localStorage.setItem('exam_answers_' + SESSION_ID, JSON.stringify(savedAnswers));
+    localStorage.setItem(getStorageKey('answers'), JSON.stringify(savedAnswers));
     document.querySelectorAll('.option-label').forEach(l => l.classList.remove('selected'));
     document.querySelectorAll('.answer-input:checked').forEach(i => i.closest('.option-label')?.classList.add('selected'));
     updateProgress();
-    saveAnswers();
   });
 });
 
@@ -182,10 +283,7 @@ async function saveAnswers() {
   const answers = [];
   document.querySelectorAll('.answer-input:checked').forEach(input => answers.push({ question_id: input.dataset.qid, answer: input.value }));
   try {
-    const token = localStorage.getItem('api_token');
-    const headers = { 'Content-Type':'application/json', 'X-CSRF-TOKEN':CSRF };
-    if (token) headers['Authorization'] = 'Bearer ' + token;
-    await fetch('/api/siswa/sessions/' + SESSION_ID + '/answers', { method:'POST', headers, body: JSON.stringify({ answers }) });
+    await fetch('/api/siswa/sessions/' + SESSION_ID + '/answers', { method:'POST', headers: apiHeaders(), body: JSON.stringify({ answers }) });
   } catch(e) {}
 }
 
@@ -193,12 +291,11 @@ async function submitExam() {
   if (!confirm('Yakin ingin mengumpulkan ujian?')) return;
   await saveAnswers();
   try {
-    const headers = { 'Content-Type':'application/json', 'X-CSRF-TOKEN':CSRF, 'Accept':'application/json' };
-    const token = localStorage.getItem('api_token');
-    if (token) headers['Authorization'] = 'Bearer ' + token;
-    const res = await fetch('/api/siswa/sessions/' + SESSION_ID + '/submit', { method:'POST', headers, body: '{}' });
+    const res = await fetch('/api/siswa/sessions/' + SESSION_ID + '/submit', { method:'POST', headers: apiHeaders(), body: '{}' });
     const data = await res.json();
-    localStorage.removeItem('exam_answers_' + SESSION_ID);
+    localStorage.removeItem(getStorageKey('answers'));
+    localStorage.removeItem(getStorageKey('timeElapsed'));
+    localStorage.removeItem(getStorageKey('violations'));
     if (data.result) {
       showResult(data.result);
     } else {
@@ -212,7 +309,7 @@ async function submitExam() {
 function showResult(r) {
   const o = document.createElement('div');
   o.className = 'modal-overlay open';
-  o.innerHTML = `<div class="modal" style="max-width:400px;text-align:center">
+  o.innerHTML = `<div class="modal" style="max-width:410px;text-align:center">
     <div class="modal-body" style="padding:32px">
       <div style="width:64px;height:64px;border-radius:50%;margin:0 auto 16px;display:grid;place-items:center;font-size:30px;background:${r.is_passed ? 'var(--green-light)' : 'var(--red-light)'};color:${r.is_passed ? 'var(--green)' : 'var(--red)'}">${r.is_passed ? '✓' : '✕'}</div>
       <h2 style="font-size:20px;margin-bottom:4px">${r.is_passed ? 'Lulus!' : 'Tidak Lulus'}</h2>
@@ -226,6 +323,7 @@ function showResult(r) {
     </div>
   </div>`;
   document.body.appendChild(o);
+  clearInterval(timerInt);
 }
 </script>
 @endpush

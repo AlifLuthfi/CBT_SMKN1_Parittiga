@@ -2,6 +2,10 @@
 @section('title', 'Kelas')
 @section('page-title', 'Manajemen Kelas')
 @section('content')
+<a href="{{ route('dashboard') }}" class="back-link">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="15 18 9 12 15 6"/></svg>
+  Kembali
+</a>
 <div class="flex items-center justify-between mb-6" style="flex-wrap:wrap;gap:12px">
   <div class="page-sub" style="margin:0">Total {{ $classes->total() }} kelas</div>
   <button class="btn btn-primary" onclick="openModal('createModal')">

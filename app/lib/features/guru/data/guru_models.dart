@@ -4,9 +4,9 @@ double _asDouble(dynamic value, double fallback) {
 }
 
 class DashboardStats {
-  final int    totalExams, totalQuestions, totalStudents, activeExams, violationsToday, totalSubjects;
+  final int    totalExams, totalQuestions, totalStudents, activeExams, violationsToday, totalSubjects, totalClasses;
   final double averageScore;
-  const DashboardStats({required this.totalExams, required this.totalQuestions, required this.totalStudents, required this.averageScore, required this.activeExams, required this.violationsToday, required this.totalSubjects});
+  const DashboardStats({required this.totalExams, required this.totalQuestions, required this.totalStudents, required this.averageScore, required this.activeExams, required this.violationsToday, required this.totalSubjects, required this.totalClasses});
   factory DashboardStats.fromJson(Map<String, dynamic> j) => DashboardStats(
     totalExams:      j['total_exams']      as int? ?? 0,
     totalQuestions:  j['total_questions']  as int? ?? 0,
@@ -15,6 +15,7 @@ class DashboardStats {
     activeExams:     j['active_exams']     as int? ?? 0,
     violationsToday: j['violations_today'] as int? ?? 0,
     totalSubjects:   j['total_subjects']   as int? ?? 0,
+    totalClasses:    j['total_classes']    as int? ?? 0,
   );
 }
 
@@ -58,20 +59,17 @@ class ExamModel {
 }
 
 class QuestionModel {
-  final int id; final String questionText, questionType, difficulty; final double weight;
-  final Map<String, String>? options; final String? correctAnswer, explanation, categoryName, imageUrl;
+  final int id; final String questionText, questionType;
+  final Map<String, String>? options; final String? correctAnswer, explanation, imageUrl;
   final int? subjectId; final String? subjectName;
-  const QuestionModel({required this.id, required this.questionText, required this.questionType, required this.difficulty, required this.weight, this.options, this.correctAnswer, this.explanation, this.categoryName, this.imageUrl, this.subjectId, this.subjectName});
+  const QuestionModel({required this.id, required this.questionText, required this.questionType, this.options, this.correctAnswer, this.explanation, this.imageUrl, this.subjectId, this.subjectName});
   factory QuestionModel.fromJson(Map<String, dynamic> j) => QuestionModel(
     id:           j['id']            as int,
     questionText: j['question_text'] as String,
     questionType: j['question_type'] as String? ?? 'multiple_choice',
-    difficulty:   j['difficulty']    as String? ?? 'medium',
-    weight:       _asDouble(j['weight'], 1),
     options:      (j['options']      as Map?)?.cast<String, String>(),
     correctAnswer:j['correct_answer'] as String?,
     explanation:  j['explanation']   as String?,
-    categoryName: (j['category']     as Map?)?['name'] as String?,
     imageUrl:     j['image_url']     as String?,
     subjectId:    (j['subject']      as Map?)?['id'] as int?,
     subjectName:  (j['subject']      as Map?)?['name'] as String?,
@@ -99,11 +97,7 @@ class QuestionImportPreviewRow {
   final String? questionText;
   final Map<String, String>? options;
   final String? correctAnswer;
-  final String? difficulty;
-  final double? weight;
   final String? explanation;
-  final String? category;
-  final List<String>? tags;
   final List<String>? errors;
 
   const QuestionImportPreviewRow({
@@ -112,11 +106,7 @@ class QuestionImportPreviewRow {
     this.questionText,
     this.options,
     this.correctAnswer,
-    this.difficulty,
-    this.weight,
     this.explanation,
-    this.category,
-    this.tags,
     this.errors,
   });
 
@@ -128,11 +118,7 @@ class QuestionImportPreviewRow {
       questionText:  j['question_text'] as String?,
       options:       optionsRaw?.map((k, v) => MapEntry(k.toString(), v.toString())),
       correctAnswer: j['correct_answer'] as String?,
-      difficulty:    j['difficulty']     as String?,
-      weight:        (j['weight'] is num ? (j['weight'] as num).toDouble() : double.tryParse((j['weight'] ?? '').toString())),
       explanation:   j['explanation']    as String?,
-      category:      j['category']       as String?,
-      tags:          (j['tags'] as List?)?.map((e) => e.toString()).toList(),
       errors:        (j['errors'] as List?)?.map((e) => e.toString()).toList(),
     );
   }

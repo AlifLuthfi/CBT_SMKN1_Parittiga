@@ -18,7 +18,7 @@ return new class extends Migration
         });
 
         Schema::table('questions', function (Blueprint $table) {
-            $table->foreignId('subject_id')->nullable()->constrained('subjects')->onDelete('cascade')->after('category_id');
+            $table->foreignId('subject_id')->nullable()->constrained('subjects')->onDelete('cascade');
         });
     }
 

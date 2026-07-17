@@ -1,8 +1,14 @@
 #include "flutter_window.h"
 
+#include <flutter/event_channel.h>
+#include <flutter/event_sink.h>
+#include <flutter/event_stream_handler_functions.h>
+#include <flutter/standard_method_codec.h>
+
 #include <optional>
 
 #include "flutter/generated_plugin_registrant.h"
+#include "keyboard_hook.h"
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -36,10 +42,35 @@ bool FlutterWindow::OnCreate() {
   // window is shown. It is a no-op if the first frame hasn't completed yet.
   flutter_controller_->ForceRedraw();
 
+  // ── Anti-cheat method channel ──────────────────────────────
+  anticheat_channel_ = std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+      flutter_controller_->engine()->messenger(), "com.smkn1parittiga.examcore/anticheat_win",
+      &flutter::StandardMethodCodec::GetInstance());
+
+  anticheat_channel_->SetMethodCallHandler(
+      [](const flutter::MethodCall<flutter::EncodableValue>& call,
+         std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
+        const auto& method = call.method_name();
+
+        if (method == "enableKeyboardBlock") {
+          bool ok = keyboard_hook::Install();
+          result->Success(flutter::EncodableValue(ok));
+        } else if (method == "disableKeyboardBlock") {
+          keyboard_hook::Remove();
+          result->Success(flutter::EncodableValue(true));
+        } else if (method == "isKeyboardBlocked") {
+          result->Success(flutter::EncodableValue(keyboard_hook::IsActive()));
+        } else {
+          result->NotImplemented();
+        }
+      });
+
   return true;
 }
 
 void FlutterWindow::OnDestroy() {
+  keyboard_hook::Remove();
+  anticheat_channel_.reset();
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }

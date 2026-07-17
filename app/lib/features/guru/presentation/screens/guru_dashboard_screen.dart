@@ -60,8 +60,6 @@ class GuruDashboardScreen extends ConsumerWidget {
 
   Widget _buildContent(BuildContext context, WidgetRef ref, Map<String, dynamic> data) {
     final stats   = DashboardStats.fromJson(data['stats'] as Map<String, dynamic>? ?? {});
-    final actives = ((data['activeExams'] ?? data['active_exams']) as List? ?? [])
-        .map((e) => ExamModel.fromJson(e as Map<String, dynamic>)).toList();
     final exams   = ((data['recentExams'] ?? data['recent_exams']) as List? ?? [])
         .map((e) => ExamModel.fromJson(e as Map<String, dynamic>)).toList();
     final viols   = ((data['recentViolations'] ?? data['recent_violations']) as List? ?? [])
@@ -87,22 +85,12 @@ class GuruDashboardScreen extends ConsumerWidget {
         crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
         crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.45,
         children: [
-          StatCard(label: 'Total Ujian',  value: '${stats.totalExams}',    subtitle: '${stats.activeExams} aktif', accentColor: AppColors.orange),
-          StatCard(label: 'Total Soal',   value: '${stats.totalQuestions}', subtitle: 'Tersimpan',                  accentColor: AppColors.navy),
-          StatCard(label: 'Total Siswa',  value: '${stats.totalStudents}',  subtitle: 'Terdaftar',                  accentColor: AppColors.green),
-          StatCard(label: 'Mata Pelajaran', value: '${stats.totalSubjects}', subtitle: 'Terdaftar',               accentColor: AppColors.sky),
+          StatCard(label: 'Total Ujian', value: '${stats.totalExams}',    subtitle: '${stats.activeExams} aktif', accentColor: AppColors.orange),
+          StatCard(label: 'Total Mapel', value: '${stats.totalSubjects}', subtitle: 'Terdaftar',                  accentColor: AppColors.navy),
+          StatCard(label: 'Total Kelas', value: '${stats.totalClasses}',  subtitle: 'Diampu',                     accentColor: AppColors.green),
+          StatCard(label: 'Total Soal',  value: '${stats.totalQuestions}', subtitle: 'Tersimpan',                  accentColor: AppColors.sky),
         ],
       ),
-      const SizedBox(height: 20),
-
-      // Active exams
-      _sectionHeader('Ujian Berjalan (${actives.length})',
-          action: TextButton(onPressed: () => context.push('/guru/exams'), child: const Text('Semua'))),
-      const SizedBox(height: 8),
-      if (actives.isEmpty)
-        const EmptyState(title: 'Tidak ada ujian aktif', icon: Icons.coffee_outlined)
-      else
-        ...actives.map((e) => _activeExamCard(context, e, ref)),
       const SizedBox(height: 20),
 
       // Recent exams
@@ -125,65 +113,6 @@ class GuruDashboardScreen extends ConsumerWidget {
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [Text(title, style: AppTextStyles.h4), if (action != null) action],
   );
-
-  Widget _activeExamCard(BuildContext context, ExamModel exam, WidgetRef ref) {
-    final submitted = exam.submittedCount ?? 0;
-    final total     = exam.sessionsCount  ?? 0;
-    final pct       = total > 0 ? submitted / total : 0.0;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface, borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.green.withOpacity(.3), width: 1.5),
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Container(width: 7, height: 7, decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle)),
-          const SizedBox(width: 8),
-          Expanded(child: Text(exam.title, style: AppTextStyles.h4.copyWith(fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis)),
-          StatusBadge.fromStatus('active'),
-        ]),
-        if (exam.classRoom != null) ...[
-          const SizedBox(height: 3),
-          Text(exam.classRoom!.name, style: AppTextStyles.bodySmall),
-        ],
-        const SizedBox(height: 10),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-          _miniStat('Peserta', '$total'),
-          _miniStat('Submit',  '$submitted', color: AppColors.green),
-          _miniStat('Langgar', '${exam.violationsCount ?? 0}', color: AppColors.red),
-        ]),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(value: pct, backgroundColor: AppColors.border, color: AppColors.green, minHeight: 6),
-        ),
-        const SizedBox(height: 4),
-        Text('$submitted/$total submit (${(pct*100).toStringAsFixed(0)}%)', style: AppTextStyles.bodySmall),
-        const SizedBox(height: 10),
-        Row(children: [
-          Expanded(child: OutlinedButton.icon(
-            icon: const Icon(Icons.pause, size: 14),
-            label: const Text('Pause'),
-            onPressed: () => _pauseExam(context, exam, ref),
-          )),
-          const SizedBox(width: 8),
-          Expanded(child: OutlinedButton.icon(
-            icon: const Icon(Icons.stop, size: 14),
-            label: const Text('Akhiri'),
-            onPressed: () => _endExam(context, exam, ref),
-            style: OutlinedButton.styleFrom(foregroundColor: AppColors.red, side: const BorderSide(color: AppColors.red)),
-          )),
-        ]),
-      ]),
-    );
-  }
-
-  Widget _miniStat(String label, String value, {Color? color}) => Column(children: [
-    Text(value, style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 20, fontWeight: FontWeight.w700, color: color ?? AppColors.navy)),
-    Text(label, style: AppTextStyles.bodySmall),
-  ]);
 
   Widget _examListCard(List<ExamModel> exams) {
     if (exams.isEmpty) return const EmptyState(title: 'Belum ada ujian', icon: Icons.description_outlined);
@@ -217,7 +146,7 @@ class GuruDashboardScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(border: last ? null : const Border(bottom: BorderSide(color: AppColors.border))),
         child: Row(children: [
-          CircleAvatar(radius: 15, backgroundColor: c.withOpacity(.1),
+          CircleAvatar(radius: 15, backgroundColor: c.withValues(alpha:.1),
             child: Text(v.studentName[0], style: TextStyle(color: c, fontWeight: FontWeight.w700, fontSize: 12))),
           const SizedBox(width: 10),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -229,35 +158,6 @@ class GuruDashboardScreen extends ConsumerWidget {
       );
     }).toList()),
   );
-
-  Future<void> _pauseExam(BuildContext ctx, ExamModel exam, WidgetRef ref) async {
-    try {
-      await ref.read(_guruRepoProvider).pauseExam(exam.id);
-      ref.invalidate(_dashboardProvider);
-      if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Ujian dijeda')));
-    } catch (e) {
-      if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.toString())));
-    }
-  }
-
-  Future<void> _endExam(BuildContext ctx, ExamModel exam, WidgetRef ref) async {
-    final ok = await showDialog<bool>(context: ctx, builder: (_) => AlertDialog(
-      title: const Text('Akhiri Ujian?'),
-      content: Text('Akhiri "${exam.title}"? Semua siswa yang belum submit akan dikumpulkan otomatis.'),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
-        ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: AppColors.red, minimumSize: const Size(0,0)), child: const Text('Ya, Akhiri')),
-      ],
-    ));
-    if (ok != true || !ctx.mounted) return;
-    try {
-      await ref.read(_guruRepoProvider).endExam(exam.id);
-      ref.invalidate(_dashboardProvider);
-      if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Ujian diakhiri')));
-    } catch (e) {
-      if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.toString())));
-    }
-  }
 
   Future<void> _logout(BuildContext ctx) async {
     await SecureStorage.clearAll();

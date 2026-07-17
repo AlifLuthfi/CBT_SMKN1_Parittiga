@@ -27,6 +27,7 @@ class ItemAnalysisService
 
         $questions = $exam->questions()->wherePivot('is_active', true)->get();
         $n         = $sessions->count();
+        $sessionIds = $sessions->pluck('id');
 
         // Skor total semua siswa (untuk r_pbis)
         $allScores  = $sessions->pluck('score')->map(fn($s) => (float)$s);
@@ -38,34 +39,34 @@ class ItemAnalysisService
         $upperIds  = $sessions->sortByDesc('score')->take($groupSize)->pluck('id');
         $lowerIds  = $sessions->sortBy('score')->take($groupSize)->pluck('id');
 
+        // Batch load semua jawaban — hindari N+1
+        $qAnswersByQ = ExamSessionAnswer::whereIn('session_id', $sessionIds)
+            ->get()
+            ->groupBy('question_id');
+
         $items     = [];
         $pValues   = [];
         $variances = [];
 
         foreach ($questions as $q) {
-            $allAnswers   = ExamSessionAnswer::where('question_id', $q->id)
-                ->whereIn('session_id', $sessions->pluck('id'))
-                ->get();
-
-            $totalAnswered = $allAnswers->count();
-            $correctTotal  = $allAnswers->where('is_correct', true)->count();
+            $qAnswers     = $qAnswersByQ->get($q->id, collect());
+            $totalAnswered = $qAnswers->count();
+            $correctTotal  = $qAnswers->where('is_correct', true)->count();
             $omitCount     = $n - $totalAnswered;
 
             // ── P-value (Difficulty Index) ──────────────────────────────────
             $p = $totalAnswered > 0 ? $correctTotal / $totalAnswered : 0;
 
-            // ── D-index (Discrimination Index) ─────────────────────────────
-            $upperCorrect = ExamSessionAnswer::where('question_id', $q->id)
-                ->whereIn('session_id', $upperIds)->where('is_correct', true)->count();
-            $lowerCorrect = ExamSessionAnswer::where('question_id', $q->id)
-                ->whereIn('session_id', $lowerIds)->where('is_correct', true)->count();
+            // ── D-index (Discrimination Index) — hitung dari koleksi, bukan DB ──
+            $upperCorrect = $qAnswers->whereIn('session_id', $upperIds)->where('is_correct', true)->count();
+            $lowerCorrect = $qAnswers->whereIn('session_id', $lowerIds)->where('is_correct', true)->count();
             $d = $groupSize > 0 ? ($upperCorrect - $lowerCorrect) / $groupSize : 0;
 
             // ── Point Biserial Correlation (r_pbis) ────────────────────────
             // r_pbis = (M_correct - M_total) / SD_total * sqrt(p * q)
             $rpbis = 0;
             if ($correctTotal > 0 && $stdTotal > 0 && $p > 0 && $p < 1) {
-                $correctSessionIds = $allAnswers->where('is_correct', true)->pluck('session_id');
+                $correctSessionIds = $qAnswers->where('is_correct', true)->pluck('session_id');
                 $meanCorrect = $sessions->whereIn('id', $correctSessionIds->toArray())
                     ->avg('score') ?? 0;
                 $q_val = 1 - $p;
@@ -77,7 +78,7 @@ class ItemAnalysisService
             $distractors = [];
             if ($q->options) {
                 foreach (array_keys($q->options) as $key) {
-                    $cnt       = $allAnswers->where('answer', $key)->count();
+                    $cnt       = $qAnswers->where('answer', $key)->count();
                     $isCorrect = $key === $q->correct_answer;
 
                     // Pengecoh efektif jika dipilih ≥5% siswa yang menjawab
@@ -133,7 +134,6 @@ class ItemAnalysisService
                 'question_id'              => $q->id,
                 'question_text'            => $q->question_text,
                 'question_type'            => $q->question_type,
-                'difficulty_level'         => $q->difficulty,
                 'difficulty_index'         => round($p, 3),
                 'difficulty_category'      => $diffCat,
                 'discrimination_index'     => round($d, 3),
@@ -277,7 +277,7 @@ class ItemAnalysisService
         return sqrt($variance);
     }
 
-    private function calculateKR20(int $n, array $pValues, array $variances, $sessions): float
+    private function calculateKR20(int $n, array $pValues, array $variances, \Illuminate\Support\Collection $sessions): float
     {
         $k = count($pValues);
         if ($k < 2) return 0;

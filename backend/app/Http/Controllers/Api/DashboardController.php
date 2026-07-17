@@ -26,20 +26,20 @@ class DashboardController extends Controller
             'violations_today'=> Violation::whereHas('session.exam', fn($q) => $q->where('teacher_id',$teacher->id))
                                     ->whereDate('created_at', today())->count(),
             'total_subjects'  => Subject::where('teacher_id', $teacher->id)->count(),
+            'total_classes'  => \App\Models\ClassRoom::where('teacher_id', $teacher->id)->count(),
         ];
 
         $activeExams = Exam::where('teacher_id', $teacher->id)
             ->where('status', 'active')
             ->with(['classRoom'])
-            ->withCount(['sessions','sessions as submitted_count' => fn($q) => $q->whereIn('status',['submitted','timeout','force_submitted'])])
-            ->get()
-            ->map(fn($e) => array_merge($e->toArray(), ['violations_count' => $e->violations_count]));
+            ->withCount([
+                'sessions',
+                'sessions as submitted_count' => fn($q) => $q->whereIn('status',['submitted','timeout','force_submitted']),
+                'violations',
+            ])
+            ->get();
 
-        $questionDist = [
-            'easy'   => Question::where('teacher_id',$teacher->id)->where('difficulty','easy')->count(),
-            'medium' => Question::where('teacher_id',$teacher->id)->where('difficulty','medium')->count(),
-            'hard'   => Question::where('teacher_id',$teacher->id)->where('difficulty','hard')->count(),
-        ];
+        $questionDist = Question::where('teacher_id',$teacher->id)->count();
 
         $recentExams = Exam::where('teacher_id',$teacher->id)
             ->with(['classRoom'])

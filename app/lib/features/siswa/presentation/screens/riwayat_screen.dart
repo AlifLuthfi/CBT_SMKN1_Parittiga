@@ -3,39 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../../core/widgets/app_widgets.dart';
-
-class RiwayatItem {
-  final int     sessionId;
-  final String  examTitle, subject, submittedAt, status;
-  final double  score, passingGrade;
-  final bool    isPassed;
-  final int     correct, wrong, unanswered, total;
-  const RiwayatItem({required this.sessionId, required this.examTitle, required this.subject, required this.submittedAt, required this.status, required this.score, required this.passingGrade, required this.isPassed, required this.correct, required this.wrong, required this.unanswered, required this.total});
-  factory RiwayatItem.fromJson(Map<String, dynamic> j) {
-    final exam = j['exam'] as Map<String, dynamic>? ?? {};
-    return RiwayatItem(
-      sessionId:   j['id']              as int,
-      examTitle:   exam['title']        as String? ?? '—',
-      subject:     exam['class_room']?['subject'] as String? ?? '—',
-      submittedAt: j['submitted_at']    as String? ?? '—',
-      status:      j['status']          as String? ?? '—',
-      score:       double.tryParse(j['score']?.toString() ?? '') ?? 0,
-      passingGrade: double.tryParse((exam['passing_grade'] ?? '').toString()) ?? 70,
-      isPassed:    j['is_passed']       as bool? ?? false,
-      correct:     j['correct']         as int? ?? 0,
-      wrong:       j['wrong']           as int? ?? 0,
-      unanswered:  j['unanswered']      as int? ?? 0,
-      total:       j['total']           as int? ?? 0,
-    );
-  }
-}
+import '../../data/siswa_models.dart';
+import '../../data/siswa_repository.dart';
 
 final _riwayatProvider = FutureProvider.autoDispose<List<RiwayatItem>>((ref) async {
-  final data = await ApiClient.get('/siswa/history');
-  final list = (data['data'] as List?) ?? [];
-  return list.map((e) => RiwayatItem.fromJson(e as Map<String, dynamic>)).toList();
+  return SiswaRepository().getHistory();
 });
 
 class RiwayatScreen extends ConsumerStatefulWidget {
@@ -148,24 +121,24 @@ class _RiwayatScreenState extends ConsumerState<RiwayatScreen> {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.border),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(.03), blurRadius: 6, offset: const Offset(0,2))],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha:.03), blurRadius: 6, offset: const Offset(0,2))],
         ),
         child: Column(children: [
           Row(children: [
             // Score circle
             Container(
               width: 52, height: 52,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: color.withOpacity(.1), border: Border.all(color: color, width: 2.5)),
+              decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha:.1), border: Border.all(color: color, width: 2.5)),
               child: Center(child: Text(r.score.toStringAsFixed(0), style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 16, fontWeight: FontWeight.w700, color: color))),
             ),
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(r.examTitle, style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600, color: AppColors.ink, fontSize: 13.5), maxLines: 1, overflow: TextOverflow.ellipsis),
               Text(r.subject, style: AppTextStyles.bodySmall.copyWith(fontSize: 11.5)),
-              Text(r.submittedAt, style: AppTextStyles.bodySmall.copyWith(fontSize: 11)),
+              Text(_formatWaktu(r.submittedAt), style: AppTextStyles.bodySmall.copyWith(fontSize: 11)),
             ])),
             Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: color.withOpacity(.1), borderRadius: BorderRadius.circular(20)),
+              Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: color.withValues(alpha:.1), borderRadius: BorderRadius.circular(20)),
                 child: Text(pass ? '✓ LULUS' : '✗ GAGAL', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: color))),
               const SizedBox(height: 5),
               Text('KKM ${r.passingGrade.toInt()}', style: AppTextStyles.bodySmall.copyWith(fontSize: 10.5)),
@@ -203,6 +176,19 @@ class _RiwayatScreenState extends ConsumerState<RiwayatScreen> {
         ]),
       ),
     );
+  }
+
+  String _formatWaktu(String iso) {
+    // iso: "2025-01-15T10:30:00.000000Z" or similar
+    final dt = DateTime.tryParse(iso);
+    if (dt == null) return iso;
+    const days = ['Senin','Selasa','Rabu','Kamis',"Jum'at",'Sabtu','Minggu'];
+    final dayName = days[dt.weekday - 1];
+    final d = dt.day.toString().padLeft(2,'0');
+    final m = dt.month.toString().padLeft(2,'0');
+    final jam = dt.hour.toString().padLeft(2,'0');
+    final menit = dt.minute.toString().padLeft(2,'0');
+    return '$dayName, $d/$m/${dt.year} • $jam:$menit';
   }
 
   Widget _answerDot(int count, String label, Color color) => Row(mainAxisSize: MainAxisSize.min, children: [

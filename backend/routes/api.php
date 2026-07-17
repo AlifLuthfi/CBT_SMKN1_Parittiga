@@ -41,10 +41,6 @@ Route::middleware('auth:sanctum')->group(function () {
         // Dashboard
         Route::get('/dashboard', [DashboardController::class, 'index']);
 
-        // ── Kategori soal (HARUS sebelum /{question} agar tidak bentrok) ────
-        Route::get ('/questions/categories', [QuestionController::class, 'categories']);
-        Route::post('/questions/categories', [QuestionController::class, 'storeCategory']);
-
         // ── Import soal ──────────────────────────────────────────────────────
         // Preview (parse tanpa simpan) — HARUS sebelum POST /question-imports
         Route::post('/question-imports/preview',  [QuestionImportController::class, 'preview']);

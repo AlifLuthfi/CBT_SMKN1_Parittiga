@@ -2,6 +2,10 @@
 @section('title', 'Pelanggaran')
 @section('page-title', 'Log Pelanggaran')
 @section('content')
+<a href="{{ route('dashboard') }}" class="back-link">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="15 18 9 12 15 6"/></svg>
+  Kembali
+</a>
 <form method="GET" class="mb-4" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
   <label style="font-weight:600;font-size:14px;color:var(--ink2)">Filter Kelas:</label>
   <select name="class_id" class="form-input" style="max-width:260px" onchange="this.form.submit()">

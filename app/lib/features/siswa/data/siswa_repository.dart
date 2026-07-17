@@ -1,8 +1,22 @@
+import 'dart:async';
+import 'dart:developer' as dev;
 import '../../../core/network/api_client.dart';
-import '../../../core/network/api_exception.dart';
 import 'siswa_models.dart';
 
 class SiswaRepository {
+  Future<T> _retry<T>(Future<T> Function() fn, {int maxRetries = 3}) async {
+    for (int i = 0; i < maxRetries; i++) {
+      try {
+        return await fn();
+      } catch (e) {
+        if (i == maxRetries - 1) rethrow;
+        dev.log('Retry ${i + 1}/$maxRetries: $e', name: 'SiswaRepository');
+        await Future.delayed(Duration(seconds: 1 << i)); // 1, 2, 4s
+      }
+    }
+    throw StateError('Unreachable');
+  }
+
   Future<List<SiswaExamModel>> getAvailableExams() async {
     final data = await ApiClient.get('/siswa/exams');
     final list = (data['data'] as List?) ?? (data as List? ?? []);
@@ -25,16 +39,20 @@ class SiswaRepository {
 
   Future<void> saveAnswer(int sessionId, int questionId, String? answer) async {
     try {
-      await ApiClient.patch('/siswa/sessions/$sessionId/answer',
-          data: {'question_id': questionId, 'answer': answer});
-    } catch (_) {} // silent — jawaban tersimpan lokal
+      await _retry(() => ApiClient.patch('/siswa/sessions/$sessionId/answer',
+          data: {'question_id': questionId, 'answer': answer}));
+    } catch (_) {
+      dev.log('saveAnswer failed after retries', name: 'SiswaRepository');
+    }
   }
 
   Future<void> bulkSaveAnswers(int sessionId, Map<int, String?> answers) async {
     try {
       final list = answers.entries.map((e) => {'question_id': e.key, 'answer': e.value}).toList();
-      await ApiClient.post('/siswa/sessions/$sessionId/answers', data: {'answers': list});
-    } catch (_) {}
+      await _retry(() => ApiClient.post('/siswa/sessions/$sessionId/answers', data: {'answers': list}));
+    } catch (_) {
+      dev.log('bulkSaveAnswers failed after retries', name: 'SiswaRepository');
+    }
   }
 
   Future<ExamResultModel> submitExam(int sessionId) async {
@@ -61,6 +79,12 @@ class SiswaRepository {
     } catch (_) {
       return null;
     }
+  }
+
+  Future<List<RiwayatItem>> getHistory() async {
+    final data = await ApiClient.get('/siswa/history');
+    final list = (data['data'] as List?) ?? [];
+    return list.map((e) => RiwayatItem.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   Future<Map<String, dynamic>> verifyExitPassword(int? sessionId, String password) async {

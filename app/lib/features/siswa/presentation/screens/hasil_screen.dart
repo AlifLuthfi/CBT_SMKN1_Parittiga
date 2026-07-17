@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/storage/secure_storage.dart';
 import '../../../../core/widgets/app_widgets.dart';
@@ -21,8 +21,6 @@ class HasilScreen extends ConsumerStatefulWidget {
 }
 
 class _HasilScreenState extends ConsumerState<HasilScreen> {
-  String _reviewFilter = 'wrong'; // default hanya tampilkan salah
-
   @override
   Widget build(BuildContext context) {
     if (widget.result != null) return _buildContent(context, widget.result!);
@@ -38,10 +36,7 @@ class _HasilScreenState extends ConsumerState<HasilScreen> {
     backgroundColor: AppColors.bg,
     appBar: AppBar(
       title: const Text('Hasil Ujian'),
-      leading: IconButton(
-        icon: const Icon(Icons.home_outlined),
-        onPressed: () => context.go('/siswa/dashboard'),
-      ),
+      leading: const AppBackButton(),
     ),
     body: ListView(padding: const EdgeInsets.all(14), children: [
       // Biodata card
@@ -58,14 +53,6 @@ class _HasilScreenState extends ConsumerState<HasilScreen> {
 
       // Review section
       _reviewCard(r),
-      const SizedBox(height: 20),
-
-      // Back button
-      OutlinedButton.icon(
-        onPressed: () => context.go('/siswa/dashboard'),
-        icon: const Icon(Icons.home_outlined, size: 16),
-        label: const Text('Kembali ke Dashboard'),
-      ),
       const SizedBox(height: 20),
     ]),
   );
@@ -162,7 +149,7 @@ class _HasilScreenState extends ConsumerState<HasilScreen> {
   }
 
   Widget _detailRow(IconData icon, String text, Color color) => Row(children: [
-    Container(width: 24, height: 24, decoration: BoxDecoration(color: color.withOpacity(.1), borderRadius: BorderRadius.circular(6)),
+    Container(width: 24, height: 24, decoration: BoxDecoration(color: color.withValues(alpha:.1), borderRadius: BorderRadius.circular(6)),
       child: Icon(icon, size: 13, color: color)),
     const SizedBox(width: 8),
     Expanded(child: Text(text, style: AppTextStyles.bodySmall.copyWith(color: AppColors.ink2))),
@@ -192,52 +179,22 @@ class _HasilScreenState extends ConsumerState<HasilScreen> {
   ));
 
   Widget _reviewCard(ExamResultModel r) {
-    final filtered = _reviewFilter == 'all' ? r.answers : r.answers.where((a) => a.status == _reviewFilter).toList();
+    // Hanya tampilkan soal salah & tidak dijawab
+    final wrongAnswers = r.answers.where((a) => a.status != 'correct').toList();
+    if (wrongAnswers.isEmpty) return const SizedBox.shrink();
     return Container(
       decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
       child: Column(children: [
         // Header
         Padding(padding: const EdgeInsets.fromLTRB(14, 12, 14, 0), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('Pembahasan Soal', style: AppTextStyles.h4.copyWith(fontSize: 14)),
-          Text('${r.answers.where((a) => a.status != 'correct').length} perlu diperhatikan', style: AppTextStyles.bodySmall),
+          Text('Pembahasan Soal (hanya yang salah)', style: AppTextStyles.h4.copyWith(fontSize: 14)),
+          Text('${wrongAnswers.length} perlu diperhatikan', style: AppTextStyles.bodySmall),
         ])),
-
-        // Filter chips
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(children: [
-            _filterChip('all',        'Semua'),
-            _filterChip('wrong',      'Salah'),
-            _filterChip('correct',    'Benar'),
-            _filterChip('unanswered', 'Tidak Dijawab'),
-          ]),
-        ),
         const Divider(height: 1),
 
-        if (filtered.isEmpty)
-          Padding(padding: const EdgeInsets.all(24), child: Text('Tidak ada soal', style: AppTextStyles.bodySmall, textAlign: TextAlign.center))
-        else
-          ...filtered.asMap().entries.map((entry) =>
-            _reviewItem(r.answers.indexOf(entry.value) + 1, entry.value)),
+        ...wrongAnswers.asMap().entries.map((entry) =>
+          _reviewItem(entry.key + 1, entry.value)),
       ]),
-    );
-  }
-
-  Widget _filterChip(String filter, String label) {
-    final active = _reviewFilter == filter;
-    return GestureDetector(
-      onTap: () => setState(() => _reviewFilter = filter),
-      child: Container(
-        margin: const EdgeInsets.only(right: 7),
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
-        decoration: BoxDecoration(
-          color: active ? AppColors.navy : AppColors.bg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: active ? AppColors.navy : AppColors.border),
-        ),
-        child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: active ? Colors.white : AppColors.ink3)),
-      ),
     );
   }
 
@@ -261,8 +218,8 @@ class _HasilScreenState extends ConsumerState<HasilScreen> {
               const SizedBox(height: 8),
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(a.imageUrl!, height: 120, width: double.infinity, fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                child: Image.network(AppConstants.resolveImageUrl(a.imageUrl)!, height: 120, width: double.infinity, fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
                 ),
               ),
             ],
@@ -287,8 +244,4 @@ class _HasilScreenState extends ConsumerState<HasilScreen> {
     return m > 0 ? '$m mnt $ss dtk' : '$ss detik';
   }
 
-  String _formatNow() {
-    final n = DateTime.now();
-    return '${n.day.toString().padLeft(2,'0')}/${n.month.toString().padLeft(2,'0')}/${n.year} ${n.hour.toString().padLeft(2,'0')}:${n.minute.toString().padLeft(2,'0')}';
-  }
 }

@@ -104,11 +104,16 @@ class ExamRandomizationService
         $newOptions = [];
         $keyMap     = [];
 
+        // Map nilai yg sudah diacak kembali ke key asli — pakai loop, hindari array_search
+        // yg salah kalau ada 2 opsi bernilai sama.
+        $valToOrigKey = [];
+        foreach ($origKeys as $i => $k) {
+            $valToOrigKey[$origValues[$i]] = $k;
+        }
         foreach ($origKeys as $i => $oldKey) {
-            $newKey            = $origKeys[$i]; // kunci tetap A,B,C,D
+            $newKey              = $origKeys[$i];
             $newOptions[$newKey] = $shuffVals[$i];
-            $posInOrig         = array_search($shuffVals[$i], $origValues, true);
-            $oldKeyForVal      = $origKeys[$posInOrig];
+            $oldKeyForVal        = $valToOrigKey[$shuffVals[$i]] ?? $oldKey;
             $keyMap[$oldKeyForVal] = $newKey;
         }
 
@@ -143,10 +148,8 @@ class ExamRandomizationService
                 'id'            => $q->id,
                 'question_text' => $q->question_text,
                 'question_type' => $q->question_type,
-                'difficulty'    => $q->difficulty,
-                'weight'        => $q->weight,
                 'options'       => $shuffled['options'],
-                // correct_answer sengaja tidak dikirim saat ujian berlangsung
+                'image_url'     => $q->image_url,
             ];
         }
 

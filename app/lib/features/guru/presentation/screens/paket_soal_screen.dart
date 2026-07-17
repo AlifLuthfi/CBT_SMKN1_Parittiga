@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../data/guru_models.dart';
@@ -25,7 +27,7 @@ class _PaketSoalScreenState extends ConsumerState<PaketSoalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final subjects = ref.watch(_subjectsProvider);
+    ref.watch(_subjectsProvider);
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
@@ -163,8 +165,6 @@ class _PaketSoalScreenState extends ConsumerState<PaketSoalScreen> {
   }
 
   Widget _soalTile(QuestionModel q) {
-    final diffColor = {'easy': AppColors.green, 'medium': AppColors.amber, 'hard': AppColors.red}[q.difficulty] ?? AppColors.ink3;
-    final diffLabel = {'easy': 'Mudah', 'medium': 'Sedang', 'hard': 'Sulit'}[q.difficulty] ?? q.difficulty;
     return Container(
       decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.border))),
       child: ListTile(
@@ -173,14 +173,8 @@ class _PaketSoalScreenState extends ConsumerState<PaketSoalScreen> {
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 5),
           child: Row(children: [
-            Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(color: diffColor.withOpacity(.1), borderRadius: BorderRadius.circular(10)),
-              child: Text(diffLabel, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: diffColor))),
-            const SizedBox(width: 6),
             if (q.imageUrl != null) const Icon(Icons.image, size: 13, color: AppColors.navy),
-            if (q.categoryName != null) Text(q.categoryName!, style: AppTextStyles.bodySmall.copyWith(fontSize: 11)),
             const Spacer(),
-            Text('Bobot: ${q.weight}', style: AppTextStyles.bodySmall.copyWith(fontSize: 11)),
           ]),
         ),
         trailing: PopupMenuButton(
@@ -233,7 +227,6 @@ class _PaketSoalScreenState extends ConsumerState<PaketSoalScreen> {
   void _showSoalSheet(BuildContext context, QuestionModel? existing) {
     final textCtrl  = TextEditingController(text: existing?.questionText ?? '');
     final explCtrl  = TextEditingController(text: existing?.explanation  ?? '');
-    String diff     = existing?.difficulty   ?? 'medium';
     final optCtrls  = List.generate(5, (i) {
       final keys  = ['A','B','C','D','E'];
       return TextEditingController(text: existing?.options?[keys[i]] ?? '');
@@ -241,6 +234,7 @@ class _PaketSoalScreenState extends ConsumerState<PaketSoalScreen> {
     String correctKey = existing?.correctAnswer ?? 'A';
     String? imageFile; // native: path string
     Uint8List? imageBytes; String? imageFileName; // web: bytes + filename
+    bool removeImage = false;
 
     showModalBottomSheet(
       context: context,
@@ -292,36 +286,49 @@ class _PaketSoalScreenState extends ConsumerState<PaketSoalScreen> {
                     final picked = await FilePicker.platform.pickFiles(type: FileType.image, allowMultiple: false);
                     if (picked != null && picked.files.isNotEmpty) {
                       final f = picked.files.single;
-                      if (f.bytes != null) {
-                        setS(() { imageBytes = f.bytes; imageFileName = f.name; });
-                      } else if (f.path != null) {
-                        setS(() { imageFile = f.path; });
-                      }
+                        WidgetsBinding.instance.endOfFrame.then((_) {
+                          if (ctx.mounted) setS(() {
+                            removeImage = false;
+                            if (f.bytes != null) { imageBytes = f.bytes; imageFileName = f.name; }
+                            else if (f.path != null) { imageFile = f.path; }
+                          });
+                        });
                     }
                   },
                 ),
               ]),
-              if (imageFile != null)
+              if (imageFile != null && !kIsWeb)
                 Padding(padding: const EdgeInsets.only(top: 8), child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.file(File(imageFile!), height: 120, width: double.infinity, fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Text('Gagal memuat gambar', style: TextStyle(color: AppColors.red, fontSize: 11)),
+                    errorBuilder: (_, _, _) => const Text('Gagal memuat gambar', style: TextStyle(color: AppColors.red, fontSize: 11)),
                   ),
                 ))
               else if (imageBytes != null)
                 Padding(padding: const EdgeInsets.only(top: 8), child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.memory(imageBytes!, height: 120, width: double.infinity, fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Text('Gagal memuat gambar', style: TextStyle(color: AppColors.red, fontSize: 11)),
+                    errorBuilder: (_, _, _) => const Text('Gagal memuat gambar', style: TextStyle(color: AppColors.red, fontSize: 11)),
                   ),
                 ))
               else if (existing?.imageUrl != null)
-                Padding(padding: const EdgeInsets.only(top: 8), child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(existing!.imageUrl!, height: 120, width: double.infinity, fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                Padding(padding: const EdgeInsets.only(top: 8), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(AppConstants.resolveImageUrl(existing!.imageUrl)!, height: 120, width: double.infinity, fit: BoxFit.contain,
+                      frameBuilder: (_, child, frame, wasSync) {
+                        if (wasSync == true) return child;
+                        if (frame == null) return const SizedBox(height: 120, child: Center(child: CircularProgressIndicator(strokeWidth: 2)));
+                        return child;
+                      },
+                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                    ),
                   ),
-                )),
+                  Row(children: [
+                    Checkbox(value: removeImage, onChanged: (v) => setS(() => removeImage = v ?? false), visualDensity: VisualDensity.compact),
+                    const Text('Hapus gambar', style: TextStyle(fontSize: 12, color: AppColors.red)),
+                  ]),
+                ])),
               const SizedBox(height: 14),
 
               const Text('Pilihan Jawaban', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ink2)),
@@ -361,62 +368,6 @@ class _PaketSoalScreenState extends ConsumerState<PaketSoalScreen> {
               ),
               const SizedBox(height: 14),
 
-              const Text('Tingkat Kesulitan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ink2)),
-              const SizedBox(height: 8),
-              Row(children: [
-                {'val':'easy',   'label':'Mudah',  'color': AppColors.green},
-                {'val':'medium', 'label':'Sedang', 'color': AppColors.amber},
-                {'val':'hard',   'label':'Sulit',  'color': AppColors.red},
-              ].map((d) {
-                final active = diff == d['val'];
-                final c = d['color'] as Color;
-                return Expanded(child: GestureDetector(
-                  onTap: () => setS(() => diff = d['val'] as String),
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: active ? c.withOpacity(.12) : AppColors.bg,
-                      border: Border.all(color: active ? c : AppColors.border),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(d['label'] as String, textAlign: TextAlign.center, style: TextStyle(fontSize: 12.5, fontWeight: active ? FontWeight.w600 : FontWeight.w400, color: active ? c : AppColors.ink3)),
-                  ),
-                ));
-              }).toList()),
-              const SizedBox(height: 14),
-
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppColors.navyLight, borderRadius: BorderRadius.circular(8)),
-                child: Row(children: [
-                  const Icon(Icons.scale_outlined, size: 16, color: AppColors.navy),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('Bobot otomatis', style: AppTextStyles.bodySmall.copyWith(color: AppColors.navy, fontWeight: FontWeight.w600, fontSize: 12)),
-                      const SizedBox(height: 2),
-                      Text((() {
-                        final w = {'easy': 1, 'medium': 2, 'hard': 3}[diff] ?? 1;
-                        final label = {'easy': 'Mudah = 1×', 'medium': 'Sedang = 2×', 'hard': 'Sulit = 3×'}[diff] ?? '';
-                        return '$label — Bobot soal $w poin';
-                      })(), style: AppTextStyles.bodySmall.copyWith(color: AppColors.navy, fontSize: 11.5)),
-                    ]),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.navy.withValues(alpha: 0.2)),
-                    ),
-                    child: Text('×${{'easy': 1, 'medium': 2, 'hard': 3}[diff] ?? 1}',
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.navy, fontFamily: 'JetBrainsMono')),
-                  ),
-                ]),
-              ),
-              const SizedBox(height: 14),
-
               const Text('Pembahasan (opsional)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ink2)),
               const SizedBox(height: 5),
               TextField(controller: explCtrl, maxLines: 3, decoration: const InputDecoration(hintText: 'Tulis pembahasan jawaban...')),
@@ -437,26 +388,26 @@ class _PaketSoalScreenState extends ConsumerState<PaketSoalScreen> {
                     final repo = GuruRepository();
                     final hasImage = imageFile != null || imageBytes != null;
                     if (existing != null) {
-                      if (hasImage) {
+                      if (hasImage || removeImage) {
                         await repo.updateQuestionWithImage(
                           id: existing.id, questionText: text, options: options,
-                          correctAnswer: correctKey, difficulty: diff,
-                          weight: ({'easy': 1, 'medium': 2, 'hard': 3}[diff] ?? 1).toDouble(),
+                          correctAnswer: correctKey,
                           explanation: explCtrl.text.trim().isEmpty ? null : explCtrl.text.trim(),
                           imagePath: imageFile, imageBytes: imageBytes, imageName: imageFileName,
+                          removeImage: removeImage,
+                          subjectId: _selectedSubjectId,
                         );
                       } else {
                         await repo.updateQuestion(existing.id, {
                           'question_text': text, 'options': options, 'correct_answer': correctKey,
-                          'difficulty': diff, 'subject_id': _selectedSubjectId,
+                          'subject_id': _selectedSubjectId,
                           if (explCtrl.text.trim().isNotEmpty) 'explanation': explCtrl.text.trim(),
                         });
                       }
                     } else {
                       await repo.createQuestionWithImage(
                         questionText: text, options: options, correctAnswer: correctKey,
-                        difficulty: diff, subjectId: _selectedSubjectId,
-                        weight: ({'easy': 1, 'medium': 2, 'hard': 3}[diff] ?? 1).toDouble(),
+                        subjectId: _selectedSubjectId,
                         explanation: explCtrl.text.trim().isEmpty ? null : explCtrl.text.trim(),
                         imagePath: imageFile, imageBytes: imageBytes, imageName: imageFileName,
                       );
@@ -701,17 +652,6 @@ class _ImportSoalSheetState extends State<_ImportSoalSheet> {
                   child: Text('${e.key}. ${e.value}', style: TextStyle(fontSize: 9, fontWeight: e.key == row.correctAnswer ? FontWeight.w600 : FontWeight.w400, color: e.key == row.correctAnswer ? AppColors.green : AppColors.ink3)),
                 ),
               )),
-            ],
-            if (row.difficulty != null) ...[
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: BoxDecoration(
-                  color: {'easy': AppColors.green, 'medium': AppColors.amber, 'hard': AppColors.red}[row.difficulty]?.withValues(alpha: .1) ?? AppColors.bg,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text({'easy': 'Mudah', 'medium': 'Sedang', 'hard': 'Sulit'}[row.difficulty] ?? row.difficulty!, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600)),
-              ),
             ],
           ]),
         ] else ...[

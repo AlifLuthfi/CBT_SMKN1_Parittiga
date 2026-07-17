@@ -9,6 +9,8 @@ use App\Services\ExamRandomizationService;
 use App\Services\GradingService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class StudentExamController extends Controller
 {
@@ -183,20 +185,44 @@ class StudentExamController extends Controller
             return response()->json(['message' => 'Sesi sudah berakhir.'], 403);
         }
 
+        // Cek waktu habis
+        $elapsed   = now()->diffInSeconds($session->started_at);
+        $extSeconds = $session->extensions()->sum('minutes') * 60;
+        $total     = ($session->exam->duration_minutes * 60) + $extSeconds;
+        $remaining = max(0, $total - $elapsed);
+
+        if ($remaining <= 0) {
+            $session->update(['status' => 'timeout', 'submitted_at' => now()]);
+            $this->grading->gradeSession($session);
+            return response()->json(['message' => 'Waktu habis. Ujian dikumpulkan.', 'auto_submitted' => true], 403);
+        }
+
         $data = $request->validate([
             'answers'               => 'required|array',
             'answers.*.question_id' => 'required|exists:questions,id',
             'answers.*.answer'      => 'nullable|string|max:10',
         ]);
 
+        // Upsert batch via raw query — hindari N+1 updateOrCreate
+        $records = [];
         foreach ($data['answers'] as $ans) {
-            ExamSessionAnswer::updateOrCreate(
-                ['session_id' => $session->id, 'question_id' => $ans['question_id']],
-                ['answer'     => $ans['answer']]
+            $records[] = [
+                'session_id'  => $session->id,
+                'question_id' => $ans['question_id'],
+                'answer'      => $ans['answer'],
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ];
+        }
+        if (!empty($records)) {
+            \DB::table('exam_session_answers')->upsert(
+                $records,
+                ['session_id', 'question_id'],
+                ['answer', 'updated_at']
             );
         }
 
-        $session->update(['last_activity_at' => now()]);
+        $session->update(['last_activity_at' => now(), 'remaining_seconds' => (int) $remaining]);
 
         return response()->json(['message' => count($data['answers']) . ' jawaban disimpan.']);
     }
@@ -248,7 +274,7 @@ class StudentExamController extends Controller
         $total      = ($session->exam->duration_minutes * 60) + $extSeconds;
         $remaining  = max(0, $total - $elapsed);
 
-        $questions    = $this->randomizer->buildShuffledQuestions($session->exam, $session);
+        // Asumsikan client sudah punya questions — kirim hanya remaining_seconds + saved_answers
         $savedAnswers = $session->answers()->pluck('answer', 'question_id');
 
         return response()->json([
@@ -259,7 +285,6 @@ class StudentExamController extends Controller
                 'status'            => $session->status,
                 'remaining_seconds' => (int) $remaining,
                 'started_at'        => $session->started_at,
-                'questions'         => $questions,
                 'saved_answers'     => $savedAnswers,
             ],
         ]);
@@ -276,6 +301,10 @@ class StudentExamController extends Controller
             ->get()
             ->map(function ($s) {
                 $exam = $s->exam;
+                $correct    = $s->answers()->where('is_correct', true)->count();
+                $wrong      = $s->answers()->where('is_correct', false)->whereNotNull('answer')->count();
+                $total      = $exam?->total_questions ?? $s->answers()->count();
+                $unanswered = max(0, $total - $correct - $wrong);
                 return [
                     'id'             => $s->id,
                     'exam'           => $exam ? $exam->toArray() : null,
@@ -283,10 +312,10 @@ class StudentExamController extends Controller
                     'status'         => $s->status,
                     'score'          => $s->score,
                     'is_passed'      => $s->is_passed,
-                    'correct'        => $s->answers()->where('is_correct', true)->count(),
-                    'wrong'          => $s->answers()->where('is_correct', false)->whereNotNull('answer')->count(),
-                    'unanswered'     => $s->answers()->whereNull('answer')->count(),
-                    'total'          => $s->answers()->count(),
+                    'correct'        => $correct,
+                    'wrong'          => $wrong,
+                    'unanswered'     => $unanswered,
+                    'total'          => $total,
                 ];
             });
 
@@ -308,23 +337,36 @@ class StudentExamController extends Controller
         ]);
 
         $user   = $request->user();
+
+        // Validasi session milik student ini
+        if ($data['session_id']) {
+            $session = ExamSession::find($data['session_id']);
+            if (!$session || $session->student_id !== $user->id) {
+                return response()->json(['valid' => false, 'message' => 'Sesi tidak valid.'], 403);
+            }
+        }
+
         $action = $data['action'] ?? 'exit_exam';
 
         // Verifikasi password user itu sendiri (siswa)
         $valid = \Illuminate\Support\Facades\Hash::check($data['password'], $user->password);
 
-        // Juga cek apakah ini password guru/admin yang valid
-        if (!$valid) {
-            $admin = \App\Models\User::where('role', 'admin')->first();
-            if ($admin && \Illuminate\Support\Facades\Hash::check($data['password'], $admin->password)) {
+        // Juga cek password guru pengampu ujian ini
+        if (!$valid && isset($session)) {
+            $teacher = $session->exam->teacher;
+            if ($teacher && \Illuminate\Support\Facades\Hash::check($data['password'], $teacher->password)) {
                 $valid = true;
             }
         }
 
+        // Fallback: cek semua admin (untuk supervisi)
         if (!$valid) {
-            $guru = \App\Models\User::where('role', 'guru')->first();
-            if ($guru && \Illuminate\Support\Facades\Hash::check($data['password'], $guru->password)) {
-                $valid = true;
+            $admins = \App\Models\User::where('role', 'admin')->get();
+            foreach ($admins as $admin) {
+                if (\Illuminate\Support\Facades\Hash::check($data['password'], $admin->password)) {
+                    $valid = true;
+                    break;
+                }
             }
         }
 
@@ -353,6 +395,19 @@ class StudentExamController extends Controller
             'description' => "{$user->name} keluar dari ujian (terverifikasi) — $action",
             'metadata'    => json_encode(['session_id' => $data['session_id'], 'action' => $action]),
         ]);
+
+        // Jika exit_exam dan sesi masih in_progress → auto-submit
+        if ($action === 'exit_exam' && isset($session) && $session->status === 'in_progress') {
+            $graded = $this->grading->gradeSession($session);
+            $result = $this->grading->getSessionResult($graded);
+            $this->notif->notifyStudentSubmit($graded);
+            return response()->json([
+                'valid'   => true,
+                'message' => 'Password valid. Ujian dikumpulkan.',
+                'result'  => $result,
+                'submitted' => true,
+            ]);
+        }
 
         return response()->json([
             'valid'   => true,

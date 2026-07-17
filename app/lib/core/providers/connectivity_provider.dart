@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,13 +9,20 @@ class ConnectivityNotifier extends StateNotifier<bool> {
   }
 
   final _conn = Connectivity();
+  StreamSubscription<List<ConnectivityResult>>? _sub;
 
   Future<void> _init() async {
     final result = await _conn.checkConnectivity();
-    state = result != ConnectivityResult.none;
-    _conn.onConnectivityChanged.listen((r) {
-      state = r != ConnectivityResult.none;
+    state = !result.contains(ConnectivityResult.none);
+    _sub = _conn.onConnectivityChanged.listen((r) {
+      state = !r.contains(ConnectivityResult.none);
     });
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
   }
 }
 

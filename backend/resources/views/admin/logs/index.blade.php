@@ -2,6 +2,10 @@
 @section('title', 'Log Aktivitas')
 @section('page-title', 'Log Aktivitas')
 @section('content')
+<a href="{{ route('dashboard') }}" class="back-link">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="15 18 9 12 15 6"/></svg>
+  Kembali
+</a>
 <div class="card">
   <div class="table-wrap">
     <table>

@@ -58,10 +58,13 @@ class ExamSchedulerService
     public function endExam(Exam $exam): void
     {
         $exam->update(['status'=>'ended']);
-        // Auto-submit all in_progress sessions
+        // Auto-submit all in_progress sessions — batch update
         ExamSession::where('exam_id',$exam->id)->where('status','in_progress')
+            ->update(['status'=>'timeout','submitted_at'=>now()]);
+        // grade sessions yang baru di-timeout
+        ExamSession::where('exam_id',$exam->id)->where('status','timeout')
+            ->whereNotNull('submitted_at')
             ->each(function(ExamSession $session) {
-                $session->update(['status'=>'timeout','submitted_at'=>now()]);
                 $this->grading->gradeSession($session);
             });
         $submitted = ExamSession::where('exam_id',$exam->id)->whereIn('status',['submitted','timeout','force_submitted'])->count();
@@ -79,7 +82,7 @@ class ExamSchedulerService
                 if ($remaining <= 0) {
                     $session->update(['status'=>'timeout','submitted_at'=>now()]);
                     $this->grading->gradeSession($session);
-                } else {
+                } else if ($session->remaining_seconds !== $remaining) {
                     $session->update(['remaining_seconds'=>$remaining,'last_activity_at'=>now()]);
                 }
             });
@@ -99,7 +102,10 @@ class ExamSchedulerService
             $pause->update(['resumed_at'=>now(),'is_active'=>false]);
             // Extend all in_progress sessions by paused time
             ExamSession::where('exam_id',$exam->id)->where('status','in_progress')
-                ->each(fn($s) => $s->update(['started_at'=>$s->started_at->addSeconds($pausedSeconds),'last_activity_at'=>now()]));
+                ->update([
+                    'started_at'       => \Illuminate\Support\Facades\DB::raw("started_at + INTERVAL $pausedSeconds SECOND"),
+                    'last_activity_at' => now(),
+                ]);
         }
         $exam->update(['status'=>'active']);
     }

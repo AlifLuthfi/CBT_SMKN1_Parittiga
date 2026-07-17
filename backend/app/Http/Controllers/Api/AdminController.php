@@ -108,7 +108,7 @@ class AdminController extends Controller
 
     public function classes()
     {
-        return response()->json(['data' => ClassRoom::with(['teacher'])->withCount(['students','exams'])->orderBy('level')->get()]);
+        return response()->json(['data' => ClassRoom::with(['teacher'])->withCount(['students','exams'])->orderBy('level')->orderBy('name')->get()]);
     }
 
     public function createClass(Request $request)

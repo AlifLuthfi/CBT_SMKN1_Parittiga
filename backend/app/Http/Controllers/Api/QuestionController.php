@@ -3,7 +3,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Question;
-use App\Models\QuestionCategory;
+
 use Illuminate\Http\Request;
 
 class QuestionController extends Controller
@@ -11,12 +11,8 @@ class QuestionController extends Controller
     public function index(Request $request)
     {
         $q = Question::where('teacher_id', $request->user()->id)
-            ->with(['category', 'subject'])
-            // Filter by type dihapus — selalu multiple_choice
-            ->when($request->difficulty,  fn($q,$v) => $q->where('difficulty',$v))
-            ->when($request->category_id, fn($q,$v) => $q->where('category_id',$v))
+            ->with('subject')
             ->when($request->subject_id,  fn($q,$v) => $q->where('subject_id',$v))
-            ->when($request->tag,         fn($q,$v) => $q->whereJsonContains('tags',$v))
             ->when($request->search,      fn($q,$v) => $q->where('question_text','like',"%$v%"))
             ->orderByDesc('created_at')
             ->paginate($request->per_page ?? 15);
@@ -38,21 +34,12 @@ class QuestionController extends Controller
             'correct_answer' => 'required|string|max:10',
             'explanation'    => 'nullable|string|max:2000',
             'subject_id'     => 'required|exists:subjects,id',
-            'difficulty'     => 'required|in:easy,medium,hard',
-            'category_id'    => 'nullable|exists:question_categories,id',
-            'tags'           => 'nullable|array',
-            'tags.*'         => 'string|max:50',
             'image'          => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'image_url'      => 'nullable|string|max:1024',
         ]);
 
-        // Bobot otomatis berdasarkan tingkat kesulitan
-        // mudah=1, sedang=2, sulit=3
-        $weights = ['easy' => 1, 'medium' => 2, 'hard' => 3];
-        $data['weight'] = $weights[$data['difficulty']] ?? 1;
-
         $data['teacher_id']    = $request->user()->id;
-        $data['question_type'] = 'multiple_choice'; // hardcode selalu pilihan ganda
+        $data['question_type'] = 'multiple_choice';
 
         if ($request->hasFile('image')) {
             $data['image_path'] = $request->file('image')->store('questions', 'public');
@@ -64,14 +51,14 @@ class QuestionController extends Controller
 
         return response()->json([
             'message'  => 'Soal berhasil disimpan.',
-            'question' => $question->load('category'),
+            'question' => $question,
         ], 201);
     }
 
     public function show(Request $request, Question $question)
     {
         $this->authorizeQuestion($request, $question);
-        return response()->json(['question' => $question->load('category')]);
+        return response()->json(['question' => $question]);
     }
 
     public function update(Request $request, Question $question)
@@ -89,19 +76,9 @@ class QuestionController extends Controller
             'correct_answer' => 'sometimes|string|max:10',
             'explanation'    => 'nullable|string|max:2000',
             'subject_id'     => 'sometimes|exists:subjects,id',
-            'difficulty'     => 'sometimes|in:easy,medium,hard',
-            'category_id'    => 'nullable|exists:question_categories,id',
-            'tags'           => 'nullable|array',
-            'tags.*'         => 'string|max:50',
             'image'          => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'remove_image'   => 'nullable|boolean',
         ]);
-
-        // Bobot otomatis mengikuti perubahan tingkat kesulitan
-        if (isset($data['difficulty'])) {
-            $weights = ['easy' => 1, 'medium' => 2, 'hard' => 3];
-            $data['weight'] = $weights[$data['difficulty']];
-        }
 
         if ($request->boolean('remove_image')) {
             if ($question->image_path) {
@@ -118,7 +95,7 @@ class QuestionController extends Controller
         $question->update($data);
         return response()->json([
             'message'  => 'Soal diperbarui.',
-            'question' => $question->load('category'),
+            'question' => $question,
         ]);
     }
 
@@ -148,17 +125,12 @@ class QuestionController extends Controller
             'questions.*.options.E'    => 'nullable|string|max:500',
             'questions.*.correct_answer'=> 'required|string|max:10',
             'questions.*.subject_id'   => 'required|exists:subjects,id',
-            'questions.*.difficulty'   => 'required|in:easy,medium,hard',
-            'questions.*.tags'         => 'nullable|array',
-            'questions.*.tags.*'       => 'string|max:50',
         ]);
 
         $created = 0;
-        $weights = ['easy' => 1, 'medium' => 2, 'hard' => 3];
         foreach ($request->questions as $q) {
             $q['teacher_id']    = $request->user()->id;
             $q['question_type'] = 'multiple_choice';
-            $q['weight']        = $weights[$q['difficulty']] ?? 1;
             Question::create($q);
             $created++;
         }
@@ -167,25 +139,6 @@ class QuestionController extends Controller
             'message' => "$created soal berhasil disimpan.",
             'created' => $created,
         ], 201);
-    }
-
-    public function categories(Request $request)
-    {
-        $cats = QuestionCategory::where('teacher_id', $request->user()->id)
-            ->withCount('questions')
-            ->get();
-        return response()->json(['data' => $cats]);
-    }
-
-    public function storeCategory(Request $request)
-    {
-        $data = $request->validate([
-            'name'  => 'required|string|max:100',
-            'color' => 'nullable|string|max:20',
-        ]);
-        $data['teacher_id'] = $request->user()->id;
-        $cat = QuestionCategory::create($data);
-        return response()->json(['message' => 'Kategori dibuat.', 'category' => $cat], 201);
     }
 
     private function authorizeQuestion(Request $request, Question $question): void

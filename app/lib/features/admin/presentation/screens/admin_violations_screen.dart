@@ -29,6 +29,7 @@ class AdminViolationsScreen extends ConsumerWidget {
       backgroundColor: AppColors.bg,
       appBar: AppBar(
         title: const Text('Log Pelanggaran'),
+        leading: const AppBackButton(),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: () => ref.invalidate(_violationsProvider)),
         ],
@@ -40,7 +41,7 @@ class AdminViolationsScreen extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
           child: classes.when(
             loading: () => const SkeletonBox(height: 40),
-            error:   (_, __) => const SizedBox.shrink(),
+            error:   (_, _) => const SizedBox.shrink(),
             data: (data) {
               final list = (data as Map<String, dynamic>)['data'] as List? ?? [];
               return DropdownButtonFormField<int>(
@@ -88,7 +89,12 @@ class AdminViolationsScreen extends ConsumerWidget {
           final v = list[i] as Map<String, dynamic>;
           final student = v['student'] as Map<String, dynamic>?;
           final exam = v['session'] is Map ? (v['session'] as Map<String, dynamic>)['exam'] : null;
-          final className = exam is Map<String, dynamic> ? exam['class_room']?['name']?.toString() ?? exam['class']?.toString() : null;
+          String? className;
+          if (exam is Map<String, dynamic>) {
+            final room = exam['class_room'];
+            className = room is Map ? room['name']?.toString() : exam['class']?.toString();
+          }
+          final classNameSuffix = className != null ? ' · $className' : '';
           return ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             leading: CircleAvatar(
@@ -98,7 +104,7 @@ class AdminViolationsScreen extends ConsumerWidget {
             title: Text(student?['name']?.toString() ?? '-',
                 style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600)),
             subtitle: Text(
-              '${v['violation_type'] ?? '-'} · ${v['created_at'] ?? '-'}${className != null ? ' · $className' : ''}',
+              '${v['violation_type'] ?? '-'} · ${v['created_at'] ?? '-'}$classNameSuffix',
               style: AppTextStyles.bodySmall,
             ),
           );

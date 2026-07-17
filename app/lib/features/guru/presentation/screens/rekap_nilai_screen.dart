@@ -9,13 +9,13 @@ import '../../data/guru_repository.dart';
 
 final _kelasProvider = FutureProvider.autoDispose((_) => GuruRepository().getClasses());
 
-class KelasScreen extends ConsumerStatefulWidget {
-  const KelasScreen({super.key});
+class RekapNilaiScreen extends ConsumerStatefulWidget {
+  const RekapNilaiScreen({super.key});
   @override
-  ConsumerState<KelasScreen> createState() => _KelasScreenState();
+  ConsumerState<RekapNilaiScreen> createState() => _RekapNilaiScreenState();
 }
 
-class _KelasScreenState extends ConsumerState<KelasScreen> {
+class _RekapNilaiScreenState extends ConsumerState<RekapNilaiScreen> {
   ClassRoomModel? _selected;
   List<Map<String, dynamic>>? _students;
   bool _loadingStudents = false;
@@ -26,7 +26,7 @@ class _KelasScreenState extends ConsumerState<KelasScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
-        title: Text(_selected != null ? _selected!.name : 'Kelas Saya'),
+        title: Text(_selected != null ? _selected!.name : 'Rekap Nilai'),
         leading: _selected != null
             ? IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => setState(() { _selected = null; _students = null; }))
             : null,
@@ -46,14 +46,15 @@ class _KelasScreenState extends ConsumerState<KelasScreen> {
 
   Widget _buildGrid(List<ClassRoomModel> list) {
     if (list.isEmpty) return const EmptyState(title: 'Belum ada kelas', icon: Icons.class_outlined);
+    final sorted = List<ClassRoomModel>.from(list)..sort((a, b) => _compareClassNames(a.name, b.name));
     return RefreshIndicator(
       onRefresh: () async => ref.invalidate(_kelasProvider),
       child: GridView.builder(
         padding: const EdgeInsets.all(14),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: .95),
-        itemCount: list.length,
-        itemBuilder: (_, i) => _kelasCard(list[i]),
+        itemCount: sorted.length,
+        itemBuilder: (_, i) => _kelasCard(sorted[i]),
       ),
     );
   }
@@ -69,7 +70,7 @@ class _KelasScreenState extends ConsumerState<KelasScreen> {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(.04), blurRadius: 6, offset: const Offset(0,2))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha:.04), blurRadius: 6, offset: const Offset(0,2))],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Container(width: 40, height: 40, decoration: BoxDecoration(color: AppColors.navyLight, borderRadius: BorderRadius.circular(10)),
@@ -186,7 +187,7 @@ class _KelasScreenState extends ConsumerState<KelasScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: _gradeColor(g['grade']?.toString()).withOpacity(.12),
+                    color: _gradeColor(g['grade']?.toString()).withValues(alpha:.12),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text('${g['score'] ?? 0}', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: _gradeColor(g['grade']?.toString()))),
@@ -205,6 +206,28 @@ class _KelasScreenState extends ConsumerState<KelasScreen> {
     if (grade.startsWith('C')) return AppColors.orange;
     return AppColors.red;
   }
+
+/// Sort by grade level (X < XI < XII) then suffix alphabetically.
+int _compareClassNames(String a, String b) {
+  final levelA = _gradeLevel(a);
+  final levelB = _gradeLevel(b);
+  if (levelA != levelB) return levelA.compareTo(levelB);
+  return _classSuffix(a).compareTo(_classSuffix(b));
+}
+
+int _gradeLevel(String name) {
+  if (name.startsWith('XII')) return 3;
+  if (name.startsWith('XI'))  return 2;
+  if (name.startsWith('X'))   return 1;
+  return 0;
+}
+
+String _classSuffix(String name) {
+  if (name.startsWith('XII')) return name.substring(3);
+  if (name.startsWith('XI'))  return name.substring(2);
+  if (name.startsWith('X'))   return name.substring(1);
+  return name;
+}
 
   Widget _detailStat(String label, String value, Color color) => Column(children: [
     Text(value, style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 18, fontWeight: FontWeight.w700, color: color)),

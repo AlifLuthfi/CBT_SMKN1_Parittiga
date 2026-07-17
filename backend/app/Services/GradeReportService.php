@@ -25,6 +25,7 @@ class GradeReportService
                 ->where('status','ended'))
             ->whereIn('status',['submitted','timeout','force_submitted'])
             ->whereNotNull('score')
+            ->with('exam:id,passing_grade')
             ->get();
 
         $total    = $sessions->count();

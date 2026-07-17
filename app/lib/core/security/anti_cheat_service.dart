@@ -2,11 +2,12 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 
 /// Anti-cheat native platform bridge.
-/// Prevents screenshots, screen recording, detects split-screen/multi-window.
+/// Full device lockdown: FLAG_SECURE, lock task (kiosk mode), multi-window
+/// detection, screen recording detection.
 class AntiCheatService {
   static const _channel = MethodChannel('com.smkn1parittiga.examcore/anticheat');
 
-  /// Enable FLAG_SECURE on Android — blocks screenshots & screen recording.
+  // ── FLAG_SECURE — blocks screenshots & screen recording ─
   static Future<void> enableSecureFlag() async {
     if (!Platform.isAndroid) return;
     try {
@@ -14,7 +15,6 @@ class AntiCheatService {
     } catch (_) {}
   }
 
-  /// Disable FLAG_SECURE (on exam end).
   static Future<void> disableSecureFlag() async {
     if (!Platform.isAndroid) return;
     try {
@@ -22,7 +22,25 @@ class AntiCheatService {
     } catch (_) {}
   }
 
-  /// Check if device is in multi-window / split-screen mode (Android only).
+  // ── Lock task (screen pinning / kiosk mode) ─────────────
+  /// Enter Android lock task mode — blocks home, recents, nav bar.
+  /// Requires screen pinning enabled in Settings → Security.
+  static Future<void> enterLockTask() async {
+    if (!Platform.isAndroid) return;
+    try {
+      await _channel.invokeMethod('enterLockTask');
+    } catch (_) {}
+  }
+
+  /// Exit Android lock task mode.
+  static Future<void> exitLockTask() async {
+    if (!Platform.isAndroid) return;
+    try {
+      await _channel.invokeMethod('exitLockTask');
+    } catch (_) {}
+  }
+
+  // ── Multi-window & screen recording ────────────────────
   static Future<bool> isInMultiWindow() async {
     if (!Platform.isAndroid) return false;
     try {
@@ -32,7 +50,6 @@ class AntiCheatService {
     }
   }
 
-  /// Check if screen recording is active (Android 11+).
   static Future<bool> isScreenRecording() async {
     if (!Platform.isAndroid) return false;
     try {
@@ -43,12 +60,26 @@ class AntiCheatService {
   }
 
   /// Register multi-window change callback.
-  /// Android sends "onMultiWindowChanged" event.
   static void onMultiWindowChanged(void Function(bool isMultiWindow) callback) {
     _channel.setMethodCallHandler((call) async {
       if (call.method == 'onMultiWindowChanged') {
         callback(call.arguments as bool);
       }
     });
+  }
+
+  // ── Physical keyboard blocking (Android) ──────────────────
+  static Future<void> enableKeyboardBlock() async {
+    if (!Platform.isAndroid) return;
+    try {
+      await _channel.invokeMethod('enableKeyboardBlock');
+    } catch (_) {}
+  }
+
+  static Future<void> disableKeyboardBlock() async {
+    if (!Platform.isAndroid) return;
+    try {
+      await _channel.invokeMethod('disableKeyboardBlock');
+    } catch (_) {}
   }
 }

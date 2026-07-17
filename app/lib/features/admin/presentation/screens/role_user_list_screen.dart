@@ -58,6 +58,7 @@ class RoleUserListScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(title: Text('${cfg.label} Users'),
+        leading: const AppBackButton(),
         actions: [
           IconButton(icon: const Icon(Icons.add_circle_outline, size: 22), tooltip: 'Tambah ${cfg.label}', onPressed: () => _showCreateSheet(context, ref, roleKey)),
           IconButton(icon: const Icon(Icons.refresh), onPressed: () => ref.invalidate(_usersProvider(roleKey))),

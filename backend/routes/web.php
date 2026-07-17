@@ -68,22 +68,21 @@ Route::middleware('auth')->group(function () {
         Route::put('/questions/{question}/update', [$c, 'updateQuestion'])->name('questions.update');
         Route::delete('/questions/{question}',     [$c, 'deleteQuestion'])->name('questions.delete');
 
+        // Subject-specific questions
+        Route::get('/subjects/{subject}/questions', [$c, 'subjectQuestions'])->name('subjects.questions');
+
         // Import Soal (web JSON endpoints + view)
-        Route::get('/questions/import',        [$c, 'importForm'])->name('questions.import');
-        Route::post('/questions/import/preview', [$c, 'importPreview'])->name('questions.import.preview');
-        Route::post('/questions/import/execute', [$c, 'importExecute'])->name('questions.import.execute');
-        Route::get('/questions/import/history',  [$c, 'importHistory'])->name('questions.import.history');
+        Route::get('/questions/import',           [$c, 'importForm'])->name('questions.import');
+        Route::get('/questions/import/template',  [$c, 'downloadTemplate'])->name('questions.import.template');
+        Route::post('/questions/import/preview',  [$c, 'importPreview'])->name('questions.import.preview');
+        Route::post('/questions/import/execute',  [$c, 'importExecute'])->name('questions.import.execute');
+        Route::get('/questions/import/history',   [$c, 'importHistory'])->name('questions.import.history');
 
         // Subjects
         Route::get('/subjects',          [$c, 'subjects'])->name('subjects');
         Route::post('/subjects',         [$c, 'storeSubject'])->name('subjects.store');
         Route::put('/subjects/{subject}/update',   [$c, 'updateSubject'])->name('subjects.update');
         Route::delete('/subjects/{subject}',       [$c, 'deleteSubject'])->name('subjects.delete');
-
-        // Packages
-        Route::get('/packages',          [$c, 'packages'])->name('packages');
-        Route::post('/packages',         [$c, 'storePackage'])->name('packages.store');
-        Route::delete('/packages/{package}',       [$c, 'deletePackage'])->name('packages.delete');
 
         // Exams
         Route::get('/exams',             [$c, 'exams'])->name('exams');
@@ -106,8 +105,7 @@ Route::middleware('auth')->group(function () {
         $c = SiswaWebController::class;
         Route::get('/exams',           [$c, 'exams'])->name('exams');
         Route::get('/exams/{exam}/start', [$c, 'startExam'])->name('exams.start');
-        Route::get('/history',         function () {
-            return view('siswa.history.index');
-        })->name('history');
+        Route::get('/history',         [$c, 'history'])->name('history');
+        Route::get('/result/{session}', [$c, 'result'])->name('exams.result');
     });
 });

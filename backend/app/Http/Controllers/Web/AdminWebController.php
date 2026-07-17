@@ -21,7 +21,7 @@ class AdminWebController extends Controller
             ->when($request->level, fn($q, $v) => $q->whereHas('enrolledClasses', fn($q) => $q->where('level', $v)))
             ->when($request->search, fn($q, $v) => $q->where('name', 'like', "%{$v}%"))
             ->orderBy('name')->paginate(20)->withQueryString();
-        $classes = ClassRoom::all();
+        $classes = ClassRoom::orderBy('level')->orderBy('name')->get();
 
         // stats for cards
         $allUsers = User::selectRaw("role, status, COUNT(*) as total")->groupBy('role', 'status')->get();
@@ -117,7 +117,7 @@ class AdminWebController extends Controller
     // ── Classes ────────────────────────────────────────────
     public function classes()
     {
-        $classes = ClassRoom::with(['teacher', 'students'])->withCount('students')->orderBy('level')->paginate(20);
+        $classes = ClassRoom::with(['teacher', 'students'])->withCount('students')->orderBy('level')->orderBy('name')->paginate(20);
         $gurus = User::where('role', 'guru')->active()->get();
         return view('admin.classes.index', compact('classes', 'gurus'));
     }
@@ -191,7 +191,7 @@ class AdminWebController extends Controller
         $violations = Violation::with(['session.exam.classRoom', 'student'])
             ->when($request->class_id, fn($q, $v) => $q->whereHas('session.exam', fn($q) => $q->where('class_id', $v)))
             ->latest()->paginate(30);
-        $classes = ClassRoom::all();
+        $classes = ClassRoom::orderBy('level')->orderBy('name')->get();
         return view('admin.violations.index', compact('violations', 'classes'));
     }
 

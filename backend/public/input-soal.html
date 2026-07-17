@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Input Soal — ExamCore</title>
+<title>Input Soal â€” ExamCore</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -20,11 +20,11 @@
 }
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex}
 
-/* ── SKELETON ── */
+/* â”€â”€ SKELETON â”€â”€ */
 @keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
 .sk{background:linear-gradient(90deg,#e8ebef 25%,#f4f6f8 50%,#e8ebef 75%);background-size:600px 100%;animation:shimmer 1.4s ease-in-out infinite;border-radius:6px}
 
-/* ── SIDEBAR ── */
+/* â”€â”€ SIDEBAR â”€â”€ */
 .sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;z-index:100;display:flex;flex-direction:column;overflow-y:auto}
 .sidebar-brand{display:flex;align-items:center;gap:11px;padding:0 18px;height:var(--topbar-h);border-bottom:1px solid var(--border);flex-shrink:0}
 .brand-icon{width:36px;height:36px;background:var(--navy);border-radius:8px;display:grid;place-items:center;flex-shrink:0}
@@ -46,7 +46,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .logout-btn{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;font-size:12px;color:var(--ink3);cursor:pointer;transition:all .15s;border:none;background:transparent;width:100%;margin-top:2px;font-family:'Inter',sans-serif}
 .logout-btn:hover{background:var(--red-light);color:var(--red)}
 
-/* ── MAIN ── */
+/* â”€â”€ MAIN â”€â”€ */
 .main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
 .topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50}
 .topbar-title{font-size:15px;font-weight:700;color:var(--ink)}
@@ -61,23 +61,23 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .btn-danger:hover{background:var(--red);color:#fff}
 .btn svg{width:14px;height:14px}
 
-/* ── CONTENT ── */
+/* â”€â”€ CONTENT â”€â”€ */
 .content{padding:22px 24px;flex:1}
 .page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
 .page-title{font-size:20px;font-weight:700;color:var(--ink)}
 .page-sub{font-size:13px;color:var(--ink3);margin-top:2px}
 
-/* ── LAYOUT ── */
+/* â”€â”€ LAYOUT â”€â”€ */
 .layout{display:grid;grid-template-columns:1fr 360px;gap:18px;align-items:start}
 
-/* ── CARD ── */
+/* â”€â”€ CARD â”€â”€ */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
 .card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);background:#f7f9fc}
 .card-title{font-size:14px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px}
 .card-title svg{width:15px;height:15px;color:var(--ink3)}
 .card-body{padding:18px}
 
-/* ── FORM ── */
+/* â”€â”€ FORM â”€â”€ */
 .form-group{margin-bottom:16px}
 .form-label{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:5px}
 .form-label .req{color:var(--red)}
@@ -87,12 +87,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .form-hint{font-size:11px;color:var(--ink3);margin-top:4px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 
-/* ── TYPE TABS ── */
+/* â”€â”€ TYPE TABS â”€â”€ */
 .type-tabs{display:flex;background:var(--bg);border-radius:9px;padding:4px;gap:4px;margin-bottom:18px}
 .type-tab{flex:1;padding:9px;border-radius:6px;border:none;background:transparent;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:500;color:var(--ink3);cursor:pointer;transition:all .15s;text-align:center}
 .type-tab.active{background:var(--surface);color:var(--navy);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08)}
 
-/* ── OPTIONS ── */
+/* â”€â”€ OPTIONS â”€â”€ */
 .option-item{display:flex;align-items:flex-start;gap:10px;padding:10px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;margin-bottom:8px;transition:border-color .15s}
 .option-item:has(.option-correct:checked){border-color:var(--green);background:var(--green-light)}
 .option-key{width:28px;height:28px;border-radius:6px;background:var(--surface);border:1.5px solid var(--border);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--ink3);flex-shrink:0;margin-top:2px;font-family:'JetBrains Mono',monospace}
@@ -104,21 +104,21 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .option-del:hover{background:var(--red-light);color:var(--red);border-color:rgba(198,40,40,.2)}
 .option-del svg{width:12px;height:12px}
 
-/* ── DIFFICULTY SELECTOR ── */
+/* â”€â”€ DIFFICULTY SELECTOR â”€â”€ */
 .diff-btns{display:flex;gap:8px}
 .diff-btn{flex:1;padding:8px;border-radius:7px;border:1.5px solid var(--border);background:transparent;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:var(--ink3);cursor:pointer;transition:all .15s;text-align:center}
 .diff-btn.easy.active{background:var(--green-light);border-color:var(--green);color:var(--green)}
 .diff-btn.medium.active{background:var(--amber-light);border-color:var(--amber);color:#92400e}
 .diff-btn.hard.active{background:var(--red-light);border-color:rgba(198,40,40,.3);color:var(--red)}
 
-/* ── PREVIEW ── */
+/* â”€â”€ PREVIEW â”€â”€ */
 .preview-q{font-size:15px;color:var(--ink);line-height:1.7;margin-bottom:14px;font-weight:400}
 .preview-option{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:7px;font-size:13px;color:var(--ink2)}
 .preview-key{width:26px;height:26px;border-radius:6px;border:1.5px solid var(--border2);display:grid;place-items:center;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--ink3);flex-shrink:0}
 .preview-option.correct-opt{background:var(--green-light);border-color:rgba(46,125,50,.3);color:var(--green)}
 .preview-option.correct-opt .preview-key{background:var(--green);color:#fff;border-color:var(--green)}
 
-/* ── SOAL LIST ── */
+/* â”€â”€ SOAL LIST â”€â”€ */
 .soal-item{display:flex;align-items:flex-start;gap:10px;padding:13px 16px;border-bottom:1px solid var(--border);transition:background .15s}
 .soal-item:last-child{border-bottom:none}
 .soal-item:hover{background:var(--bg)}
@@ -130,17 +130,17 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .diff-medium{background:var(--amber-light);color:#92400e}
 .diff-hard{background:var(--red-light);color:var(--red)}
 
-/* ── CHAR COUNTER ── */
+/* â”€â”€ CHAR COUNTER â”€â”€ */
 .char-count{font-size:11px;color:var(--ink3);text-align:right;margin-top:3px}
 .char-count.warn{color:var(--amber)}
 .char-count.over{color:var(--red)}
 
-/* ── SESSION TRACKER ── */
+/* â”€â”€ SESSION TRACKER â”€â”€ */
 .session-stat{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border-radius:8px;margin-bottom:10px;font-size:13px}
 .ss-label{color:var(--ink2)}
 .ss-value{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--navy)}
 
-/* ── PROGRESS BAR ── */
+/* â”€â”€ PROGRESS BAR â”€â”€ */
 .prog-track{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:4px}
 .prog-fill{height:100%;background:var(--navy);border-radius:3px;transition:width .4s ease}
 
@@ -228,17 +228,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
           <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Tipe Soal</div></div>
           <div class="card-body">
             <div style="background:var(--navy-light);color:var(--navy);border-radius:9px;padding:10px 12px;font-size:13px;font-weight:600;margin-bottom:14px">Pilihan Ganda</div>
-            <div class="row2">
-              <div class="form-group" style="margin:0">
-                <label class="form-label">Kategori</label>
-                <select class="form-select" id="sel-category">
-                  <option value="">— Pilih Kategori —</option>
-                </select>
-              </div>
-              <div class="form-group" style="margin:0">
-                <label class="form-label">Bobot Nilai</label>
-                <input class="form-input" type="number" id="inp-weight" value="1" min="0.1" max="10" step="0.1">
-              </div>
+            <div class="form-group" style="margin:0">
+              <label class="form-label">Bobot Nilai</label>
+              <input class="form-input" type="number" id="inp-weight" value="1" min="0.1" max="10" step="0.1">
             </div>
           </div>
         </div>
@@ -284,8 +276,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
           <div class="card-head"><div class="card-title">Jawaban Benar / Salah</div></div>
           <div class="card-body">
             <div class="diff-btns">
-              <button class="diff-btn easy active" id="tf-true"  onclick="setTF('true',this)">✓ Benar (True)</button>
-              <button class="diff-btn hard"       id="tf-false" onclick="setTF('false',this)">✗ Salah (False)</button>
+              <button class="diff-btn easy active" id="tf-true"  onclick="setTF('true',this)">âœ“ Benar (True)</button>
+              <button class="diff-btn hard"       id="tf-false" onclick="setTF('false',this)">âœ— Salah (False)</button>
             </div>
             <input type="hidden" id="inp-tf-answer" value="true">
           </div>
@@ -366,11 +358,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!requireAuth('guru')) return;
   renderUser();
   initOptions();
-  loadCategories();
   renderSoalList();
 });
 
-/* ── State ── */
+/* â”€â”€ State â”€â”€ */
 let currentType      = 'multiple_choice';
 let currentDiff      = 'medium';
 let tfAnswer         = 'true';
@@ -379,7 +370,7 @@ let sessionSoal      = JSON.parse(localStorage.getItem('ec_input_soal_session') 
 let optionCount      = 0;
 const OPTION_KEYS    = ['A','B','C','D','E'];
 
-/* ── Tipe Soal ── */
+/* â”€â”€ Tipe Soal â”€â”€ */
 function setType(type, btn) {
   currentType = type;
   document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'));
@@ -389,7 +380,7 @@ function setType(type, btn) {
   updatePreview();
 }
 
-/* ── Tingkat Kesulitan ── */
+/* â”€â”€ Tingkat Kesulitan â”€â”€ */
 function setDiff(diff, btn) {
   currentDiff = diff;
   document.querySelectorAll('#diff-btns .diff-btn').forEach(b => b.classList.remove('active'));
@@ -397,7 +388,7 @@ function setDiff(diff, btn) {
   document.getElementById('inp-difficulty').value = diff;
 }
 
-/* ── Benar/Salah ── */
+/* â”€â”€ Benar/Salah â”€â”€ */
 function setTF(val, btn) {
   tfAnswer = val;
   document.getElementById('inp-tf-answer').value = val;
@@ -405,7 +396,7 @@ function setTF(val, btn) {
   document.getElementById('tf-false').classList.toggle('active', val === 'false');
 }
 
-/* ── Opsi MC ── */
+/* â”€â”€ Opsi MC â”€â”€ */
 function initOptions() {
   const list = document.getElementById('options-list');
   list.innerHTML = '';
@@ -438,7 +429,7 @@ function removeOption(key) {
   updatePreview();
 }
 
-/* ── Preview ── */
+/* â”€â”€ Preview â”€â”€ */
 function updatePreview() {
   const qText  = document.getElementById('inp-question').value.trim();
   const body   = document.getElementById('preview-body');
@@ -464,13 +455,13 @@ function updatePreview() {
     html += `<div class="preview-option ${tfAnswer==='true'?'correct-opt':''}"><div class="preview-key">T</div><div>Benar (True)</div></div>`;
     html += `<div class="preview-option ${tfAnswer==='false'?'correct-opt':''}"><div class="preview-key">F</div><div>Salah (False)</div></div>`;
   } else {
-    html += `<div style="padding:12px;background:var(--bg);border-radius:8px;font-size:13px;color:var(--ink3);border:1.5px dashed var(--border)">Area jawaban esai — siswa mengetik jawaban di sini</div>`;
+    html += `<div style="padding:12px;background:var(--bg);border-radius:8px;font-size:13px;color:var(--ink3);border:1.5px dashed var(--border)">Area jawaban esai â€” siswa mengetik jawaban di sini</div>`;
   }
 
   body.innerHTML = html;
 }
 
-/* ── Char Counter ── */
+/* â”€â”€ Char Counter â”€â”€ */
 function updateCharCount(el, max) {
   const len = el.value.length;
   const id  = el.id === 'inp-question' ? 'cc-question' : 'cc-explanation';
@@ -480,20 +471,7 @@ function updateCharCount(el, max) {
   cc.className   = `char-count ${len > max * 0.9 ? 'warn' : ''} ${len >= max ? 'over' : ''}`;
 }
 
-/* ── Load Categories ── */
-async function loadCategories() {
-  try {
-    const data = await api('GET', '/guru/questions/categories');
-    const sel  = document.getElementById('sel-category');
-    (data.data || []).forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c.id; opt.textContent = c.name;
-      sel.appendChild(opt);
-    });
-  } catch(_) {}
-}
-
-/* ── Gambar Soal ── */
+	</script>
 function setQuestionImage(file) {
   if (!file) return;
   currentImageFile = file;
@@ -511,7 +489,7 @@ function removeQuestionImage() {
   document.getElementById('inp-image').value = '';
 }
 
-/* ── Simpan Soal ── */
+/* â”€â”€ Simpan Soal â”€â”€ */
 async function simpanSoal() {
   const qText = document.getElementById('inp-question').value.trim();
   if (!qText) { toast('Teks soal tidak boleh kosong','err'); return; }
@@ -551,7 +529,6 @@ async function simpanSoal() {
       difficulty:     document.getElementById('inp-difficulty').value,
       weight:         parseFloat(document.getElementById('inp-weight').value) || 1,
       explanation:    document.getElementById('inp-explanation').value.trim() || null,
-      category_id:    document.getElementById('sel-category').value || null,
     };
 
     // Pakai multipart/form-data kalau ada gambar
@@ -564,7 +541,6 @@ async function simpanSoal() {
       fd.append('difficulty',     payload.difficulty);
       fd.append('weight',         String(payload.weight));
       if (payload.explanation)    fd.append('explanation', payload.explanation);
-      if (payload.category_id)    fd.append('category_id', payload.category_id);
       Object.entries(options || {}).forEach(([k, v]) => fd.append(`options[${k}]`, v));
       await apiUpload('/guru/questions', fd);
     } else {
@@ -587,7 +563,6 @@ async function simpanSoal() {
       difficulty:     document.getElementById('inp-difficulty').value,
       weight:         parseFloat(document.getElementById('inp-weight').value) || 1,
       explanation:    document.getElementById('inp-explanation').value.trim() || null,
-      category_id:    document.getElementById('sel-category').value || null,
     };
     sessionSoal.push({ ...fallback, savedAt: new Date().toISOString() });
     localStorage.setItem('ec_input_soal_session', JSON.stringify(sessionSoal));
@@ -599,7 +574,7 @@ async function simpanSoal() {
   }
 }
 
-/* ── Session ── */
+/* â”€â”€ Session â”€â”€ */
 function updateSession() {
   const total  = sessionSoal.length;
   const easy   = sessionSoal.filter(s => s.difficulty === 'easy').length;
@@ -625,7 +600,7 @@ function renderSoalList() {
         <div class="soal-text">${s.question_text.substring(0,60)}${s.question_text.length > 60 ? '...' : ''}</div>
         <div class="soal-meta">
           <span class="diff-badge diff-${s.difficulty}">${s.difficulty === 'easy' ? 'Mudah' : s.difficulty === 'medium' ? 'Sedang' : 'Sulit'}</span>
-          · Bobot: ${s.weight}
+          Â· Bobot: ${s.weight}
         </div>
       </div>
       <button onclick="hapusSoal(${i})" style="background:none;border:none;cursor:pointer;color:var(--ink3);padding:4px" title="Hapus">
@@ -666,3 +641,4 @@ updateSession();
 </script>
 </body>
 </html>
+

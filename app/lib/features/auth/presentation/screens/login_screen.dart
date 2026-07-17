@@ -31,9 +31,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _errorMsg;
 
   final _demos = [
-    {'name': 'Budi Santoso',  'email': 'guru@cbt.sch.id',     'role': 'guru',  'pass': 'password123'},
+    {'name': 'Budi Santoso',  'email': 'guru@examcore.id',     'role': 'guru',  'pass': 'password123'},
     {'name': 'Ahmad Naufal',  'email': 'ahmadnaufal@siswa.id', 'role': 'siswa', 'pass': 'password123'},
-    {'name': 'Administrator', 'email': 'admin@cbt.sch.id',     'role': 'admin', 'pass': 'password123'},
+    {'name': 'Administrator', 'email': 'admin@examcore.id',     'role': 'admin', 'pass': 'password123'},
   ];
 
   @override
@@ -143,7 +143,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Image.asset(
                 'assets/images/smk_parittiga_logo.png',
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.school, color: Colors.white, size: 30)),
+                errorBuilder: (_, _, _) => const Center(child: Icon(Icons.school, color: Colors.white, size: 30)),
               ),
             ),
             const SizedBox(height: 14),
@@ -157,7 +157,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: AppColors.border),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(.04), blurRadius: 16, offset: const Offset(0,4))],
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha:.04), blurRadius: 16, offset: const Offset(0,4))],
               ),
               child: Column(children: [
                 // Header
@@ -192,7 +192,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     if (_errorMsg != null) ...[
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        decoration: BoxDecoration(color: AppColors.redLight, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.red.withOpacity(.2))),
+                        decoration: BoxDecoration(color: AppColors.redLight, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.red.withValues(alpha:.2))),
                         child: Row(children: [
                           Icon(Icons.error_outline, color: AppColors.red, size: 15),
                           const SizedBox(width: 8),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/widgets/app_widgets.dart';
 
 class UserManagementScreen extends StatelessWidget {
   const UserManagementScreen({super.key});
@@ -16,7 +17,7 @@ class UserManagementScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('Manajemen Pengguna')),
+      appBar: AppBar(title: const Text('Manajemen Pengguna'), leading: const AppBackButton()),
       body: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
         itemCount: roles.length,

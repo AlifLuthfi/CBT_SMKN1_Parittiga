@@ -8,6 +8,7 @@
 <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
 <link rel="apple-touch-icon" href="{{ asset('images/logo.png') }}">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/clockpicker/0.0.7/bootstrap-clockpicker.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/styles/choices.min.css">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -127,19 +128,35 @@ tbody tr:hover td{background:#f9fafc}
 .b-amber{background:var(--amber-light);color:#92400e}
 
 /* ── Buttons ── */
-.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s;border:none;text-decoration:none}
-.btn-primary{background:var(--navy);color:#fff}
-.btn-primary:hover{background:var(--navy-dark)}
-.btn-ghost{border:1px solid var(--border);background:var(--surface);color:var(--ink2)}
-.btn-ghost:hover{background:var(--bg);color:var(--ink)}
-.btn-danger{background:var(--red);color:#fff}
-.btn-danger:hover{background:#b71c1c}
-.btn-sm{padding:5px 12px;font-size:12px}
-.btn svg{width:14px;height:14px}
-.icon-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--ink3);cursor:pointer;display:inline-grid;place-items:center;transition:all .15s;text-decoration:none}
-.icon-btn svg{width:13px;height:13px}
-.icon-btn:hover{background:var(--bg);color:var(--ink)}
-.icon-btn.danger:hover{background:var(--red-light);color:var(--red);border-color:rgba(198,40,40,.25)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 18px;border-radius:9px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .22s cubic-bezier(.34,1.56,.64,1);border:none;text-decoration:none;line-height:1.2;box-shadow:0 1px 2px rgba(0,0,0,.04);position:relative;overflow:hidden}
+.btn::after{content:'';position:absolute;inset:0;background:transparent;transition:background .22s}
+.btn:hover{transform:translateY(-1.5px);box-shadow:0 6px 16px rgba(0,0,0,.1)}
+.btn:active{transform:translateY(0);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.btn-primary{background:linear-gradient(135deg,var(--navy) 0%,#234b82 100%);color:#fff}
+.btn-primary:hover{box-shadow:0 6px 20px rgba(26,60,110,.35)}
+.btn-ghost{border:1.5px solid var(--border);background:var(--surface);color:var(--ink2)}
+.btn-ghost:hover{background:#f7f9fc;color:var(--ink);border-color:var(--border2);box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.btn-danger{background:linear-gradient(135deg,var(--red) 0%,#d32f2f 100%);color:#fff}
+.btn-danger:hover{box-shadow:0 6px 20px rgba(198,40,40,.35)}
+.btn-outline-danger{border:1.5px solid var(--red);background:transparent;color:var(--red)}
+.btn-outline-danger:hover{background:var(--red-light);box-shadow:0 4px 12px rgba(198,40,40,.15);border-color:var(--red)}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:7px}
+.btn-sm:hover{transform:translateY(-1px)}
+.btn svg{width:15px;height:15px;flex-shrink:0;transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+.btn:hover svg{transform:scale(1.12) rotate(-3deg)}
+.btn-primary:hover svg,.btn-danger:hover svg{filter:brightness(1.2)}
+.icon-btn{width:32px;height:32px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--ink3);cursor:pointer;display:inline-grid;place-items:center;transition:all .2s cubic-bezier(.34,1.56,.64,1);text-decoration:none;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.icon-btn svg{width:14px;height:14px;transition:transform .25s cubic-bezier(.34,1.56,.64,1),color .2s}
+.icon-btn:hover{background:#f7f9fc;color:var(--ink);border-color:var(--border2);transform:translateY(-2px) scale(1.05);box-shadow:0 5px 14px rgba(0,0,0,.08)}
+.icon-btn:hover svg{transform:scale(1.2)}
+.icon-btn.danger:hover{background:var(--red-light);color:var(--red);border-color:rgba(198,40,40,.3);box-shadow:0 4px 12px rgba(198,40,40,.15)}
+.icon-btn.danger:hover svg{transform:scale(1.2) rotate(2deg)}
+
+/* ── Back link ── */
+.back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--navy);text-decoration:none;padding:5px 10px;border-radius:7px;transition:all .2s;margin-bottom:16px}
+.back-link:hover{background:var(--navy-light);gap:8px}
+.back-link svg{width:14px;height:14px;transition:transform .2s}
+.back-link:hover svg{transform:translateX(-3px)}
 
 /* ── Forms ── */
 .form-group{margin-bottom:14px}
@@ -150,19 +167,46 @@ tbody tr:hover td{background:#f9fafc}
 select.form-input{appearance:auto;cursor:pointer}
 textarea.form-input{resize:vertical;min-height:60px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* Time/date highlight when filled */
+.time-wrap.has-time .form-input.fp-time,
+.date-wrap.has-date .form-input[type="date"]{background:var(--navy-light);border-color:rgba(26,60,110,.3);font-weight:600}
+
+/* Clock icon trigger — wrapped with input */
+.input-icon-wrap{position:relative;display:flex;align-items:center}
+.input-icon-wrap .form-input{padding-right:34px!important;cursor:pointer}
+.input-icon-wrap .clock-trigger{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:var(--ink3);cursor:pointer;pointer-events:auto;transition:color .15s;flex-shrink:0}
+.input-icon-wrap .clock-trigger:hover{color:var(--navy)}
+.time-wrap.has-time .clock-trigger{color:var(--navy);opacity:.85}
+
+/* ── ClockPicker custom theme (navy) ── */
+.clockpicker-popover{z-index:99999!important;border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.15);font-family:'Inter',sans-serif;margin-top:4px!important}
+.clockpicker-popover.popover{position:fixed!important}
+.clockpicker-popover .popover-content{background:var(--surface);border-radius:10px;padding:16px}
+.clockpicker-plate{background:var(--bg);border-radius:50%}
+.clockpicker-tick{color:var(--ink2);font-weight:600;font-size:13px}
+.clockpicker-tick:hover{background:var(--navy-light);color:var(--navy);border-radius:50%}
+.clockpicker-canvas line{stroke:var(--navy)!important}
+.clockpicker-canvas-bg{fill:rgba(26,60,110,.12)!important}
+.clockpicker-canvas-bearing{fill:var(--navy)!important}
+.clockpicker-canvas-fg{fill:var(--navy)!important}
+.clockpicker-button{color:var(--navy);font-weight:600;font-size:13px;padding:10px 16px;border-radius:0 0 10px 10px;background:var(--surface);border:none;cursor:pointer;transition:background .15s}
+.clockpicker-button:hover{background:var(--navy-light)}
+.clockpicker-button.clockpicker-button-clear{color:var(--red);float:left}
+.clockpicker-popover .popover-arrow{display:none}
 .checkbox-label{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink2);cursor:pointer}
 .checkbox-label input{accent-color:var(--navy);width:14px;height:14px}
 
 /* ── Modal ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);backdrop-filter:blur(3px);z-index:500;display:none;place-items:center;padding:20px}
 .modal-overlay.open{display:grid}
-.modal{background:var(--surface);border-radius:12px;border:1px solid var(--border);width:100%;max-width:520px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.15);animation:mi .2s ease}
+.modal{background:var(--surface);border-radius:12px;border:1px solid var(--border);width:100%;max-width:530px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.15);animation:mi .2s ease}
 @keyframes mi{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
 .modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#f7f9fc}
 .modal-title{font-size:15px;font-weight:700;color:var(--ink)}
 .modal-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--ink3);cursor:pointer;display:grid;place-items:center;font-size:14px;font-family:'Inter',sans-serif}
 .modal-close:hover{background:var(--bg)}
-.modal-body{padding:20px;max-height:65vh;overflow-y:auto}
+.modal-body{padding:20px;max-height:80vh;overflow-y:auto}
 .modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:#f7f9fc}
 
 /* ── Pagination ── */
@@ -265,25 +309,13 @@ textarea.form-input{resize:vertical;min-height:60px}
     </a>
 
     @elseif($role === 'guru')
-    <a href="{{ route('guru.questions') }}" class="nav-item {{ request()->routeIs('guru.questions*') ? 'active' : '' }}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-      Input Soal
-    </a>
-    <a href="{{ route('guru.subjects') }}" class="nav-item {{ request()->routeIs('guru.subjects*') ? 'active' : '' }}">
+    <a href="{{ route('guru.subjects') }}" class="nav-item {{ request()->routeIs('guru.subjects*') || request()->routeIs('guru.questions*') ? 'active' : '' }}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-      Mata Pelajaran
-    </a>
-    <a href="{{ route('guru.packages') }}" class="nav-item {{ request()->routeIs('guru.packages*') ? 'active' : '' }}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-      Paket Soal
+      Input Soal
     </a>
     <a href="{{ route('guru.exams') }}" class="nav-item {{ request()->routeIs('guru.exams*') ? 'active' : '' }}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       Jadwal Ujian
-    </a>
-    <a href="{{ route('guru.classes') }}" class="nav-item {{ request()->routeIs('guru.classes*') ? 'active' : '' }}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-      Manajemen Kelas
     </a>
     <a href="{{ route('guru.grade-reports') }}" class="nav-item {{ request()->routeIs('guru.grade-reports*') ? 'active' : '' }}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
@@ -354,12 +386,31 @@ textarea.form-input{resize:vertical;min-height:60px}
   </div>
 </main>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clockpicker/0.0.7/bootstrap-clockpicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/scripts/choices.min.js"></script>
 <script>
 function toggleSidebar() {
-  const sb = document.getElementById('sidebar');
-  const ov = document.getElementById('sidebarOverlay');
+  var sb = document.getElementById('sidebar');
+  var ov = document.getElementById('sidebarOverlay');
   sb.classList.toggle('open');
   ov.style.display = sb.classList.contains('open') ? 'block' : 'none';
+}
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+var toastTimer;
+function showToast(msg, type) {
+  var el = document.getElementById('toast');
+  if (!el) return;
+  document.getElementById('toast-msg').textContent = msg;
+  var ico = document.getElementById('toast-icon');
+  if (ico) {
+    if (type==='err') ico.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>';
+    else ico.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+  }
+  el.className = 'toast' + (type ? ' ' + type : '') + ' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { el.classList.remove('show'); }, 3000);
 }
 document.addEventListener('DOMContentLoaded', function() {
   @if(session('success'))
@@ -368,29 +419,52 @@ document.addEventListener('DOMContentLoaded', function() {
   @if(session('error'))
     showToast('{{ session('error') }}', 'err');
   @endif
-});
-let toastTimer;
-function showToast(msg, type) {
-  const el = document.getElementById('toast');
-  if (!el) return;
-  document.getElementById('toast-msg').textContent = msg;
-  const ico = document.getElementById('toast-icon');
-  if (ico) {
-    if (type==='err') ico.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>';
-    else ico.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+  document.querySelectorAll('.modal-overlay:not(#sidebarOverlay)').forEach(function(el) {
+    el.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('open'); });
+  });
+
+  // ClockPicker time picker
+  var cptimes = document.querySelectorAll('.fp-time');
+  for (var i = 0; i < cptimes.length; i++) {
+    (function(el) {
+      var cp = $(el).clockpicker({
+        autoclose: true,
+        donetext: 'Pilih',
+        placement: 'bottom',
+        align: 'left',
+        afterHide: function() {
+          var wrap = el.closest('.time-wrap');
+          if (wrap) wrap.classList.toggle('has-time', !!el.value);
+        },
+      });
+      var clock = el.parentElement ? el.parentElement.querySelector('.clock-trigger') : null;
+      if (clock) {
+        clock.addEventListener('click', function(e) {
+          e.stopPropagation();
+          $(el).clockpicker('show');
+        });
+      }
+      // Set initial highlight
+      var wrap = el.closest('.time-wrap');
+      if (wrap) wrap.classList.toggle('has-time', !!el.value);
+    })(cptimes[i]);
   }
-  el.className = 'toast' + (type ? ' ' + type : '') + ' show';
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
-}
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-document.querySelectorAll('.modal-overlay:not(#sidebarOverlay)').forEach(el => {
-  el.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('open'); });
+
+  // Date input highlight
+  var dateInputs = document.querySelectorAll('.form-input[type="date"]');
+  for (var j = 0; j < dateInputs.length; j++) {
+    (function(el) {
+      el.addEventListener('change', function() {
+        var wrap = el.closest('.date-wrap');
+        if (wrap) wrap.classList.toggle('has-date', !!el.value);
+      });
+      var wrap = el.closest('.date-wrap');
+      if (wrap) wrap.classList.toggle('has-date', !!el.value);
+    })(dateInputs[j]);
+  }
 });
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/scripts/choices.min.js"></script>
 @stack('scripts')
 
 {{-- Toast container --}}

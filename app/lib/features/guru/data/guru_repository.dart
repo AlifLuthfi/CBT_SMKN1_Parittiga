@@ -22,67 +22,8 @@ class GuruRepository {
     return ((data['data'] as List?) ?? []).map((e) => ClassRoomModel.fromJson(e as Map<String, dynamic>)).toList();
   }
 
-  Future<QuestionModel> createQuestion(Map<String, dynamic> payload) async {
-    final data = await ApiClient.post('/guru/questions', data: payload);
-    return QuestionModel.fromJson(data['question'] as Map<String, dynamic>);
-  }
-
   Future<QuestionModel> updateQuestion(int id, Map<String, dynamic> payload) async {
     final data = await ApiClient.put('/guru/questions/$id', data: payload);
-    return QuestionModel.fromJson(data['question'] as Map<String, dynamic>);
-  }
-
-  Future<QuestionModel> updateQuestionWithImage({
-    required int id,
-    required String questionText,
-    required Map<String, String> options,
-    required String correctAnswer,
-    required String difficulty,
-    required double weight,
-    String? explanation,
-    String? categoryId,
-    String? imagePath,
-    Uint8List? imageBytes,
-    String? imageName,
-    bool removeImage = false,
-  }) async {
-    if (imagePath != null) {
-      final fields = <String, dynamic>{
-        'question_text': questionText,
-        'correct_answer': correctAnswer,
-        'difficulty': difficulty,
-        'weight': weight.toString(),
-        'remove_image': removeImage.toString(),
-        if (explanation != null) 'explanation': explanation,
-        if (categoryId != null) 'category_id': categoryId,
-      };
-      options.forEach((k, v) => fields['options[$k]'] = v);
-      final data = await ApiClient.uploadFile('/guru/questions/$id', 'image', imagePath, fields, method: 'PUT');
-      return QuestionModel.fromJson(data['question'] as Map<String, dynamic>);
-    }
-    if (imageBytes != null) {
-      final fields = <String, dynamic>{
-        'question_text': questionText,
-        'correct_answer': correctAnswer,
-        'difficulty': difficulty,
-        'weight': weight.toString(),
-        'remove_image': removeImage.toString(),
-        if (explanation != null) 'explanation': explanation,
-        if (categoryId != null) 'category_id': categoryId,
-      };
-      options.forEach((k, v) => fields['options[$k]'] = v);
-      final data = await ApiClient.uploadFileBytes('/guru/questions/$id', 'image', imageBytes, imageName ?? 'image.jpg', fields, method: 'PUT');
-      return QuestionModel.fromJson(data['question'] as Map<String, dynamic>);
-    }
-    final data = await ApiClient.put('/guru/questions/$id', data: {
-      'question_text': questionText,
-      'options': options,
-      'correct_answer': correctAnswer,
-      'difficulty': difficulty,
-      'weight': weight.toString(),
-      if (explanation != null) 'explanation': explanation,
-      if (categoryId != null) 'category_id': categoryId,
-    });
     return QuestionModel.fromJson(data['question'] as Map<String, dynamic>);
   }
 
@@ -90,39 +31,28 @@ class GuruRepository {
     required String questionText,
     required Map<String, String> options,
     required String correctAnswer,
-    required String difficulty,
-    required double weight,
     String? explanation,
-    String? categoryId,
     int? subjectId,
     String? imagePath,
     Uint8List? imageBytes,
     String? imageName,
   }) async {
+    void addFields(Map<String, dynamic> f) {
+      f['question_text'] = questionText;
+      f['correct_answer'] = correctAnswer;
+      if (explanation != null) f['explanation'] = explanation;
+      if (subjectId != null) f['subject_id'] = subjectId;
+    }
     if (imagePath != null) {
-      final fields = <String, dynamic>{
-        'question_text': questionText,
-        'correct_answer': correctAnswer,
-        'difficulty': difficulty,
-        'weight': weight.toString(),
-        if (subjectId != null) 'subject_id': subjectId,
-        if (explanation != null) 'explanation': explanation,
-        if (categoryId != null) 'category_id': categoryId,
-      };
+      final fields = <String, dynamic>{};
+      addFields(fields);
       options.forEach((k, v) => fields['options[$k]'] = v);
       final data = await ApiClient.uploadFile('/guru/questions', 'image', imagePath, fields);
       return QuestionModel.fromJson(data['question'] as Map<String, dynamic>);
     }
     if (imageBytes != null) {
-      final fields = <String, dynamic>{
-        'question_text': questionText,
-        'correct_answer': correctAnswer,
-        'difficulty': difficulty,
-        'weight': weight.toString(),
-        if (subjectId != null) 'subject_id': subjectId,
-        if (explanation != null) 'explanation': explanation,
-        if (categoryId != null) 'category_id': categoryId,
-      };
+      final fields = <String, dynamic>{};
+      addFields(fields);
       options.forEach((k, v) => fields['options[$k]'] = v);
       final data = await ApiClient.uploadFileBytes('/guru/questions', 'image', imageBytes, imageName ?? 'image.jpg', fields);
       return QuestionModel.fromJson(data['question'] as Map<String, dynamic>);
@@ -131,11 +61,52 @@ class GuruRepository {
       'question_text': questionText,
       'options': options,
       'correct_answer': correctAnswer,
-      'difficulty': difficulty,
-      'weight': weight.toString(),
-      if (subjectId != null) 'subject_id': subjectId,
       if (explanation != null) 'explanation': explanation,
-      if (categoryId != null) 'category_id': categoryId,
+      if (subjectId != null) 'subject_id': subjectId,
+    });
+    return QuestionModel.fromJson(data['question'] as Map<String, dynamic>);
+  }
+
+  Future<QuestionModel> updateQuestionWithImage({
+    required int id,
+    required String questionText,
+    required Map<String, String> options,
+    required String correctAnswer,
+    String? explanation,
+    int? subjectId,
+    String? imagePath,
+    Uint8List? imageBytes,
+    String? imageName,
+    bool removeImage = false,
+  }) async {
+    void addFields(Map<String, dynamic> f) {
+      f['question_text'] = questionText;
+      f['correct_answer'] = correctAnswer;
+      f['remove_image'] = removeImage ? '1' : '0';
+      if (explanation != null) f['explanation'] = explanation;
+      if (subjectId != null) f['subject_id'] = subjectId;
+    }
+    if (imagePath != null) {
+      final fields = <String, dynamic>{};
+      addFields(fields);
+      options.forEach((k, v) => fields['options[$k]'] = v);
+      final data = await ApiClient.uploadFile('/guru/questions/$id', 'image', imagePath, fields, method: 'PUT');
+      return QuestionModel.fromJson(data['question'] as Map<String, dynamic>);
+    }
+    if (imageBytes != null) {
+      final fields = <String, dynamic>{};
+      addFields(fields);
+      options.forEach((k, v) => fields['options[$k]'] = v);
+      final data = await ApiClient.uploadFileBytes('/guru/questions/$id', 'image', imageBytes, imageName ?? 'image.jpg', fields, method: 'PUT');
+      return QuestionModel.fromJson(data['question'] as Map<String, dynamic>);
+    }
+    final data = await ApiClient.put('/guru/questions/$id', data: {
+      'question_text': questionText,
+      'options': options,
+      'correct_answer': correctAnswer,
+      'remove_image': removeImage ? '1' : '0',
+      if (explanation != null) 'explanation': explanation,
+      if (subjectId != null) 'subject_id': subjectId,
     });
     return QuestionModel.fromJson(data['question'] as Map<String, dynamic>);
   }
@@ -180,9 +151,9 @@ class GuruRepository {
   Future<void> deleteSubject(int id) => ApiClient.delete('/guru/subjects/$id');
 
   // ── Soal by Subject ────────────────────────────────────
-  Future<List<QuestionModel>> getQuestions({String? search, String? difficulty, String? subjectId, int page = 1}) async {
+  Future<List<QuestionModel>> getQuestions({String? search, String? subjectId, int page = 1}) async {
     final data = await ApiClient.get('/guru/questions', params: {
-      'search': search, 'difficulty': difficulty, 'subject_id': subjectId, 'page': page, 'per_page': 100,
+      'search': search, 'subject_id': subjectId, 'page': page, 'per_page': 100,
     });
     return ((data['data'] as List?) ?? []).map((e) => QuestionModel.fromJson(e as Map<String, dynamic>)).toList();
   }
@@ -198,17 +169,15 @@ class GuruRepository {
     return QuestionImportPreview.fromJson(data['preview'] as Map<String, dynamic>);
   }
 
-  Future<QuestionImportModel> executeImport(String filePath, String fileName, {int? categoryId, int? subjectId}) async {
+  Future<QuestionImportModel> executeImport(String filePath, String fileName, {int? subjectId}) async {
     final fields = <String, dynamic>{};
-    if (categoryId != null) fields['category_id'] = categoryId;
     if (subjectId != null) fields['subject_id'] = subjectId;
     final data = await ApiClient.uploadFile('/guru/question-imports', 'file', filePath, fields);
     return QuestionImportModel.fromJson(data['import'] as Map<String, dynamic>);
   }
 
-  Future<QuestionImportModel> executeImportBytes(Uint8List bytes, String fileName, {int? categoryId, int? subjectId}) async {
+  Future<QuestionImportModel> executeImportBytes(Uint8List bytes, String fileName, {int? subjectId}) async {
     final fields = <String, dynamic>{};
-    if (categoryId != null) fields['category_id'] = categoryId;
     if (subjectId != null) fields['subject_id'] = subjectId;
     final data = await ApiClient.uploadFileBytes('/guru/question-imports', 'file', bytes, fileName, fields);
     return QuestionImportModel.fromJson(data['import'] as Map<String, dynamic>);

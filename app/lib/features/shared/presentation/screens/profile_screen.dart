@@ -24,8 +24,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _biometricAvail   = false;
   bool _biometricEnabled = false;
   bool _obscureOld = true, _obscureNew = true, _obscureConf = true;
-  bool _saving  = false;
-  bool _darkMode= false;
   String _appVersion = '1.0.0';
 
   @override
@@ -55,7 +53,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('Profil & Pengaturan')),
+      appBar: AppBar(title: const Text('Profil & Pengaturan'), leading: const AppBackButton()),
       body: ListView(children: [
 
         // ── Avatar Section ──
@@ -191,7 +189,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             onPressed: _logoutAll,
             icon: const Icon(Icons.devices, size: 18, color: AppColors.red),
             label: const Text('Keluar Semua Perangkat', style: TextStyle(color: AppColors.red)),
-            style: OutlinedButton.styleFrom(side: BorderSide(color: AppColors.red.withOpacity(.5)), foregroundColor: AppColors.red),
+            style: OutlinedButton.styleFrom(side: BorderSide(color: AppColors.red.withValues(alpha:.5)), foregroundColor: AppColors.red),
           ),
         ),
         const SizedBox(height: 32),

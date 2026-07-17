@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -27,16 +26,12 @@ class SecurityService {
         raw = DateTime.now().millisecondsSinceEpoch.toString();
       }
     } catch (_) {
-      raw = _randomHex();
+      // catat error, jangan generate random — nanti device ID berubah2
+      raw = 'fallback_device_id';
     }
     final id = sha256.convert(utf8.encode(raw)).toString();
     await SecureStorage.saveDeviceId(id);
     return id;
-  }
-
-  static String _randomHex() {
-    final r = Random.secure();
-    return List.generate(32, (_) => r.nextInt(256).toRadixString(16).padLeft(2,'0')).join();
   }
 
   // ── Biometric ─────────────────────────────────────────
@@ -91,18 +86,49 @@ class SecurityService {
   static bool isValidHost(String url) {
     try {
       final uri = Uri.parse(url);
+      final host = uri.host;
       // Izinkan localhost dan private IP
-      return uri.host == 'localhost' ||
-             uri.host.startsWith('192.168.') ||
-             uri.host.startsWith('10.') ||
-             uri.host.startsWith('172.') ||
-             uri.host == '10.0.2.2' ||
-             uri.host.endsWith('.school.id') ||
-             uri.host.endsWith('.sch.id') ||
-             uri.host.endsWith('.ngrok-free.app') ||
-             uri.host.endsWith('.ngrok-free.dev') ||
-             uri.host.endsWith('.ngrok.app') ||
-             uri.host.endsWith('.ngrok.io');
+      if (host == 'localhost' || host == '10.0.2.2' || host == '127.0.0.1') return true;
+      if (host.startsWith('192.168.')) return true;
+      if (host.startsWith('10.') &&
+          !host.startsWith('100.') &&
+          !host.startsWith('101.') &&
+          !host.startsWith('102.') &&
+          !host.startsWith('103.') &&
+          !host.startsWith('104.') &&
+          !host.startsWith('105.') &&
+          !host.startsWith('106.') &&
+          !host.startsWith('107.') &&
+          !host.startsWith('108.') &&
+          !host.startsWith('109.') &&
+          !host.startsWith('110.') &&
+          !host.startsWith('111.') &&
+          !host.startsWith('112.') &&
+          !host.startsWith('113.') &&
+          !host.startsWith('114.') &&
+          !host.startsWith('115.') &&
+          !host.startsWith('116.') &&
+          !host.startsWith('117.') &&
+          !host.startsWith('118.') &&
+          !host.startsWith('119.') &&
+          !host.startsWith('120.') &&
+          !host.startsWith('121.') &&
+          !host.startsWith('122.') &&
+          !host.startsWith('123.') &&
+          !host.startsWith('124.') &&
+          !host.startsWith('125.') &&
+          !host.startsWith('126.') &&
+          !host.startsWith('127.')) return true;
+      // prefix 172.16-31
+      if (host.startsWith('172.')) {
+        final parts = host.split('.');
+        if (parts.length >= 3) {
+          final octet = int.tryParse(parts[1]);
+          if (octet != null && octet >= 16 && octet <= 31) return true;
+        }
+      }
+      return host.endsWith('.school.id') ||
+             host.endsWith('.sch.id');
     } catch (_) { return false; }
   }
 }

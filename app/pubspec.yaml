@@ -1,4 +1,4 @@
-name: frontend_flutter
+name: cbt_smkn1_parittiga
 description: "A new Flutter project."
 publish_to: 'none'
 
@@ -22,6 +22,7 @@ dependencies:
   crypto: ^3.0.6
   device_info_plus: ^11.2.0
   wakelock_plus: ^1.2.8
+  window_manager: ^0.4.3
   shimmer: ^3.0.0
   intl: ^0.20.1
   file_picker: ^8.1.6

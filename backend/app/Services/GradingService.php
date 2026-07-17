@@ -19,16 +19,34 @@ class GradingService
         $seed    = $session->seed;
         $answers = $session->answers()->with('question')->get();
 
-        $totalWeight  = 0;
-        $earnedWeight = 0;
+        $total    = $exam->total_questions ?: $answers->count();
+        $correct  = 0;
+
+        // Pastikan semua soal punya row — buat row untuk unanswered
+        $questionIds = $session->question_order ?? [];
+        $answeredIds = $answers->pluck('question_id')->toArray();
+        $newAnswers = [];
+        foreach ($questionIds as $qId) {
+            if (!in_array($qId, $answeredIds)) {
+                $newAnswers[] = [
+                    'session_id'  => $session->id,
+                    'question_id' => $qId,
+                    'answer'      => null,
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
+                ];
+            }
+        }
+        if ($newAnswers) {
+            ExamSessionAnswer::insert($newAnswers);
+            $answers = ExamSessionAnswer::where('session_id', $session->id)
+                ->with('question')->get();
+        }
 
         foreach ($answers as $answer) {
             $q = $answer->question;
             if (!$q) continue;
 
-            $totalWeight += $q->weight;
-
-            // Grade dengan mempertimbangkan opsi yang diacak LCG
             $isCorrect = ($q->question_type === 'essay')
                 ? false
                 : $this->randomizer->gradeAnswer(
@@ -38,12 +56,11 @@ class GradingService
                     $exam->randomize_options ?? true
                 );
 
-            $score = $isCorrect ? $q->weight : 0;
-            $answer->update(['is_correct' => $isCorrect, 'score' => $score]);
-            if ($isCorrect) $earnedWeight += $q->weight;
+            $answer->update(['is_correct' => $isCorrect, 'score' => $isCorrect ? 1 : 0]);
+            if ($isCorrect) $correct++;
         }
 
-        $score    = $totalWeight > 0 ? round(($earnedWeight / $totalWeight) * 100, 2) : 0;
+        $score    = $total > 0 ? round(($correct / $total) * 100, 2) : 0;
         $isPassed = $score >= $exam->passing_grade;
 
         $session->update([
@@ -66,9 +83,10 @@ class GradingService
         $answers = $session->answers()->with('question')->get();
         $seed    = $session->seed;
 
+        $total      = $exam->total_questions ?: $answers->count();
         $correct    = $answers->where('is_correct', true)->count();
         $wrong      = $answers->where('is_correct', false)->whereNotNull('answer')->count();
-        $unanswered = $answers->whereNull('answer')->count();
+        $unanswered = $total - $correct - $wrong;
 
         $durationTaken = ($session->started_at && $session->submitted_at)
             ? min($session->started_at->diffInSeconds($session->submitted_at), $exam->duration_minutes * 60)
@@ -90,7 +108,7 @@ class GradingService
                 'question_id'     => $q->id,
                 'question_text'   => $q->question_text,
                 'question_type'   => $q->question_type,
-                'difficulty'      => $q->difficulty,
+                'image_url'       => $q->image_url,
                 // Opsi dalam urutan yang dilihat siswa (sudah diacak)
                 'options'         => $shuffledData['options'] ?? $q->options,
                 // Kunci benar dalam urutan yang dilihat siswa
@@ -114,7 +132,7 @@ class GradingService
             'correct'        => $correct,
             'wrong'          => $wrong,
             'unanswered'     => $unanswered,
-            'total'          => $answers->count(),
+            'total'          => $exam->total_questions ?: $answers->count(),
             'duration_taken' => $durationTaken,
             'answers'        => $answersDetail,
         ];
@@ -122,10 +140,10 @@ class GradingService
 
     public function recalculateSessionScore(ExamSession $session): void
     {
-        $answers     = $session->answers()->with('question')->get();
-        $totalWeight = $answers->sum(fn($a) => $a->question->weight ?? 0);
-        $earned      = $answers->sum('score');
-        $score       = $totalWeight > 0 ? round(($earned / $totalWeight) * 100, 2) : 0;
+        $answers = $session->answers()->with('question')->get();
+        $total   = $answers->count();
+        $earned  = $answers->where('is_correct', true)->count();
+        $score   = $total > 0 ? round(($earned / $total) * 100, 2) : 0;
         $session->update(['score' => $score, 'is_passed' => $score >= $session->exam->passing_grade]);
     }
 }

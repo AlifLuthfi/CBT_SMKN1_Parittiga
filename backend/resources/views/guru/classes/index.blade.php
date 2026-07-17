@@ -2,6 +2,10 @@
 @section('title', 'Manajemen Kelas')
 @section('page-title', 'Kelas Saya')
 @section('content')
+<a href="{{ route('dashboard') }}" class="back-link">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="15 18 9 12 15 6"/></svg>
+  Kembali
+</a>
 @forelse($classes as $class)
 <div class="card mb-4">
   <div class="card-head">

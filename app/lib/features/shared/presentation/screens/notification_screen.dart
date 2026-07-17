@@ -51,6 +51,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
       backgroundColor: AppColors.bg,
       appBar: AppBar(
         title: const Text('Notifikasi'),
+        leading: const AppBackButton(),
         actions: [
           TextButton(
             onPressed: () async {

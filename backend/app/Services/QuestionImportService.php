@@ -2,10 +2,10 @@
 namespace App\Services;
 
 use App\Models\Question;
-use App\Models\QuestionCategory;
 use App\Models\QuestionImport;
 use Illuminate\Http\UploadedFile;
 use Shuchkin\SimpleXLSX;
+use Shuchkin\SimpleXLSXGen;
 
 class QuestionImportService
 {
@@ -13,21 +13,23 @@ class QuestionImportService
 
     public function generateTemplate(): string
     {
-        // Kolom: question_text, option_a, option_b, option_c, option_d, option_e,
-        //        correct_answer, difficulty, weight, explanation, category, tags
-        $header = "question_text,option_a,option_b,option_c,option_d,option_e,correct_answer,difficulty,weight,explanation,category,tags\n";
-        $rows   = [
-            '"Hitunglah nilai x jika 2x+5=11","x=2","x=3","x=4","x=5",,B,easy,1,"2x=6, x=3",Aljabar,"Bab 1;UTS"',
-            '"Nilai sin 30° adalah","0.25","0.5","0.75","1.0",,B,easy,1,"sin 30°=1/2=0.5",Trigonometri,"Bab 3"',
-            '"Planet terbesar dalam tata surya adalah","Bumi","Jupiter","Saturnus","Mars",,B,medium,1,,IPA,',
-            '"Ibukota Indonesia adalah","Surabaya","Bandung","Jakarta","Medan",,C,easy,1,,IPS,"Geografi;Kelas 5"',
+        $rows = [
+            ['question_text', 'option_a', 'option_b', 'option_c', 'option_d', 'option_e', 'correct_answer', 'explanation'],
+            ['Ibukota Indonesia adalah', 'Jakarta', 'Surabaya', 'Bandung', 'Medan', '', 'C', ''],
+            ['Hewan ovipar adalah', 'Kucing', 'Anjing', 'Ikan', 'Sapi', '', 'C', ''],
+            ['Bilangan prima terkecil', '0', '1', '2', '3', '', 'C', ''],
+            ['Apa fungsi akar pada tumbuhan?', 'Menyerap air', 'Fotosintesis', 'Berkembang biak', 'Bernapas', '', 'A', 'Menyerap air dan mineral'],
         ];
-        return $header . implode("\n", $rows);
+
+        $xlsx = SimpleXLSXGen::fromArray($rows, 'Soal');
+        $path = tempnam(sys_get_temp_dir(), 'template_') . '.xlsx';
+        $xlsx->saveAs($path);
+        return $path;
     }
 
     // ─── Import utama (CSV atau XLSX) ────────────────────────────────────────
 
-    public function import(UploadedFile $file, int $teacherId, ?int $categoryId = null, ?int $subjectId = null): QuestionImport
+    public function import(UploadedFile $file, int $teacherId, ?int $subjectId = null): QuestionImport
     {
         $record = QuestionImport::create([
             'teacher_id' => $teacherId,
@@ -44,7 +46,7 @@ class QuestionImportService
 
             $record->update(['total_rows' => count($rows)]);
 
-            [$success, $errors] = $this->processRows($rows, $teacherId, $categoryId, $subjectId);
+            [$success, $errors] = $this->processRows($rows, $teacherId, $subjectId);
 
             $record->update([
                 'success_count' => $success,
@@ -94,7 +96,7 @@ class QuestionImportService
 
     // ─── Retry import yang gagal ────────────────────────────────────────────
 
-    public function retry(QuestionImport $import, int $teacherId, ?int $categoryId = null): QuestionImport
+    public function retry(QuestionImport $import, int $teacherId): QuestionImport
     {
         if (!in_array($import->status, ['failed', 'completed'])) {
             throw new \RuntimeException('Import tidak dapat di-retry dalam status: ' . $import->status);
@@ -137,7 +139,7 @@ class QuestionImportService
 
     // ─── Proses baris data ──────────────────────────────────────────────────
 
-    private function processRows(array $rows, int $teacherId, ?int $categoryId, ?int $subjectId = null): array
+    private function processRows(array $rows, int $teacherId, ?int $subjectId = null): array
     {
         $success = 0;
         $errors  = [];
@@ -153,15 +155,6 @@ class QuestionImportService
 
             $data = $validated['data'];
 
-            // Resolve category
-            $catId = $categoryId;
-            if (!$catId && !empty($data['category'])) {
-                $cat   = QuestionCategory::firstOrCreate(
-                    ['teacher_id' => $teacherId, 'name' => $data['category']]
-                );
-                $catId = $cat->id;
-            }
-
             // Cek duplikat question_text milik guru yang sama
             $exists = Question::where('teacher_id', $teacherId)
                 ->where('question_text', $data['question_text'])
@@ -175,15 +168,11 @@ class QuestionImportService
             Question::create(array_filter([
                 'teacher_id'     => $teacherId,
                 'subject_id'     => $subjectId,
-                'category_id'    => $catId,
                 'question_text'  => $data['question_text'],
                 'question_type'  => $data['question_type'],
                 'options'        => $data['options'],
                 'correct_answer' => $data['correct_answer'],
                 'explanation'    => $data['explanation'],
-                'difficulty'     => $data['difficulty'],
-                'weight'         => $data['weight'],
-                'tags'           => $data['tags'],
             ]));
 
             $success++;
@@ -200,24 +189,17 @@ class QuestionImportService
         $cols = array_values($cols);
 
         if (count($cols) < 7) {
-            return ['valid' => false, 'errors' => ["Baris $rowNum: Jumlah kolom kurang dari 7 (minimal: question_text, option_a, option_b, correct_answer, difficulty, weight)."]]; 
+            return ['valid' => false, 'errors' => ["Baris $rowNum: Jumlah kolom kurang dari 7 (minimal: question_text, option_a, option_b, correct_answer)."]];
         }
 
-        // Format baru tanpa question_type:
-        // [0]question_text [1]option_a [2]option_b [3]option_c [4]option_d [5]option_e
-        // [6]correct_answer [7]difficulty [8]weight [9]explanation [10]category [11]tags
-        [$text, $optA, $optB, $optC, $optD, $optE, $correct, $difficulty, $weight, $explanation, $category, $tags]
-            = array_pad(array_map(fn($v) => trim((string)$v), $cols), 12, '');
+        // Format: [0]question_text [1]option_a [2]option_b [3]option_c [4]option_d [5]option_e
+        //         [6]correct_answer [7]explanation
+        [$text, $optA, $optB, $optC, $optD, $optE, $correct, $explanation]
+            = array_pad(array_map(fn($v) => trim((string)$v), $cols), 8, '');
 
         $errors = [];
 
         if (empty($text))  $errors[] = "Baris $rowNum: question_text kosong.";
-
-        if (!in_array($difficulty, ['easy', 'medium', 'hard'])) {
-            $errors[] = "Baris $rowNum: difficulty '$difficulty' tidak valid. Gunakan: easy, medium, hard.";
-        }
-
-        $weightVal = max(0.1, (float)($weight ?: 1));
 
         // Semua soal adalah pilihan ganda — minimal 2 opsi wajib
         $options = array_filter(['A' => $optA, 'B' => $optB, 'C' => $optC, 'D' => $optD, 'E' => $optE]);
@@ -238,23 +220,14 @@ class QuestionImportService
             return ['valid' => false, 'errors' => $errors];
         }
 
-        // Parse tags: "Bab 1;UTS" → ["Bab 1", "UTS"]
-        $tagsArr = !empty($tags)
-            ? array_values(array_filter(array_map('trim', explode(';', $tags))))
-            : null;
-
         return [
             'valid' => true,
             'data'  => [
                 'question_text'  => $text,
-                'question_type'  => 'multiple_choice', // selalu pilihan ganda
+                'question_type'  => 'multiple_choice',
                 'options'        => $options,
                 'correct_answer' => $correctUpper,
                 'explanation'    => $explanation ?: null,
-                'difficulty'     => $difficulty,
-                'weight'         => $weightVal,
-                'category'       => $category ?: null,
-                'tags'           => $tagsArr,
             ],
         ];
     }

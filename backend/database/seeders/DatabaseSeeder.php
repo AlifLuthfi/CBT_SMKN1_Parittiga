@@ -5,7 +5,7 @@ use App\Models\ClassRoom;
 use App\Models\Exam;
 use App\Models\ExamQuestion;
 use App\Models\Question;
-use App\Models\QuestionCategory;
+
 use App\Models\TeacherProfile;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -135,48 +135,29 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        // ── CATEGORIES ──
-        $catAljabar = QuestionCategory::updateOrCreate([
-            'teacher_id' => $guru->id,
-            'name'       => 'Aljabar',
-        ], ['color' => '#3b82f6']);
-
-        $catGeo = QuestionCategory::updateOrCreate([
-            'teacher_id' => $guru->id,
-            'name'       => 'Geometri',
-        ], ['color' => '#10b981']);
-
-        $catTrig = QuestionCategory::updateOrCreate([
-            'teacher_id' => $guru->id,
-            'name'       => 'Trigonometri',
-        ], ['color' => '#f59e0b']);
-
         // ── QUESTIONS ──
         $questions = [
-            ['Hasil dari persamaan 2x + 5 = 11 adalah...','multiple_choice',['A'=>'x = 2','B'=>'x = 3','C'=>'x = 4','D'=>'x = 5'],'B','easy',1,'2x = 11 - 5 = 6, maka x = 3',$catAljabar->id],
-            ['Nilai dari 3² + 4² adalah...','multiple_choice',['A'=>'14','B'=>'25','C'=>'49','D'=>'7'],'B','easy',1,'3²=9, 4²=16, jadi 9+16=25',$catAljabar->id],
-            ['Jika f(x) = 2x² - 3x + 1, maka nilai f(2) adalah...','multiple_choice',['A'=>'3','B'=>'4','C'=>'5','D'=>'6'],'A','medium',1,'f(2)=2(4)-3(2)+1=8-6+1=3',$catAljabar->id],
-            ['Faktorisasi dari x² - 5x + 6 adalah...','multiple_choice',['A'=>'(x-1)(x-6)','B'=>'(x-2)(x-3)','C'=>'(x+2)(x+3)','D'=>'(x-1)(x+6)'],'B','medium',1,'(x-2)(x-3)=-2×-3=6 dan -2+(-3)=-5 ✓',$catAljabar->id],
-            ['Nilai dari ³√27 + ²√16 adalah...','multiple_choice',['A'=>'5','B'=>'6','C'=>'7','D'=>'8'],'C','easy',1,'³√27=3, ²√16=4, jadi 3+4=7',$catAljabar->id],
-            ['Luas segitiga dengan alas 8 cm dan tinggi 6 cm adalah...','multiple_choice',['A'=>'24 cm²','B'=>'48 cm²','C'=>'14 cm²','D'=>'28 cm²'],'A','easy',1,'L=½×a×t=½×8×6=24 cm²',$catGeo->id],
-            ['Keliling lingkaran dengan jari-jari 7 cm adalah... (π=22/7)','multiple_choice',['A'=>'22 cm','B'=>'44 cm','C'=>'154 cm','D'=>'308 cm'],'B','medium',1,'K=2πr=2×22/7×7=44 cm',$catGeo->id],
-            ['Nilai dari sin 30° + cos 60° adalah...','multiple_choice',['A'=>'0','B'=>'½','C'=>'1','D'=>'√2'],'C','medium',1,'sin30°=½, cos60°=½, jadi ½+½=1',$catTrig->id],
-            ['Jika sin α = 3/5 dan α sudut lancip, maka cos α adalah...','multiple_choice',['A'=>'4/5','B'=>'3/4','C'=>'5/3','D'=>'5/4'],'A','hard',1,'cos α=√(1-sin²α)=√(1-9/25)=√(16/25)=4/5',$catTrig->id],
-            ['Deret aritmetika 2,5,8,11,... Suku ke-10 adalah...','multiple_choice',['A'=>'27','B'=>'29','C'=>'31','D'=>'33'],'B','medium',1,'a=2, b=3. U10=2+(10-1)×3=2+27=29',$catAljabar->id],
+            ['Hasil dari persamaan 2x + 5 = 11 adalah...','multiple_choice',['A'=>'x = 2','B'=>'x = 3','C'=>'x = 4','D'=>'x = 5'],'B','easy',1,'2x = 11 - 5 = 6, maka x = 3'],
+            ['Nilai dari 3² + 4² adalah...','multiple_choice',['A'=>'14','B'=>'25','C'=>'49','D'=>'7'],'B','easy',1,'3²=9, 4²=16, jadi 9+16=25'],
+            ['Jika f(x) = 2x² - 3x + 1, maka nilai f(2) adalah...','multiple_choice',['A'=>'3','B'=>'4','C'=>'5','D'=>'6'],'A','medium',1,'f(2)=2(4)-3(2)+1=8-6+1=3'],
+            ['Faktorisasi dari x² - 5x + 6 adalah...','multiple_choice',['A'=>'(x-1)(x-6)','B'=>'(x-2)(x-3)','C'=>'(x+2)(x+3)','D'=>'(x-1)(x+6)'],'B','medium',1,'(x-2)(x-3)=-2×-3=6 dan -2+(-3)=-5 ✓'],
+            ['Nilai dari ³√27 + ²√16 adalah...','multiple_choice',['A'=>'5','B'=>'6','C'=>'7','D'=>'8'],'C','easy',1,'³√27=3, ²√16=4, jadi 3+4=7'],
+            ['Luas segitiga dengan alas 8 cm dan tinggi 6 cm adalah...','multiple_choice',['A'=>'24 cm²','B'=>'48 cm²','C'=>'14 cm²','D'=>'28 cm²'],'A','easy',1,'L=½×a×t=½×8×6=24 cm²'],
+            ['Keliling lingkaran dengan jari-jari 7 cm adalah... (π=22/7)','multiple_choice',['A'=>'22 cm','B'=>'44 cm','C'=>'154 cm','D'=>'308 cm'],'B','medium',1,'K=2πr=2×22/7×7=44 cm'],
+            ['Nilai dari sin 30° + cos 60° adalah...','multiple_choice',['A'=>'0','B'=>'½','C'=>'1','D'=>'√2'],'C','medium',1,'sin30°=½, cos60°=½, jadi ½+½=1'],
+            ['Jika sin α = 3/5 dan α sudut lancip, maka cos α adalah...','multiple_choice',['A'=>'4/5','B'=>'3/4','C'=>'5/3','D'=>'5/4'],'A','hard',1,'cos α=√(1-sin²α)=√(1-9/25)=√(16/25)=4/5'],
+            ['Deret aritmetika 2,5,8,11,... Suku ke-10 adalah...','multiple_choice',['A'=>'27','B'=>'29','C'=>'31','D'=>'33'],'B','medium',1,'a=2, b=3. U10=2+(10-1)×3=2+27=29'],
         ];
 
         $questionModels = [];
-        foreach ($questions as [$text,$type,$opts,$correct,$diff,$weight,$expl,$catId]) {
+        foreach ($questions as [$text,$type,$opts,$correct,$diff,$weight,$expl]) {
             $questionModels[] = Question::updateOrCreate([
                 'teacher_id'    => $guru->id,
                 'question_text' => $text,
             ], [
-                'category_id'   => $catId,
                 'question_type' => $type,
                 'options'       => $opts,
                 'correct_answer'=> $correct,
-                'difficulty'    => $diff,
-                'weight'        => $weight,
                 'explanation'   => $expl,
                 'is_active'     => true,
             ]);
@@ -194,7 +175,6 @@ class DatabaseSeeder extends Seeder
             'randomize_questions'    => true,
             'randomize_options'      => false,
             'show_result_immediately'=> true,
-            'allow_review'           => true,
             'passing_grade'          => 70,
             'status'                 => 'draft',
             'max_violations'         => 5,

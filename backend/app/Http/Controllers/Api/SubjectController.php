@@ -19,7 +19,7 @@ class SubjectController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:100',
+            'name' => 'required|string|max:255',
         ]);
         $data['teacher_id'] = $request->user()->id;
         $subject = Subject::create($data);

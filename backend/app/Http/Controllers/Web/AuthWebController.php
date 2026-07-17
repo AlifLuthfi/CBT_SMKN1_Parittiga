@@ -32,6 +32,7 @@ class AuthWebController extends Controller
         ]);
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            /** @var \App\Models\User $user */
             $user = Auth::user();
             if ($user->status !== 'active') {
                 Auth::logout();
@@ -73,6 +74,7 @@ class AuthWebController extends Controller
 
     public function dashboard()
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         if ($user->isAdmin()) {
@@ -82,10 +84,11 @@ class AuthWebController extends Controller
             $totalGuru    = User::where('role', 'guru')->count();
             $openViolations = Violation::where('status', 'open')->count();
             $submissionsToday = ExamSession::whereDate('submitted_at', today())->count();
+            $exams        = Exam::with(['teacher', 'classRoom'])->latest()->paginate(20);
 
             return view('dashboard.admin', compact(
                 'totalUsers', 'activeExams', 'totalSiswa', 'totalGuru',
-                'openViolations', 'submissionsToday'
+                'openViolations', 'submissionsToday', 'exams'
             ));
         }
 
@@ -94,13 +97,14 @@ class AuthWebController extends Controller
             $totalExams     = $user->exams()->count();
             $activeExams    = $user->exams()->where('status', 'active')->count();
             $totalClasses   = $user->classRooms()->count();
+            $totalSubjects  = \App\Models\Subject::where('teacher_id', $user->id)->count();
             $totalStudents  = \App\Models\ClassRoom::where('teacher_id', $user->id)->withCount('students')->get()->sum('students_count');
             $recentExams    = $user->exams()->with('classRoom')->latest()->take(5)->get();
             $examSessions   = ExamSession::whereIn('exam_id', $user->exams()->pluck('id'))->count();
 
             return view('dashboard.guru', compact(
                 'totalQuestions', 'totalExams', 'activeExams', 'totalClasses',
-                'totalStudents', 'recentExams', 'examSessions'
+                'totalSubjects', 'totalStudents', 'recentExams', 'examSessions'
             ));
         }
 

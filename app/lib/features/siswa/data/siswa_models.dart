@@ -48,16 +48,15 @@ class ExamSessionData {
 }
 
 class AnswerDetail {
-  final int questionId; final String questionText, questionType, difficulty;
+  final int questionId; final String questionText, questionType;
   final Map<String, String>? options;
   final String? correctAnswer, explanation, userAnswer, imageUrl; final bool? isCorrect;
   final String status;
-  const AnswerDetail({required this.questionId, required this.questionText, required this.questionType, required this.difficulty, this.options, this.correctAnswer, this.explanation, this.userAnswer, this.isCorrect, this.imageUrl, required this.status});
+  const AnswerDetail({required this.questionId, required this.questionText, required this.questionType, this.options, this.correctAnswer, this.explanation, this.userAnswer, this.isCorrect, this.imageUrl, required this.status});
   factory AnswerDetail.fromJson(Map<String, dynamic> j) => AnswerDetail(
     questionId:   j['question_id']   as int,
     questionText: j['question_text'] as String,
     questionType: j['question_type'] as String? ?? 'multiple_choice',
-    difficulty:   j['difficulty']    as String? ?? 'medium',
     options:      (j['options']      as Map?)?.cast<String, String>(),
     correctAnswer:j['correct_answer'] as String?,
     explanation:  j['explanation']   as String?,
@@ -118,19 +117,22 @@ class RiwayatItem {
     required this.total,
   });
 
-  factory RiwayatItem.fromJson(Map<String, dynamic> j) => RiwayatItem(
-    sessionId:    j['session_id']    as int,
-    examTitle:    j['exam_title']    as String? ?? '',
-    subject:      j['subject']       as String? ?? '',
-    submittedAt:  j['submitted_at']  as String? ?? '',
-    status:       j['status']        as String? ?? '',
-    score:        double.tryParse(j['score']?.toString() ?? '') ?? 0,
-    passingGrade: double.tryParse(j['passing_grade']?.toString() ?? '') ?? 70,
-    isPassed:     j['is_passed']     as bool? ?? false,
-    correct:      j['correct']       as int? ?? 0,
-    wrong:        j['wrong']         as int? ?? 0,
-    unanswered:   j['unanswered']    as int? ?? 0,
-    total:        j['total']         as int? ?? 0,
-  );
+  factory RiwayatItem.fromJson(Map<String, dynamic> j) {
+    final exam = j['exam'] as Map<String, dynamic>? ?? {};
+    return RiwayatItem(
+      sessionId:    j['id']                       as int,
+      examTitle:    exam['title']                 as String? ?? '',
+      subject:      (exam['class_room'] as Map?)?['subject'] as String? ?? '',
+      submittedAt:  j['submitted_at']             as String? ?? '',
+      status:       j['status']                   as String? ?? '',
+      score:        double.tryParse(j['score']?.toString() ?? '') ?? 0,
+      passingGrade: double.tryParse((exam['passing_grade'] ?? '').toString()) ?? 70,
+      isPassed:     j['is_passed']                as bool? ?? false,
+      correct:      j['correct']                  as int? ?? 0,
+      wrong:        j['wrong']                    as int? ?? 0,
+      unanswered:   j['unanswered']               as int? ?? 0,
+      total:        j['total']                    as int? ?? 0,
+    );
+  }
 }
 

@@ -8,7 +8,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:frontend_flutter/main.dart';
+import 'package:cbt_smkn1_parittiga/main.dart';
 
 void main() {
   testWidgets('ExamCore app builds', (WidgetTester tester) async {

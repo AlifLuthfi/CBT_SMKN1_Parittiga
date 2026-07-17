@@ -18,13 +18,14 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->singleton(ExamRandomizationService::class);
-        $this->app->singleton(GradingService::class);
-        $this->app->singleton(GradeReportService::class);
-        $this->app->singleton(ItemAnalysisService::class);
-        $this->app->singleton(NotificationService::class);
-        $this->app->singleton(QuestionImportService::class);
-        $this->app->singleton(ExamSchedulerService::class, function($app) {
+        // bind (bukan singleton) — tiap request fresh instance, hindari race condition
+        $this->app->bind(ExamRandomizationService::class);
+        $this->app->bind(GradingService::class);
+        $this->app->bind(GradeReportService::class);
+        $this->app->bind(ItemAnalysisService::class);
+        $this->app->bind(NotificationService::class);
+        $this->app->bind(QuestionImportService::class);
+        $this->app->bind(ExamSchedulerService::class, function($app) {
             return new ExamSchedulerService(
                 $app->make(NotificationService::class),
                 $app->make(GradingService::class)

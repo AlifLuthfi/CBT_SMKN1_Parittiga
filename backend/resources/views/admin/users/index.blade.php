@@ -229,14 +229,16 @@ $menuRoles = [
 #editKelasGuruGroup .choices__inner { background:var(--surface);border-color:var(--border);border-radius:7px;min-height:auto;padding:3px 6px;font-size:13px; }
 #editKelasGuruGroup .choices__input { font-size:13px;background:transparent;color:var(--ink); }
 #editKelasGuruGroup .choices__list--multiple .choices__item { background:var(--navy);border-color:var(--navy);border-radius:5px;font-size:11px;padding:2px 8px; }
-#editKelasGuruGroup .choices__list--dropdown { border-color:var(--border);border-radius:0 0 7px 7px;font-size:13px; }
 #editKelasGuruGroup .choices__list--dropdown .choices__item--selectable.is-highlighted { background:var(--navy-light); }
+/* Dropdown Choices gak terpotong modal */
+#editModal .modal-body { overflow:visible; }
+#editModal .modal { max-height:90vh; overflow-y:auto; }
 </style>
 @endif
 
 {{-- Shared: Edit Modal --}}
 <div class="modal-overlay" id="editModal">
-  <div class="modal">
+  <div class="modal" style="max-width:540px">
     <div class="modal-head"><span class="modal-title">Ubah User</span><button class="modal-close" onclick="closeModal('editModal')">✕</button></div>
     <form method="POST" id="editForm">
       @csrf @method('PUT')
@@ -267,7 +269,7 @@ $menuRoles = [
 
 {{-- Shared: Ganti Password Modal --}}
 <div class="modal-overlay" id="gantiPasswordModal">
-  <div class="modal" style="max-width:400px">
+  <div class="modal" style="max-width:410px">
     <div class="modal-head"><span class="modal-title">Ganti Password</span><button class="modal-close" onclick="closeModal('gantiPasswordModal')">✕</button></div>
     <form method="POST" id="gantiPasswordForm">
       @csrf @method('PATCH')
@@ -342,7 +344,7 @@ function openEdit(id) {
     sel.querySelectorAll('option').forEach(o => o.selected = false);
     const gk = (u.class_rooms || []).map(c => c.id);
     sel.querySelectorAll('option').forEach(o => { if (gk.includes(parseInt(o.value))) o.selected = true; });
-    kelasChoices = new Choices(sel, {removeItemButton:true, searchEnabled:true, placeholder:true, placeholderValue:'Cari & pilih kelas…'});
+    kelasChoices = new Choices(sel, {removeItemButton:true, searchEnabled:true, placeholder:true, placeholderValue:'Cari & pilih kelas…', shouldSort:false});
   }
 
   document.getElementById('editForm').action = '/admin/users/' + u.id + '/update';

@@ -1,8 +1,8 @@
 @extends('layouts.app')
-@section('title', 'Laporan Kelas')
-@section('page-title', 'Rekap Nilai: {{ $class->name }}')
+@section('title', 'Rekap Nilai')
+@section('page-title')Rekap Nilai: {{ $class->name }}@endsection
 @section('content')
-<a href="{{ route('guru.grade-reports') }}" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--navy);text-decoration:none;margin-bottom:16px" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+<a href="{{ route('guru.grade-reports') }}" class="back-link">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="15 18 9 12 15 6"/></svg>
   Kembali ke Laporan
 </a>

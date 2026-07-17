@@ -332,9 +332,6 @@ tbody tr:hover td{background:#f9fafc}
           <div class="card">
             <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Pengaturan</div></div>
             <div class="card-body">
-              <div class="form-group"><label class="form-label">Kategori Default</label>
-                <select class="form-select" id="import-category"><option value="">— Tidak ada —</option></select>
-              </div>
               <div class="form-group" style="margin:0"><label class="form-label">Skip baris error</label>
                 <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink2);cursor:pointer;margin-top:4px">
                   <input type="checkbox" id="skip-errors" checked style="accent-color:var(--navy)">
@@ -356,7 +353,7 @@ tbody tr:hover td{background:#f9fafc}
                 <div>• <code style="background:var(--bg);padding:1px 5px;border-radius:3px;font-size:11px">correct_answer</code> — A/B/C/D/true/false</div>
                 <div>• <code style="background:var(--bg);padding:1px 5px;border-radius:3px;font-size:11px">difficulty</code> — easy/medium/hard</div>
                 <div>• <code style="background:var(--bg);padding:1px 5px;border-radius:3px;font-size:11px">weight</code> — Bobot nilai (1-10)</div>
-                <div style="color:var(--ink3);margin-top:4px">• explanation, category (opsional)</div>
+                <div style="color:var(--ink3);margin-top:4px">• explanation (opsional)</div>
               </div>
             </div>
           </div>
@@ -441,7 +438,6 @@ document.addEventListener('DOMContentLoaded', () => {
   renderUser();
   renderArchive(DEMO_ARCHIVE);
   renderHistory(DEMO_HISTORY);
-  loadCategories();
   document.getElementById('filter-preview').onchange = () => renderPreviewTable();
 });
 
@@ -614,7 +610,6 @@ async function eksekusiImport() {
       difficulty:     r.raw.difficulty || 'medium',
       weight:         parseFloat(r.raw.weight) || 1,
       explanation:    r.raw.explanation || null,
-      category_id:    document.getElementById('import-category').value || null,
     }));
     await api('POST', '/guru/questions/bulk', {questions});
   } catch(_) {}
@@ -715,17 +710,17 @@ function renderHistory(data) {
 /* ── TEMPLATE DOWNLOAD ── */
 function downloadTemplate(format) {
   if (format === 'csv') {
-    const csv = `question_text,question_type,option_a,option_b,option_c,option_d,correct_answer,difficulty,weight,explanation,category
-"Hitunglah nilai x jika 2x+5=11",multiple_choice,"x=2","x=3","x=4","x=5",B,easy,1,"2x=6, x=3",Aljabar
-"Nilai sin 30° adalah",multiple_choice,"0.25","0.5","0.75","1.0",B,medium,1,"sin30°=0.5",Trigonometri
-"Apakah 0 adalah bilangan asli?",true_false,,,,,false,easy,1,"Bilangan asli dimulai dari 1",`;
+    const csv = `question_text,question_type,option_a,option_b,option_c,option_d,correct_answer,difficulty,weight,explanation
+"Hitunglah nilai x jika 2x+5=11",multiple_choice,"x=2","x=3","x=4","x=5",B,easy,1,"2x=6, x=3"
+"Nilai sin 30° adalah",multiple_choice,"0.25","0.5","0.75","1.0",B,medium,1,"sin30°=0.5"
+"Apakah 0 adalah bilangan asli?",true_false,,,,,false,easy,1,"Bilangan asli dimulai dari 1"`;
     const a = document.createElement('a');
     a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
     a.download = 'template-import-soal.csv';
     a.click();
   } else {
     const json = JSON.stringify({questions:[
-      {question_text:'Hitunglah nilai x jika 2x+5=11',question_type:'multiple_choice',options:{A:'x=2',B:'x=3',C:'x=4',D:'x=5'},correct_answer:'B',difficulty:'easy',weight:1,explanation:'2x=6, x=3',category:'Aljabar'},
+      {question_text:'Hitunglah nilai x jika 2x+5=11',question_type:'multiple_choice',options:{A:'x=2',B:'x=3',C:'x=4',D:'x=5'},correct_answer:'B',difficulty:'easy',weight:1,explanation:'2x=6, x=3'},
       {question_text:'Apakah 0 adalah bilangan asli?',question_type:'true_false',correct_answer:'false',difficulty:'easy',weight:1,explanation:'Bilangan asli dimulai dari 1'},
     ]}, null, 2);
     const a = document.createElement('a');
@@ -734,18 +729,6 @@ function downloadTemplate(format) {
     a.click();
   }
   toast(`Template ${format.toUpperCase()} diunduh`, 'ok');
-}
-
-async function loadCategories() {
-  try {
-    const data = await api('GET', '/guru/questions/categories');
-    const sel  = document.getElementById('import-category');
-    (data.data || []).forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c.id; opt.textContent = c.name;
-      sel.appendChild(opt);
-    });
-  } catch(_) {}
 }
 
 function openModal(id)  { document.getElementById(id).classList.add('open'); }

@@ -17,6 +17,7 @@ class AdminActivityLogScreen extends ConsumerWidget {
       backgroundColor: AppColors.bg,
       appBar: AppBar(
         title: const Text('Log Aktivitas'),
+        leading: const AppBackButton(),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: () => ref.invalidate(_activityLogProvider)),
         ],
