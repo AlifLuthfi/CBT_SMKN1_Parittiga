@@ -124,6 +124,9 @@ Route::middleware('auth:sanctum')->group(function () {
         // Riwayat ujian
         Route::get ('/history',                     [StudentExamController::class, 'history']);
 
+        // ⭐ Sync soal yang ditandai (flagged/ragu)
+        Route::post('/sessions/{session}/flagged',  [StudentExamController::class, 'syncFlagged']);
+
         // Single save (deprecated — backward compat, diteruskan ke bulk)
         Route::patch('/sessions/{session}/answer',  [StudentExamController::class, 'saveAnswer']);
 

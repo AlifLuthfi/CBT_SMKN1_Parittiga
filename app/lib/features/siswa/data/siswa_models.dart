@@ -29,11 +29,14 @@ class ExamSessionData {
   final String status; final String? startedAt;
   final List<Map<String, dynamic>> questions;
   final Map<int, String> savedAnswers;
-  const ExamSessionData({required this.sessionId, required this.examId, required this.seed, required this.status, required this.remainingSeconds, this.startedAt, required this.questions, required this.savedAnswers});
+  final List<int> flaggedIds;
+  const ExamSessionData({required this.sessionId, required this.examId, required this.seed, required this.status, required this.remainingSeconds, this.startedAt, required this.questions, required this.savedAnswers, this.flaggedIds = const []});
   factory ExamSessionData.fromJson(Map<String, dynamic> j) {
     final raw = j['saved_answers'];
     final rawAnswers = (raw is Map) ? raw : <dynamic, dynamic>{};
     final answers = rawAnswers.map((k, v) => MapEntry(int.tryParse(k.toString()) ?? 0, v.toString()));
+    final rawFlagged = j['flagged_ids'];
+    final flagged = (rawFlagged is List) ? rawFlagged.cast<int>() : <int>[];
     return ExamSessionData(
       sessionId:       j['session_id']       as int,
       examId:          j['exam_id']          as int,
@@ -43,6 +46,7 @@ class ExamSessionData {
       startedAt:       j['started_at']       as String?,
       questions:       ((j['questions']      as List?) ?? []).cast<Map<String, dynamic>>(),
       savedAnswers:    answers,
+      flaggedIds:      flagged,
     );
   }
 }

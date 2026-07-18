@@ -13,7 +13,14 @@
 .nav-btn{width:36px;height:36px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--ink2);cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;transition:all .15s}
 .nav-btn:hover{background:var(--bg)}
 .nav-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
-.nav-btn.answered{background:var(--green-light);color:var(--green);border-color:var(--green)}
+.nav-btn.answered{background:var(--navy-light);color:var(--navy);border-color:var(--navy);border-width:1.5px}
+.nav-btn.flagged{background:var(--amber-light);color:#92400E;border-color:var(--amber)}
+/* Modal overlay */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.modal-body{padding:24px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;padding:12px 24px 24px}
 </style>
 @endpush
 
@@ -37,6 +44,7 @@
     <div style="padding:0 18px 14px">
       <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-bottom:6px">
         <span>Terjawab: <strong id="answeredCount">0</strong>/{{ count($questions) }}</span>
+        <span>Ditandai: <strong id="flaggedCount">0</strong></span>
         <span>Soal <strong id="currentNum">1</strong>/{{ count($questions) }}</span>
       </div>
       <div style="height:6px;background:var(--bg);border-radius:3px;overflow:hidden">
@@ -72,17 +80,22 @@
           @endforeach
         </div>
 
+        {{-- Navigation + Flag --}}
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
           <button type="button" onclick="prevQuestion()" class="btn btn-ghost {{ $idx === 0 ? 'invisible' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="15 18 9 12 15 6"/></svg>
             Sebelumnya
+          </button>
+          <button type="button" onclick="toggleFlag()" class="btn btn-ghost" id="flagBtn" style="border-color:var(--amber);color:var(--amber)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+            <span id="flagLabel">Tandai</span>
           </button>
           @if($idx < count($questions) - 1)
           <button type="button" onclick="nextQuestion()" class="btn btn-primary">
             Selanjutnya <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
           @else
-          <button type="button" onclick="submitExam()" class="btn btn-primary" style="background:var(--green)">
+          <button type="button" onclick="showSubmitDialog()" class="btn btn-primary" style="background:var(--green)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><polyline points="20 6 9 17 4 12"/></svg>
             Kumpulkan
           </button>
@@ -102,11 +115,55 @@
         <button type="button" onclick="goToQuestion({{ $idx }})" class="nav-btn {{ $idx === 0 ? 'active' : '' }}" data-index="{{ $idx }}">{{ $idx + 1 }}</button>
         @endforeach
       </div>
+      <div style="display:flex;justify-content:center;gap:16px;margin-top:12px;font-size:11px;color:var(--ink3)">
+        <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--navy);vertical-align:middle;margin-right:4px"></span> Aktif</span>
+        <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--navy-light);vertical-align:middle;margin-right:4px"></span> Terjawab</span>
+        <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--amber-light);vertical-align:middle;margin-right:4px;border:1px solid var(--amber)"></span> Ditandai</span>
+        <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--surface);vertical-align:middle;margin-right:4px;border:1px solid var(--border)"></span> Kosong</span>
+      </div>
     </div>
     <div style="padding:0 18px 18px;text-align:center">
-      <button type="button" onclick="submitExam()" class="btn btn-danger">
+      <button type="button" onclick="showSubmitDialog()" class="btn btn-danger">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="20 6 9 17 4 12"/></svg>
         Kumpulkan Ujian
+      </button>
+    </div>
+  </div>
+</div>
+
+{{-- Submit Confirmation Modal --}}
+<div class="modal-overlay" id="submitModal">
+  <div class="modal">
+    <div class="modal-body" style="text-align:center">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" stroke-width="1.5" style="width:48px;height:48px;margin:0 auto 12px">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+      </svg>
+      <h3 style="font-size:18px;font-weight:600;margin-bottom:16px">Kumpulkan Ujian?</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;text-align:left;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg);border-radius:8px">
+          <span style="font-size:13px;color:var(--ink2)">Terjawab</span>
+          <strong id="dialogAnswered" style="font-size:14px;font-family:'JetBrains Mono',monospace;color:var(--green)">0</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg);border-radius:8px">
+          <span style="font-size:13px;color:var(--ink2)">Belum Dijawab</span>
+          <strong id="dialogUnanswered" style="font-size:14px;font-family:'JetBrains Mono',monospace;color:var(--amber)">0</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg);border-radius:8px">
+          <span style="font-size:13px;color:var(--ink2)">Ditandai</span>
+          <strong id="dialogFlagged" style="font-size:14px;font-family:'JetBrains Mono',monospace;color:var(--orange)">0</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg);border-radius:8px">
+          <span style="font-size:13px;color:var(--ink2)">Sisa Waktu</span>
+          <strong id="dialogTime" style="font-size:14px;font-family:'JetBrains Mono',monospace;color:var(--navy)">00:00</strong>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--ink3)">Jawaban tidak dapat diubah setelah dikumpulkan.</p>
+    </div>
+    <div class="modal-actions">
+      <button type="button" onclick="closeSubmitDialog()" class="btn btn-ghost">Periksa Lagi</button>
+      <button type="button" onclick="submitExam()" id="confirmSubmitBtn" class="btn btn-primary" style="background:var(--green)">
+        Ya, Kumpulkan
       </button>
     </div>
   </div>
@@ -128,8 +185,9 @@ function apiHeaders() {
 }
 function getStorageKey(s) { return 'exam_' + s + '_' + SESSION_ID; }
 
-// ── Restore answers + wall-clock timer ──────────────────────
+// ── Restore answers + flagged + wall-clock timer ──────────────────
 const savedAnswers = JSON.parse(localStorage.getItem(getStorageKey('answers')) || '{}');
+let flagged = JSON.parse(localStorage.getItem(getStorageKey('flagged')) || '[]');
 let timeElapsed = parseInt(localStorage.getItem(getStorageKey('timeElapsed')), 10) || 0;
 let timerStartedAt = Date.now();
 let remainingSeconds = TOTAL_SECONDS - timeElapsed;
@@ -141,6 +199,7 @@ document.querySelectorAll('.answer-input').forEach(input => {
   }
 });
 updateProgress();
+updateFlagBtn();
 
 // ── Violation ───────────────────────────────────────────────
 let violationCount = parseInt(localStorage.getItem(getStorageKey('violations')), 10) || 0;
@@ -153,7 +212,7 @@ async function recordViolation(type) {
     await fetch('/api/siswa/violations', { method:'POST', headers: apiHeaders(),
       body: JSON.stringify({ session_id: SESSION_ID, violation_type: type }) });
   } catch(e) {}
-  if (violationCount >= MAX_VIOLATIONS) { submitExam(); return; }
+  if (violationCount >= MAX_VIOLATIONS) { showSubmitDialog(); return; }
   if (violationMsgShowing) return;
   violationMsgShowing = true;
   alert('⚠ Pelanggaran! (' + violationCount + '/' + MAX_VIOLATIONS + ')');
@@ -229,7 +288,7 @@ function startTimer() {
     if (remainingSeconds <= 0) {
       remainingSeconds = 0; clearInterval(timerInt);
       localStorage.removeItem(getStorageKey('timeElapsed'));
-      showTimer(0); submitExam(); return;
+      showTimer(0); showSubmitDialog(); return;
     }
     localStorage.setItem(getStorageKey('timeElapsed'), wall.toString());
     showTimer(remainingSeconds);
@@ -237,7 +296,7 @@ function startTimer() {
 }
 startTimer();
 
-// ── Auto-save + bulk sync ─────────────────────────────────
+// ── Auto-save + bulk sync + flagged sync ──────────────────
 let isBulkSync = false;
 setInterval(async function() {
   if (isBulkSync) return; isBulkSync = true;
@@ -246,6 +305,16 @@ setInterval(async function() {
     if (a.length) await fetch('/api/siswa/sessions/'+SESSION_ID+'/answers',{method:'POST',headers:apiHeaders(),body:JSON.stringify({answers:a})});
   } catch(e) {} isBulkSync = false;
 }, 60000);
+
+// Sync flagged ke server setiap 15 detik
+let isFlagSync = false;
+setInterval(async function() {
+  if (isFlagSync || flagged.length === 0) return; isFlagSync = true;
+  try {
+    await fetch('/api/siswa/sessions/'+SESSION_ID+'/flagged', {method:'POST', headers:apiHeaders(),
+      body: JSON.stringify({ flagged_ids: flagged })});
+  } catch(e) {} isFlagSync = false;
+}, 15000);
 
 document.querySelectorAll('.answer-input').forEach(input => {
   input.addEventListener('change', function() {
@@ -257,25 +326,67 @@ document.querySelectorAll('.answer-input').forEach(input => {
   });
 });
 
+// ── Flag/Ragu ────────────────────────────────────────────
+function toggleFlag() {
+  const active = document.querySelector('.question-card.active');
+  if (!active) return;
+  const qid = parseInt(active.querySelector('.answer-input')?.dataset?.qid);
+  if (!qid) return;
+  const idx = flagged.indexOf(qid);
+  if (idx > -1) flagged.splice(idx, 1);
+  else flagged.push(qid);
+  localStorage.setItem(getStorageKey('flagged'), JSON.stringify(flagged));
+  updateFlagBtn();
+  updateProgress();
+  // Sync segera
+  fetch('/api/siswa/sessions/'+SESSION_ID+'/flagged', {method:'POST', headers:apiHeaders(),
+    body: JSON.stringify({ flagged_ids: flagged })}).catch(function(){});
+}
+
+function updateFlagBtn() {
+  const active = document.querySelector('.question-card.active');
+  if (!active) return;
+  const qid = parseInt(active.querySelector('.answer-input')?.dataset?.qid);
+  if (!qid) return;
+  const isFlagged = flagged.indexOf(qid) > -1;
+  const btn = document.getElementById('flagBtn');
+  const lbl = document.getElementById('flagLabel');
+  if (isFlagged) {
+    btn.style.background = 'var(--amber-light)';
+    lbl.textContent = 'Ditandai';
+  } else {
+    btn.style.background = '';
+    lbl.textContent = 'Tandai';
+  }
+}
+
 function goToQuestion(idx) {
   document.querySelectorAll('.question-card').forEach(c => c.classList.remove('active'));
   document.querySelector(`.question-card[data-index="${idx}"]`)?.classList.add('active');
   document.getElementById('currentNum').textContent = idx + 1;
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.querySelector(`.nav-btn[data-index="${idx}"]`)?.classList.add('active');
+  updateFlagBtn();
+  updateProgress();
 }
 function nextQuestion() { const c = document.querySelector('.question-card.active'); if (c) goToQuestion(parseInt(c.dataset.index) + 1); }
 function prevQuestion() { const c = document.querySelector('.question-card.active'); if (c) goToQuestion(parseInt(c.dataset.index) - 1); }
 
 function updateProgress() {
   const answered = Object.keys(savedAnswers).length;
+  const flaggedCount = flagged.length;
   document.getElementById('answeredCount').textContent = answered;
+  document.getElementById('flaggedCount').textContent = flaggedCount;
   document.getElementById('progressBar').style.width = (answered / TOTAL_QS * 100) + '%';
   document.querySelectorAll('.nav-btn').forEach(btn => {
     const idx = parseInt(btn.dataset.index);
     const q = document.querySelectorAll('.question-card')[idx];
-    if (q?.querySelector('.answer-input:checked')) btn.classList.add('answered');
-    else btn.classList.remove('answered');
+    const qid = q?.querySelector('.answer-input')?.dataset?.qid;
+    const isAnswered = qid && savedAnswers[qid];
+    const isFlagged = qid && flagged.indexOf(parseInt(qid)) > -1;
+    btn.classList.remove('answered', 'flagged');
+    if (isAnswered) btn.classList.add('answered');
+    if (isFlagged) btn.classList.add('flagged');
   });
 }
 
@@ -287,13 +398,34 @@ async function saveAnswers() {
   } catch(e) {}
 }
 
+// ── Submit Dialog ─────────────────────────────────────────
+function showSubmitDialog() {
+  const total = TOTAL_QS;
+  const answered = Object.keys(savedAnswers).length;
+  const unanswered = total - answered;
+  const flaggedCount = flagged.length;
+  const m = Math.floor(remainingSeconds/60), s = remainingSeconds%60;
+  document.getElementById('dialogAnswered').textContent = answered;
+  document.getElementById('dialogUnanswered').textContent = unanswered;
+  document.getElementById('dialogFlagged').textContent = flaggedCount;
+  document.getElementById('dialogTime').textContent = m + ':' + String(s).padStart(2,'0');
+  document.getElementById('submitModal').classList.add('open');
+}
+
+function closeSubmitDialog() {
+  document.getElementById('submitModal').classList.remove('open');
+}
+
 async function submitExam() {
-  if (!confirm('Yakin ingin mengumpulkan ujian?')) return;
+  if (!confirmSubmitBtn) var confirmSubmitBtn = document.getElementById('confirmSubmitBtn');
+  confirmSubmitBtn.disabled = true;
+  confirmSubmitBtn.textContent = 'Mengumpulkan...';
   await saveAnswers();
   try {
     const res = await fetch('/api/siswa/sessions/' + SESSION_ID + '/submit', { method:'POST', headers: apiHeaders(), body: '{}' });
     const data = await res.json();
     localStorage.removeItem(getStorageKey('answers'));
+    localStorage.removeItem(getStorageKey('flagged'));
     localStorage.removeItem(getStorageKey('timeElapsed'));
     localStorage.removeItem(getStorageKey('violations'));
     if (data.result) {
@@ -302,6 +434,8 @@ async function submitExam() {
       window.location.href = '/siswa/history';
     }
   } catch(e) {
+    confirmSubmitBtn.disabled = false;
+    confirmSubmitBtn.textContent = 'Ya, Kumpulkan';
     alert('Gagal mengumpulkan. Coba lagi.');
   }
 }

@@ -70,12 +70,24 @@ class SiswaRepository {
     catch (_) {}
   }
 
-  Future<({int remainingSeconds})?> getSessionState(int sessionId) async {
+  Future<void> syncFlagged(int sessionId, Set<int> flaggedIds) async {
+    try {
+      await _retry(() => ApiClient.post('/siswa/sessions/$sessionId/flagged', data: {
+        'flagged_ids': flaggedIds.toList(),
+      }));
+    } catch (_) {
+      dev.log('syncFlagged failed after retries', name: 'SiswaRepository');
+    }
+  }
+
+  Future<({int remainingSeconds, List<int> flaggedIds})?> getSessionState(int sessionId) async {
     try {
       final data = await ApiClient.get('/siswa/sessions/$sessionId/state');
       final session = data['session'] as Map<String, dynamic>;
       final remaining = session['remaining_seconds'];
-      return (remainingSeconds: (remaining is int) ? remaining : (remaining as num).toInt());
+      final rawFlagged = session['flagged_ids'];
+      final flagged = (rawFlagged is List) ? rawFlagged.cast<int>() : <int>[];
+      return (remainingSeconds: (remaining is int) ? remaining : (remaining as num).toInt(), flaggedIds: flagged);
     } catch (_) {
       return null;
     }

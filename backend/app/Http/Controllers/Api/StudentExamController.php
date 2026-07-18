@@ -127,6 +127,11 @@ class StudentExamController extends Controller
             ? $session->answers()->pluck('answer', 'question_id')
             : collect([]);
 
+        // Soal yang ditandai (flagged/ragu) — dari DB
+        $flaggedIds = $isResumed
+            ? ($session->flagged_question_ids ?? [])
+            : [];
+
         return response()->json([
             'message'    => $isResumed ? 'Melanjutkan sesi.' : 'Ujian dimulai.',
             'is_resumed' => $isResumed,
@@ -139,6 +144,7 @@ class StudentExamController extends Controller
                 'started_at'        => $session->started_at,
                 'questions'         => $questions,
                 'saved_answers'     => $savedAnswers,
+                'flagged_ids'       => $flaggedIds,
             ],
         ], $isResumed ? 200 : 201);
     }
@@ -227,6 +233,27 @@ class StudentExamController extends Controller
         return response()->json(['message' => count($data['answers']) . ' jawaban disimpan.']);
     }
 
+    /* ── Sinkronisasi soal yang ditandai (flagged/ragu) ── */
+    public function syncFlagged(Request $request, ExamSession $session)
+    {
+        $this->authorizeSession($request, $session);
+        if ($session->status !== 'in_progress') {
+            return response()->json(['message' => 'Sesi sudah berakhir.'], 403);
+        }
+
+        $data = $request->validate([
+            'flagged_ids' => 'present|array',
+            'flagged_ids.*' => 'integer|exists:questions,id',
+        ]);
+
+        $session->update([
+            'flagged_question_ids' => $data['flagged_ids'],
+            'last_activity_at' => now(),
+        ]);
+
+        return response()->json(['message' => 'Tandai soal disimpan.', 'flagged_ids' => $data['flagged_ids']]);
+    }
+
     /* ── Submit ujian ────────────────────────────────────── */
     public function submit(Request $request, ExamSession $session)
     {
@@ -286,6 +313,7 @@ class StudentExamController extends Controller
                 'remaining_seconds' => (int) $remaining,
                 'started_at'        => $session->started_at,
                 'saved_answers'     => $savedAnswers,
+                'flagged_ids'       => $session->flagged_question_ids ?? [],
             ],
         ]);
     }

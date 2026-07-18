@@ -44,6 +44,7 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
   Timer?               _timer;
   Timer?               _autoSaveTimer;
   Timer?               _bulkSyncTimer;
+  Timer?               _flaggedSyncTimer;
   Timer?               _fullscreenEnforcer;
   Timer?               _periodicCheckTimer;
   Timer?               _saveDebounce;
@@ -70,6 +71,7 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
     _timer?.cancel();
     _autoSaveTimer?.cancel();
     _bulkSyncTimer?.cancel();
+    _flaggedSyncTimer?.cancel();
     _fullscreenEnforcer?.cancel();
     _periodicCheckTimer?.cancel();
     _saveDebounce?.cancel();
@@ -240,6 +242,7 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
       if (result.isResumed) {
         _answers     = Map<int, String>.from(_session!.savedAnswers);
         _secondsLeft = _session!.remainingSeconds;
+        _flagged     = Set<int>.from(_session!.flaggedIds);  // ← restore flagged dari server
       } else {
         _answers     = {};
         _totalSeconds = _exam!.durationMinutes * 60;
@@ -340,6 +343,7 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
         setState(() {
           _secondsLeft = state.remainingSeconds;
           _timeElapsed = _totalSeconds - state.remainingSeconds;
+          if (state.flaggedIds.isNotEmpty) _flagged = Set<int>.from(state.flaggedIds); // ← sync flagged dari server
           _timerStartedAt = null;
         });
         if (startTimers && _secondsLeft > 0) {
@@ -371,6 +375,14 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
         _bulkSyncing = true;
         await ref.read(_ujianRepoProvider).bulkSaveAnswers(_session!.sessionId, _answers.cast<int, String?>());
         _bulkSyncing = false;
+      },
+    );
+    // Sync flagged/ragu ke server setiap 15 detik
+    _flaggedSyncTimer = Timer.periodic(
+      const Duration(seconds: 15),
+      (_) async {
+        if (_session == null || _flagged.isEmpty) return;
+        await ref.read(_ujianRepoProvider).syncFlagged(_session!.sessionId, _flagged);
       },
     );
   }
@@ -412,6 +424,11 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
       if (_flagged.contains(questionId)) _flagged.remove(questionId);
       else _flagged.add(questionId);
     });
+    // Sync flagged segera — tidak menunggu timer
+    if (_session != null) {
+      ref.read(_ujianRepoProvider).syncFlagged(_session!.sessionId, _flagged);
+    }
+    _scheduleSave();
   }
 
   void _recordViolation(String type) {
@@ -434,6 +451,7 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
     _timer?.cancel();
     _autoSaveTimer?.cancel();
     _bulkSyncTimer?.cancel();
+    _flaggedSyncTimer?.cancel();
     _fullscreenEnforcer?.cancel();
     _periodicCheckTimer?.cancel();
     await ExamAlarmService.stopAlarm();

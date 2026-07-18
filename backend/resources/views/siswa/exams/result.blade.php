@@ -66,6 +66,38 @@
               Tidak dijawab
             @endif
           </div>
+
+          {{-- Opsi pilihan --}}
+          @if(!empty($a['options']) && is_array($a['options']))
+          <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+            @foreach($a['options'] as $key => $value)
+            @php
+              $isOptionCorrect = $key === ($a['correct_answer'] ?? '');
+              $isOptionWrong   = $key === ($a['user_answer'] ?? '') && empty($a['is_correct']);
+            @endphp
+            <div style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px;font-size:12px;
+              background:{{ $isOptionCorrect ? 'var(--green-light)' : ($isOptionWrong ? 'var(--red-light)' : 'var(--bg)') }};
+              border:1px solid {{ $isOptionCorrect ? 'var(--green)' : ($isOptionWrong ? 'var(--red)' : 'var(--border)') }}">
+              <span style="width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;flex-shrink:0;
+                background:{{ $isOptionCorrect ? 'var(--green)' : ($isOptionWrong ? 'var(--red)' : 'transparent') }};
+                color:{{ ($isOptionCorrect || $isOptionWrong) ? '#fff' : 'var(--ink2)' }};
+                border:1px solid {{ $isOptionCorrect ? 'var(--green)' : ($isOptionWrong ? 'var(--red)' : 'var(--border2)') }}">{{ $key }}</span>
+              <span style="flex:1;color:var(--ink)">{{ $value }}</span>
+              @if($isOptionCorrect)<span style="color:var(--green);font-size:14px">✓</span>@endif
+              @if($isOptionWrong)<span style="color:var(--red);font-size:14px">✕</span>@endif
+            </div>
+            @endforeach
+          </div>
+          @endif
+
+          {{-- Kunci jawaban --}}
+          @if(!empty($a['correct_answer']))
+          <div style="margin-top:6px;font-weight:700;color:var(--green)">
+            Kunci: {{ $a['correct_answer'] }}
+          </div>
+          @endif
+
+          {{-- Pembahasan --}}
           @if(!empty($a['explanation']))
           <div style="color:var(--ink3);margin-top:6px;padding:8px;background:var(--bg);border-radius:6px">
             <strong>Pembahasan:</strong> {{ $a['explanation'] }}

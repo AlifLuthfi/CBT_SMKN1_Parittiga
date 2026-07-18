@@ -14,6 +14,7 @@ class ExamSession extends Model
         'last_activity_at'=>'datetime','last_bulk_sync_at'=>'datetime',
         'is_passed'=>'boolean','force_submit'=>'boolean',
         'score'=>'decimal:2',
+        'flagged_question_ids'=>'array',
     ];
 
     public function exam()      { return $this->belongsTo(Exam::class,'exam_id'); }

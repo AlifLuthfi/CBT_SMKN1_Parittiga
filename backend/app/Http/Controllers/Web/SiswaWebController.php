@@ -96,10 +96,10 @@ class SiswaWebController extends Controller
             ->paginate(20)
             ->through(function ($s) {
                 $exam = $s->exam;
+                $totalQuestions = $exam?->total_questions ?? $s->answers()->count();
                 $correct = $s->answers->where('is_correct', true)->count();
                 $wrong = $s->answers->where('is_correct', false)->whereNotNull('answer')->count();
-                $unanswered = $s->answers->whereNull('is_correct')->count();
-                $totalQuestions = $s->answers->count();
+                $unanswered = $totalQuestions - $correct - $wrong;
 
                 return (object) [
                     'id' => $s->id,

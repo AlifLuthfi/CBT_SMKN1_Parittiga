@@ -227,14 +227,72 @@ class _HasilScreenState extends ConsumerState<HasilScreen> {
         ]),
         const SizedBox(height: 8),
 
-        // Jawaban user — hanya info mana yang salah, tanpa kunci benar
+        // Jawaban user
         Wrap(spacing: 4, children: [
-          Text('Jawaban: ', style: AppTextStyles.bodySmall),
+          Text('Jawabanmu: ', style: AppTextStyles.bodySmall),
           Text(a.userAnswer ?? 'Tidak dijawab',
             style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w700, color: isCorrect ? AppColors.green : AppColors.red,
               fontStyle: a.userAnswer == null ? FontStyle.italic : FontStyle.normal)),
           if (isWrong) Text(' (salah)', style: AppTextStyles.bodySmall.copyWith(color: AppColors.red)),
         ]),
+
+        // Opsi pilihan
+        if (a.options != null && a.options!.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          ...a.options!.entries.map((e) => Container(
+            margin: const EdgeInsets.only(bottom: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: e.key == a.correctAnswer
+                ? AppColors.greenLight
+                : (e.key == a.userAnswer && isWrong ? AppColors.redLight : AppColors.bg),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: e.key == a.correctAnswer
+                  ? AppColors.green
+                  : (e.key == a.userAnswer && isWrong ? AppColors.red : AppColors.border)),
+            ),
+            child: Row(children: [
+              Container(
+                width: 22, height: 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: e.key == a.correctAnswer
+                    ? AppColors.green
+                    : (e.key == a.userAnswer && isWrong ? AppColors.red : Colors.transparent),
+                  border: Border.all(color: e.key == a.correctAnswer ? AppColors.green : AppColors.border2)),
+                child: Center(child: Text(e.key, style: TextStyle(
+                  fontSize: 10, fontWeight: FontWeight.w700,
+                  color: (e.key == a.correctAnswer || (e.key == a.userAnswer && isWrong)) ? Colors.white : AppColors.ink2))),
+              ),
+              const SizedBox(width: 8),
+              Expanded(child: Text(e.value, style: AppTextStyles.bodySmall.copyWith(fontSize: 12))),
+              if (e.key == a.correctAnswer)
+                const Icon(Icons.check_circle, size: 16, color: AppColors.green),
+              if (e.key == a.userAnswer && isWrong)
+                const Icon(Icons.cancel, size: 16, color: AppColors.red),
+            ]),
+          )),
+        ],
+
+        // Jawaban benar
+        if (a.correctAnswer != null) ...[
+          const SizedBox(height: 6),
+          Text('Kunci: ${a.correctAnswer}',
+            style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w700, color: AppColors.green)),
+        ],
+
+        // Pembahasan
+        if (a.explanation != null && a.explanation!.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: AppColors.bg, borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.border)),
+            child: Text('Pembahasan: ${a.explanation}',
+              style: AppTextStyles.bodySmall.copyWith(fontSize: 12, color: AppColors.ink2, height: 1.5)),
+          ),
+        ],
       ]),
     );
   }

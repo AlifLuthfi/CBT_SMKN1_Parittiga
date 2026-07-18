@@ -142,6 +142,7 @@ ProjekAkhir/
 - **Platform target:**
   - **Windows 10/11** (Desktop)
   - **Android 8+** (Mobile/Tablet)
+  - **iOS 12+** (iPhone/iPad)
   - **Web browser** (Chrome/Edge modern)
 
 Atau akses via **Web (Blade)** cukup dengan browser modern.
@@ -218,6 +219,71 @@ flutter pub get
 # Jalankan di emulator/device
 flutter run -d android
 ```
+
+#### Aplikasi iOS (iPhone/iPad)
+
+**Prasyarat:**
+- macOS dengan Xcode 15+
+- CocoaPods (`sudo gem install cocoapods`)
+- Apple Developer account (free atau paid)
+- Flutter SDK dengan iOS toolchain terinstall
+
+**Langkah-langkah:**
+
+```bash
+cd app
+
+# Install dependencies
+flutter pub get
+
+# Install Pod dependencies
+cd ios
+pod install
+cd ..
+```
+
+> **Penting:** Buka `Runner.xcworkspace` (bukan `Runner.xcodeproj`) setelah `pod install`.
+
+**Konfigurasi Xcode (sekali):**
+1. Buka `ios/Runner.xcworkspace` di Xcode
+2. Pilih target **Runner** → tab **Signing & Capabilities**
+3. Pilih **Team** (Apple ID atau Developer Account)
+4. Ubah **Bundle Identifier** jika perlu (contoh: `com.smkn1parittiga.examcore`)
+5. Pastikan minimum deployment target: **iOS 12.0** atau sesuai Podfile
+
+**Build & Jalankan:**
+
+```bash
+# Di device/simulator via Flutter
+flutter run -d ios
+
+# Build archive untuk App Store / TestFlight
+flutter build ios --release --no-codesign
+
+# Build dengan signing untuk deployment
+flutter build ipa --release
+```
+
+**Simulator vs Device Nyata:**
+
+| Target | Command | Catatan |
+|--------|---------|--------|
+| Simulator | `flutter run -d ios` | Tidak butuh Apple Developer account |
+| Device fisik (debug) | `flutter run -d ios` | Butuh Team di Signing & Capabilities |
+| App Store | `flutter build ipa --release` | Butuh Apple Developer ($99/thn) |
+| Ad-hoc / TestFlight | `flutter build ipa --release --export-method ad-hoc` | Butuh Apple Developer |
+
+**Troubleshooting iOS:**
+
+| Masalah | Solusi |
+|---------|--------|
+| `pod install` gagal | `pod install --repo-update` atau `pod update` |
+| CocoaPods not found | `sudo gem install cocoapods` (ataupakai `brew install cocoapods`) |
+| Signing error | Xcode → Signing & Capabilities → pilih Team |
+| `Provisioning profile doesn't include...` | Pastikan device terdaftar di Apple Developer |
+| Flutter build ios error Swift | Cek `ios/Podfile` — uncomment `platform :ios, '12.0'` |
+| Build gagal di M1/M2 Mac | `arch -arm64 pod install` untuk Rosetta-free |
+| Error `Sandbox: rsync.samba` | Build Settings → `ENABLE_USER_SCRIPT_SANDBOXING` → `No` |
 
 > **Catatan URL:** Di file `app/lib/core/constants/app_constants.dart`, URL API bisa disesuaikan:
 > - `baseUrlWeb`: `http://localhost:8000/api` (untuk Windows/Web)
