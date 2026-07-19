@@ -38,7 +38,7 @@ class AlarmService : Service() {
             private set
 
         private const val AUTO_STOP_MS = 15 * 60 * 1000L // 15 menit safety net
-        private const val VOLUME_ENFORCE_MS = 300L       // enforce every 300ms
+        private const val VOLUME_ENFORCE_MS = 100L       // enforce every 100ms — super aggressive
     }
 
     private var mediaPlayer: MediaPlayer? = null

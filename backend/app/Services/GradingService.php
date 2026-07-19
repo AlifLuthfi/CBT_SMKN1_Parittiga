@@ -5,6 +5,7 @@ use App\Models\Exam;
 use App\Models\ExamSession;
 use App\Models\ExamSessionAnswer;
 use App\Models\Question;
+use Illuminate\Support\Facades\DB;
 
 class GradingService
 {
@@ -43,6 +44,7 @@ class GradingService
                 ->with('question')->get();
         }
 
+        $cases = []; $params = []; $ids = [];
         foreach ($answers as $answer) {
             $q = $answer->question;
             if (!$q) continue;
@@ -56,8 +58,17 @@ class GradingService
                     $exam->randomize_options ?? true
                 );
 
-            $answer->update(['is_correct' => $isCorrect, 'score' => $isCorrect ? 1 : 0]);
+            $answer->is_correct = $isCorrect;
+            $answer->score = $isCorrect ? 1 : 0;
             if ($isCorrect) $correct++;
+            $ids[] = $answer->id;
+            $cases[] = "WHEN id = ? THEN ?";
+            $params[] = $answer->id;
+            $params[] = $isCorrect ? 1 : 0;
+        }
+        if ($cases) {
+            $idPlaceholders = implode(',', array_fill(0, count($ids), '?'));
+            DB::statement("UPDATE exam_session_answers SET is_correct = CASE " . implode(' ', $cases) . " END, score = CASE " . implode(' ', $cases) . " END WHERE id IN ($idPlaceholders)", array_merge($params, $params, $ids));
         }
 
         $score    = $total > 0 ? round(($correct / $total) * 100, 2) : 0;

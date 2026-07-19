@@ -156,7 +156,12 @@ class _RekapNilaiScreenState extends ConsumerState<RekapNilaiScreen> {
           else if (_students!.isEmpty)
             const Padding(padding: EdgeInsets.all(24), child: EmptyState(title: 'Belum ada siswa', icon: Icons.people_outline))
           else
-            ..._students!.map((s) => _buildStudentTile(s)),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _students!.length,
+              itemBuilder: (_, i) => _buildStudentTile(_students![i]),
+            ),
         ]),
       ),
     ]);

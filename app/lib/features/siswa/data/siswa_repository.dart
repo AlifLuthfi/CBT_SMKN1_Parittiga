@@ -93,10 +93,12 @@ class SiswaRepository {
     }
   }
 
-  Future<List<RiwayatItem>> getHistory() async {
-    final data = await ApiClient.get('/siswa/history');
-    final list = (data['data'] as List?) ?? [];
-    return list.map((e) => RiwayatItem.fromJson(e as Map<String, dynamic>)).toList();
+  Future<({List<RiwayatItem> items, int total, int lastPage})> getHistory({int page = 1}) async {
+    final data = await ApiClient.get('/siswa/history', params: {'page': page, 'per_page': 20});
+    final list = ((data['data'] as List?) ?? []).map((e) => RiwayatItem.fromJson(e as Map<String, dynamic>)).toList();
+    final total = data['total'] as int? ?? list.length;
+    final lastPage = data['last_page'] as int? ?? 1;
+    return (items: list, total: total, lastPage: lastPage);
   }
 
   Future<Map<String, dynamic>> verifyExitPassword(int? sessionId, String password) async {
@@ -106,5 +108,15 @@ class SiswaRepository {
       'action': 'exit_exam',
     });
     return data;
+  }
+
+  /// Verifikasi password siswa untuk matikan alarm — hanya password sendiri.
+  Future<bool> verifyAlarmPassword(String password) async {
+    try {
+      await ApiClient.post('/siswa/verify-alarm-password', data: {'password': password});
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 }

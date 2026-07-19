@@ -56,10 +56,12 @@ class ExamController extends Controller
         $exam = Exam::create($data);
 
         if ($questionIds) {
+            $records = [];
             $order = 1;
             foreach ($questionIds as $qId) {
-                \App\Models\ExamQuestion::create(['exam_id'=>$exam->id,'question_id'=>$qId,'display_order'=>$order++]);
+                $records[] = ['exam_id'=>$exam->id,'question_id'=>$qId,'display_order'=>$order++,'created_at'=>now(),'updated_at'=>now()];
             }
+            \App\Models\ExamQuestion::insert($records);
         }
 
         return response()->json(['message'=>'Ujian dibuat.','exam'=>$exam->load(['classRoom'])], 201);
@@ -159,13 +161,19 @@ class ExamController extends Controller
     {
         $this->authorizeExam($request, $exam);
         $data = $request->validate(['question_ids'=>'required|array','question_ids.*'=>'exists:questions,id']);
-        $added = 0;
+        $existing = $exam->questions()->pluck('exam_questions.question_id')->toArray();
         $order = $exam->questions()->count();
+        $records = [];
         foreach ($data['question_ids'] as $qId) {
-            \App\Models\ExamQuestion::firstOrCreate(['exam_id'=>$exam->id,'question_id'=>$qId],['display_order'=>++$order]);
-            $added++;
+            if (!in_array($qId, $existing)) {
+                $records[] = ['exam_id'=>$exam->id,'question_id'=>$qId,'display_order'=>++$order,'created_at'=>now(),'updated_at'=>now()];
+            }
         }
-        $exam->update(['total_questions'=>$exam->questions()->count()]);
+        if ($records) {
+            \App\Models\ExamQuestion::insert($records);
+        }
+        $added = count($records);
+        $exam->increment('total_questions', $added);
         return response()->json(['message'=>"$added soal ditambahkan."]);
     }
 

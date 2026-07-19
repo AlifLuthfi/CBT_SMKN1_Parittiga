@@ -44,7 +44,7 @@
   <div class="card-body">
     <h3 style="font-size:16px;font-weight:600;margin-bottom:16px">Pembahasan Soal (hanya yang salah)</h3>
     <div style="display:flex;flex-direction:column;gap:16px">
-      @foreach($result['answers'] as $idx => $a)
+      @foreach(($result['answers'] ?? []) as $idx => $a)
       @php $isCorrect = ($a['is_correct'] ?? false); @endphp
       @if($isCorrect) @continue @endif
       <div style="padding:14px;border:1px solid var(--border);border-radius:8px;border-left:4px solid {{ empty($a['user_answer']) ? 'var(--amber)' : 'var(--red)' }}">

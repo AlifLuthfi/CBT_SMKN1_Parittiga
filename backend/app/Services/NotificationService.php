@@ -14,6 +14,7 @@ class NotificationService
 
     public function notifyViolation(Violation $v): void
     {
+        $v->loadMissing(['session.exam', 'student']);
         $teacherId = $v->session->exam->teacher_id;
         $student   = $v->student->name;
         $exam      = $v->session->exam->title;

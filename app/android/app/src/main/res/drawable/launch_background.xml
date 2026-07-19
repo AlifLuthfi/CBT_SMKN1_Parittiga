@@ -13,6 +13,6 @@
           android:height="120dp">
         <bitmap
             android:gravity="center"
-            android:src="@drawable/smk_parittiga_logo" />
+            android:src="@mipmap/ic_launcher_foreground" />
     </item>
 </layer-list>

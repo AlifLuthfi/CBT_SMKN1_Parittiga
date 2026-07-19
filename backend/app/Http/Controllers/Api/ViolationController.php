@@ -20,7 +20,7 @@ class ViolationController extends Controller
             'violation_type' => 'required|in:tab_switch,fullscreen_exit,copy_paste,blur,devtools,mouse_leave,window_resize,wrong_password',
         ]);
 
-        $session = ExamSession::findOrFail($data['session_id']);
+        $session = ExamSession::with('exam')->findOrFail($data['session_id']);
 
         if ($session->student_id !== $request->user()->id) {
             return response()->json(['message' => 'Akses ditolak.'], 403);
@@ -33,7 +33,7 @@ class ViolationController extends Controller
         // Update or create violation record
         $violation = Violation::updateOrCreate(
             ['session_id' => $session->id, 'violation_type' => $data['violation_type']],
-            ['count'      => \DB::raw('count + 1'), 'student_id' => $request->user()->id]
+            ['count'      => DB::raw('count + 1'), 'student_id' => $request->user()->id]
         );
 
         // Recalculate total violations

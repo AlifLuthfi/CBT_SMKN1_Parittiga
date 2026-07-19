@@ -124,8 +124,9 @@ class ExamListNotifier extends StateNotifier<ExamListState> {
   Future<void> fetch() async {
     state = state.copyWith(loading: true, error: null);
     try {
-      final results = await _repo.getExams(status: state.filterStatus);
-      state = state.copyWith(items: results, loading: false);
+      final raw = await _repo.getExams(status: state.filterStatus);
+      final items = ((raw['data'] as List?) ?? []).map((e) => ExamModel.fromJson(e as Map<String, dynamic>)).toList();
+      state = state.copyWith(items: items, loading: false);
     } catch (e) {
       state = state.copyWith(loading: false, error: e.toString());
     }

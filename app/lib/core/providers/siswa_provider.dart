@@ -166,7 +166,7 @@ class ResultCache extends StateNotifier<Map<int, ExamResultModel>> {
   ResultCache() : super({});
 
   void cache(int sessionId, ExamResultModel result) {
-    state = {...state, sessionId: result};
+    state = Map.from(state)..[sessionId] = result;
   }
 
   ExamResultModel? get(int sessionId) => state[sessionId];

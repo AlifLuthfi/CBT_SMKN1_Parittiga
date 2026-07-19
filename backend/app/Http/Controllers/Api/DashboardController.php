@@ -10,14 +10,17 @@ use App\Models\Subject;
 use App\Models\User;
 use App\Models\Violation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
     public function index(Request $request)
     {
         $teacher = $request->user();
+        $cacheKey = "guru_dashboard_{$teacher->id}";
 
-        $stats = [
+        return response()->json(Cache::remember($cacheKey, 300, function () use ($teacher) {
+            $stats = [
             'total_exams'     => Exam::where('teacher_id', $teacher->id)->count(),
             'total_questions' => Question::where('teacher_id', $teacher->id)->count(),
             'total_students'  => $this->countUniqueStudents($teacher->id),
@@ -62,6 +65,7 @@ class DashboardController extends Controller
             ->orderByDesc('created_at')->take(6)->get();
 
         return response()->json(compact('stats','activeExams','questionDist','recentExams','recentViolations','topScores','activityLogs'));
+        }));
     }
 
     private function countUniqueStudents(int $teacherId): int

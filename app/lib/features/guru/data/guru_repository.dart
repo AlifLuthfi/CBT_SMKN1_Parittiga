@@ -11,10 +11,9 @@ class GuruRepository {
     on ApiException { rethrow; }
   }
 
-  Future<List<ExamModel>> getExams({String? status, int page = 1}) async {
+  Future<Map<String, dynamic>> getExams({String? status, int page = 1}) async {
     final data = await ApiClient.get('/guru/exams', params: {'status': status, 'page': page, 'per_page': 15});
-    final list = (data['data'] as List?) ?? (data as List? ?? []);
-    return list.map((e) => ExamModel.fromJson(e as Map<String, dynamic>)).toList();
+    return data;
   }
 
   Future<List<ClassRoomModel>> getClasses() async {

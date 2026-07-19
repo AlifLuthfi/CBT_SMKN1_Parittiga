@@ -7,8 +7,8 @@ import '../../../../core/widgets/app_widgets.dart';
 import '../../data/siswa_models.dart';
 import '../../data/siswa_repository.dart';
 
-final _riwayatProvider = FutureProvider.autoDispose<List<RiwayatItem>>((ref) async {
-  return SiswaRepository().getHistory();
+final _riwayatProvider = FutureProvider.autoDispose.family<({List<RiwayatItem> items, int total, int lastPage}), int>((ref, page) async {
+  return SiswaRepository().getHistory(page: page);
 });
 
 class RiwayatScreen extends ConsumerStatefulWidget {
@@ -19,34 +19,73 @@ class RiwayatScreen extends ConsumerStatefulWidget {
 
 class _RiwayatScreenState extends ConsumerState<RiwayatScreen> {
   String _filter = 'all';
+  int _page = 1;
+  int _lastPage = 1;
+  final List<RiwayatItem> _allItems = [];
+  final _scrollCtrl = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollCtrl.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollCtrl.removeListener(_onScroll);
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200 &&
+        _page < _lastPage) {
+      setState(() => _page++);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final riwayat = ref.watch(_riwayatProvider);
+    final riwayat = ref.watch(_riwayatProvider(_page));
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
         title: const Text('Riwayat Ujian'),
-        actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: () => ref.invalidate(_riwayatProvider))],
+        actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: () {
+          setState(() { _page = 1; _allItems.clear(); });
+          ref.invalidate(_riwayatProvider);
+        })],
       ),
       body: riwayat.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error:   (e,_) => ErrorState(message: e.toString(), onRetry: () => ref.invalidate(_riwayatProvider)),
-        data:    (list) => _buildContent(list),
+        error:   (e,_) => ErrorState(message: e.toString(), onRetry: () {
+          setState(() { _page = 1; _allItems.clear(); });
+          ref.invalidate(_riwayatProvider);
+        }),
+        data:    (result) {
+          if (_page == 1) {
+            _allItems.clear();
+            _allItems.addAll(result.items);
+          } else if (_page > 1 && result.items.isNotEmpty) {
+            _allItems.addAll(result.items);
+          }
+          _lastPage = result.lastPage;
+          return _buildContent(result.total);
+        },
       ),
     );
   }
 
-  Widget _buildContent(List<RiwayatItem> list) {
-    final filtered = _filter == 'all'    ? list
-        : _filter == 'pass'   ? list.where((r) => r.isPassed).toList()
-        : list.where((r) => !r.isPassed).toList();
+  Widget _buildContent(int totalDb) {
+    final filtered = _filter == 'all'    ? _allItems
+        : _filter == 'pass'   ? _allItems.where((r) => r.isPassed).toList()
+        : _allItems.where((r) => !r.isPassed).toList();
 
     // Calculate summary stats
-    final total     = list.length;
-    final passed    = list.where((r) => r.isPassed).length;
-    final avgScore  = total > 0 ? list.map((r) => r.score).reduce((a,b) => a+b) / total : 0.0;
-    final bestScore = total > 0 ? list.map((r) => r.score).reduce((a,b) => a>b ? a:b) : 0.0;
+    final total     = _allItems.length;
+    final passed    = _allItems.where((r) => r.isPassed).length;
+    final avgScore  = total > 0 ? _allItems.map((r) => r.score).reduce((a,b) => a+b) / total : 0.0;
+    final bestScore = total > 0 ? _allItems.map((r) => r.score).reduce((a,b) => a>b ? a:b) : 0.0;
 
     return Column(children: [
       // Summary card
@@ -54,7 +93,7 @@ class _RiwayatScreenState extends ConsumerState<RiwayatScreen> {
         color: AppColors.surface,
         padding: const EdgeInsets.all(16),
         child: Row(children: [
-          _summaryBox('Total',    '$total',                    AppColors.navy),
+          _summaryBox('Total',    '$totalDb',                    AppColors.navy),
           _summaryBox('Lulus',    '$passed',                   AppColors.green),
           _summaryBox('Rata-rata','${avgScore.toStringAsFixed(1)}', AppColors.amber),
           _summaryBox('Tertinggi','${bestScore.toStringAsFixed(0)}', AppColors.orange),
@@ -71,15 +110,21 @@ class _RiwayatScreenState extends ConsumerState<RiwayatScreen> {
         ]),
       ),
       const Divider(height: 1),
-      // List
+      // List with infinite scroll
       Expanded(child: filtered.isEmpty
           ? const EmptyState(title: 'Tidak ada riwayat', icon: Icons.history_outlined)
           : RefreshIndicator(
-              onRefresh: () async => ref.invalidate(_riwayatProvider),
+              onRefresh: () async { setState(() { _page = 1; _allItems.clear(); }); ref.invalidate(_riwayatProvider); },
               child: ListView.builder(
+                controller: _scrollCtrl,
                 padding: const EdgeInsets.all(12),
-                itemCount: filtered.length,
-                itemBuilder: (_, i) => _riwayatCard(filtered[i], i + 1),
+                itemCount: filtered.length + (_page < _lastPage ? 1 : 0),
+                itemBuilder: (_, i) {
+                  if (i >= filtered.length) {
+                    return const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator(strokeWidth: 2)));
+                  }
+                  return _riwayatCard(filtered[i], i + 1);
+                },
               ),
             )),
     ]);

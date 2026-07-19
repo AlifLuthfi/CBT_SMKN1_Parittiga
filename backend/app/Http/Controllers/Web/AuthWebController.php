@@ -9,6 +9,7 @@ use App\Models\Violation;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 
 class AuthWebController extends Controller
@@ -77,35 +78,36 @@ class AuthWebController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        if ($user->isAdmin()) {
-            $totalUsers   = User::count();
-            $activeExams  = Exam::where('status', 'active')->count();
-            $totalSiswa   = User::where('role', 'siswa')->count();
-            $totalGuru    = User::where('role', 'guru')->count();
-            $openViolations = Violation::where('status', 'open')->count();
-            $submissionsToday = ExamSession::whereDate('submitted_at', today())->count();
-            $exams        = Exam::with(['teacher', 'classRoom'])->latest()->paginate(20);
+        $role = $user->role;
 
-            return view('dashboard.admin', compact(
-                'totalUsers', 'activeExams', 'totalSiswa', 'totalGuru',
-                'openViolations', 'submissionsToday', 'exams'
-            ));
+        if ($role === 'admin') {
+            $data = Cache::remember('web_admin_dashboard', 300, fn() => [
+                'totalUsers'   => User::count(),
+                'activeExams'  => Exam::where('status', 'active')->count(),
+                'totalSiswa'   => User::where('role', 'siswa')->count(),
+                'totalGuru'    => User::where('role', 'guru')->count(),
+                'openViolations' => Violation::where('status', 'open')->count(),
+                'submissionsToday' => ExamSession::whereDate('submitted_at', today())->count(),
+            ]);
+            $exams = Exam::with(['teacher', 'classRoom'])->latest()->paginate(20);
+
+            return view('dashboard.admin', array_merge($data, compact('exams')));
         }
 
-        if ($user->isGuru()) {
-            $totalQuestions = $user->questions()->count();
-            $totalExams     = $user->exams()->count();
-            $activeExams    = $user->exams()->where('status', 'active')->count();
-            $totalClasses   = $user->classRooms()->count();
-            $totalSubjects  = \App\Models\Subject::where('teacher_id', $user->id)->count();
-            $totalStudents  = \App\Models\ClassRoom::where('teacher_id', $user->id)->withCount('students')->get()->sum('students_count');
-            $recentExams    = $user->exams()->with('classRoom')->latest()->take(5)->get();
-            $examSessions   = ExamSession::whereIn('exam_id', $user->exams()->pluck('id'))->count();
+        if ($role === 'guru') {
+            $cacheKey = "web_guru_dashboard_{$user->id}";
+            $data = Cache::remember($cacheKey, 300, fn() => [
+                'totalQuestions' => $user->questions()->count(),
+                'totalExams'     => $user->exams()->count(),
+                'activeExams'    => $user->exams()->where('status', 'active')->count(),
+                'totalClasses'   => $user->classRooms()->count(),
+                'totalSubjects'  => \App\Models\Subject::where('teacher_id', $user->id)->count(),
+                'totalStudents'  => \App\Models\ClassRoom::where('teacher_id', $user->id)->withCount('students')->get()->sum('students_count'),
+                'examSessions'   => ExamSession::whereIn('exam_id', $user->exams()->pluck('id'))->count(),
+            ]);
+            $recentExams = $user->exams()->with('classRoom')->latest()->take(5)->get();
 
-            return view('dashboard.guru', compact(
-                'totalQuestions', 'totalExams', 'activeExams', 'totalClasses',
-                'totalSubjects', 'totalStudents', 'recentExams', 'examSessions'
-            ));
+            return view('dashboard.guru', array_merge($data, compact('recentExams')));
         }
 
         // Siswa

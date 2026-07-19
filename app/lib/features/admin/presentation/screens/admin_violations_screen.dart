@@ -45,7 +45,7 @@ class AdminViolationsScreen extends ConsumerWidget {
             data: (data) {
               final list = (data as Map<String, dynamic>)['data'] as List? ?? [];
               return DropdownButtonFormField<int>(
-                value: selectedClassId,
+                initialValue: selectedClassId,
                 isExpanded: true,
                 decoration: const InputDecoration(
                   prefixIcon: Icon(Icons.filter_alt_outlined, size: 18),

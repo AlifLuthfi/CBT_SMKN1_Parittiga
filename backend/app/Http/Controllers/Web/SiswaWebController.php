@@ -17,11 +17,17 @@ class SiswaWebController extends Controller
         $exams = Exam::whereIn('class_id', $classIds)
             ->where('status', 'active')
             ->with(['classRoom', 'teacher'])
+            ->get();
+
+        // Eager load sessions in one query
+        $sessionMap = ExamSession::whereIn('exam_id', $exams->pluck('id'))
+            ->where('student_id', $student->id)
             ->get()
-            ->map(function ($exam) use ($student) {
-                $session = ExamSession::where('exam_id', $exam->id)
-                    ->where('student_id', $student->id)->first();
-                return (object) [
+            ->keyBy('exam_id');
+
+        $exams = $exams->map(function ($exam) use ($sessionMap) {
+            $session = $sessionMap->get($exam->id);
+            return (object) [
                     'id' => $exam->id,
                     'title' => $exam->title,
                     'subject' => $exam->classRoom?->subject,
@@ -66,8 +72,9 @@ class SiswaWebController extends Controller
 
         if ($session) {
             // Resume: hitung sisa waktu terkini termasuk extension
+            $session->loadMissing(['exam', 'extensions']);
             $elapsed   = now()->diffInSeconds($session->started_at);
-            $extSeconds= $session->extensions()->sum('minutes') * 60;
+            $extSeconds= $session->extensions->sum('minutes') * 60;
             $total     = ($exam->duration_minutes * 60) + $extSeconds;
             $remaining = max(0, $total - $elapsed);
             $session->update(['remaining_seconds' => (int) $remaining, 'last_activity_at' => now()]);
@@ -96,7 +103,7 @@ class SiswaWebController extends Controller
             ->paginate(20)
             ->through(function ($s) {
                 $exam = $s->exam;
-                $totalQuestions = $exam?->total_questions ?? $s->answers()->count();
+                $totalQuestions = $exam?->total_questions ?? $s->answers->count();
                 $correct = $s->answers->where('is_correct', true)->count();
                 $wrong = $s->answers->where('is_correct', false)->whereNotNull('answer')->count();
                 $unanswered = $totalQuestions - $correct - $wrong;

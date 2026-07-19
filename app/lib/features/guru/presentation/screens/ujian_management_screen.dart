@@ -7,7 +7,11 @@ import '../../data/guru_models.dart';
 import '../../data/guru_repository.dart';
 
 final _examListProvider = FutureProvider.autoDispose.family<List<ExamModel>, String?>(
-  (ref, status) => GuruRepository().getExams(status: status),
+  (ref, status) async {
+    final raw = await GuruRepository().getExams(status: status);
+    final list = (raw['data'] as List?) ?? [];
+    return list.map((e) => ExamModel.fromJson(e as Map<String, dynamic>)).toList();
+  },
 );
 
 class UjianManagementScreen extends ConsumerStatefulWidget {

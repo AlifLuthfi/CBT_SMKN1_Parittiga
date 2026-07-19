@@ -192,8 +192,12 @@ class _HasilScreenState extends ConsumerState<HasilScreen> {
         ])),
         const Divider(height: 1),
 
-        ...wrongAnswers.asMap().entries.map((entry) =>
-          _reviewItem(entry.key + 1, entry.value)),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: wrongAnswers.length,
+          itemBuilder: (_, i) => _reviewItem(i + 1, wrongAnswers[i]),
+        ),
       ]),
     );
   }

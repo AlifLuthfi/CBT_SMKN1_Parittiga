@@ -133,6 +133,9 @@ Route::middleware('auth:sanctum')->group(function () {
         // Verifikasi password untuk keluar
         Route::post('/verify-exit', [StudentExamController::class, 'verifyExit']);
 
+        // Verifikasi password siswa untuk matikan alarm (hanya password sendiri)
+        Route::post('/verify-alarm-password', [StudentExamController::class, 'verifyAlarmPassword']);
+
         // Laporkan pelanggaran
         Route::post('/violations', [ViolationController::class, 'store']);
     });

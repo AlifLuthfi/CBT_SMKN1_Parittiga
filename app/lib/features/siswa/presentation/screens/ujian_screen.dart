@@ -37,8 +37,6 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
   int                  _totalSeconds  = 0;   // total exam duration
   int                  _timeElapsed   = 0;   // elapsed before current tick window
   DateTime?            _timerStartedAt;      // when current timer window started
-  int                  _violCount     = 0;
-  String?              _alarmPin;                        // NIS siswa - PIN untuk matikan alarm
   bool                 _alarmTriggered = false;           // alarm sedang berbunyi
   int                  _seed          = 0;
   Timer?               _timer;
@@ -46,7 +44,6 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
   Timer?               _bulkSyncTimer;
   Timer?               _flaggedSyncTimer;
   Timer?               _fullscreenEnforcer;
-  Timer?               _periodicCheckTimer;
   Timer?               _saveDebounce;
   bool                 _bulkSyncing = false;
   bool                 _loading       = true;
@@ -73,7 +70,6 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
     _bulkSyncTimer?.cancel();
     _flaggedSyncTimer?.cancel();
     _fullscreenEnforcer?.cancel();
-    _periodicCheckTimer?.cancel();
     _saveDebounce?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     ExamAlarmService.stopAlarm();
@@ -90,28 +86,6 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
     super.dispose();
   }
 
-  // ── Multi-window / split-screen detection ──────────
-  bool _wasInMultiWindow = false;
-
-  Future<void> _checkMultiWindow() async {
-    if (!mounted || _phase != 'ujian') return;
-    final isMulti = await AntiCheatService.isInMultiWindow();
-    if (isMulti && !_wasInMultiWindow) {
-      _wasInMultiWindow = true;
-      _recordViolation('split_screen');
-    } else if (!isMulti && _wasInMultiWindow) {
-      _wasInMultiWindow = false;
-    }
-  }
-
-  Future<void> _checkScreenRecording() async {
-    if (!mounted || _phase != 'ujian') return;
-    final recording = await AntiCheatService.isScreenRecording();
-    if (recording) {
-      _recordViolation('screen_record');
-    }
-  }
-
   // ── Anti-cheat: detect app background ─────────────────
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -123,7 +97,6 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
         _timerStartedAt = null;
       }
       _timer?.cancel();
-      _recordViolation('blur');
       _triggerAlarm();
     } else if (state == AppLifecycleState.resumed) {
       // Enforce fullscreen SEKARANG, bukan nunggu tick 500ms
@@ -136,8 +109,6 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
       }
       // Server sync background
       _syncTimerFromServer();
-      _checkMultiWindow();
-      _checkScreenRecording();
       if (_alarmTriggered) {
         _showAlarmUnlockDialog();
       }
@@ -251,8 +222,6 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
 
       _flagged       = {};
       _currentIndex  = 0;
-      _violCount     = 0;
-      _alarmPin      = _nisCtrl.text.isNotEmpty ? _nisCtrl.text : null;
       _alarmTriggered = false;
 
       // Wall-clock anchor
@@ -271,7 +240,7 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
       AntiCheatService.enableKeyboardBlock();
       // Multi-window listener
       AntiCheatService.onMultiWindowChanged((isMulti) {
-        if (isMulti && _phase == 'ujian') _recordViolation('split_screen');
+        if (isMulti && _phase == 'ujian') _triggerAlarm();
       });
       // Aggressive enforcer — burst 50ms first 2s, then 150ms untuk respon cepat
       int burstCount = 0;
@@ -293,12 +262,6 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
       });
       _startTimer();
       _startAutoSave();
-      // Periodic checks — simpan ref biar bisa dicancel di dispose
-      _periodicCheckTimer?.cancel();
-      _periodicCheckTimer = Timer.periodic(const Duration(seconds: 10), (_) {
-        _checkMultiWindow();
-        _checkScreenRecording();
-      });
       // Koreksi timer dari server setelah start (untuk resume case)
       if (result.isResumed) {
         _syncTimerFromServer();
@@ -431,29 +394,12 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
     _scheduleSave();
   }
 
-  void _recordViolation(String type) {
-    setState(() => _violCount++);
-    final max = _exam?.maxViolations ?? 5;
-    if (_session != null) {
-      ref.read(_ujianRepoProvider).recordViolation(_session!.sessionId, type);
-    }
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('⚠ Pelanggaran terdeteksi! ($_violCount/$max)'),
-        backgroundColor: AppColors.red,
-        duration: const Duration(seconds: 3),
-      ));
-    }
-    if (_violCount >= max) _autoSubmit();
-  }
-
   Future<void> _autoSubmit() async {
     _timer?.cancel();
     _autoSaveTimer?.cancel();
     _bulkSyncTimer?.cancel();
     _flaggedSyncTimer?.cancel();
     _fullscreenEnforcer?.cancel();
-    _periodicCheckTimer?.cancel();
     await ExamAlarmService.stopAlarm();
     await _doSubmit(auto: true);
   }
@@ -491,7 +437,7 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
     return '${m.toString().padLeft(2,'0')}:${ss.toString().padLeft(2,'0')}';
   }
 
-  // ── ALARM UNLOCK DIALOG ────────────────────────────────
+  // ── ALARM UNLOCK DIALOG (password) ─────────────────────
   bool _unlockDialogOpen = false;
 
   Future<void> _showAlarmUnlockDialog() async {
@@ -508,24 +454,32 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) {
           void tryUnlock() {
-            final pin = pwCtrl.text;
-            if (pin.isEmpty || busy) return;
+            final pw = pwCtrl.text;
+            if (pw.isEmpty || busy) return;
             busy = true;
             errorText = null;
             setDialogState(() {});
-            // Async unlock
             Future.microtask(() async {
-              if (pin == _alarmPin) {
-                await ExamAlarmService.stopAlarm();
-                if (ctx.mounted) {
-                  setDialogState(() {});
-                  Navigator.pop(ctx, true);
+              try {
+                final repo = ref.read(_ujianRepoProvider);
+                final ok = await repo.verifyAlarmPassword(pw);
+                if (ok) {
+                  await ExamAlarmService.stopAlarm();
+                  if (ctx.mounted) {
+                    setDialogState(() {});
+                    Navigator.pop(ctx, true);
+                  }
+                } else {
+                  if (ctx.mounted) {
+                    busy = false;
+                    errorText = 'Password salah! Alarm tetap berbunyi.';
+                    setDialogState(() {});
+                  }
                 }
-              } else {
-                _recordViolation('wrong_password');
+              } catch (_) {
                 if (ctx.mounted) {
                   busy = false;
-                  errorText = 'NIS salah! Alarm tetap berbunyi.';
+                  errorText = 'Gagal verifikasi. Coba lagi.';
                   setDialogState(() {});
                 }
               }
@@ -547,18 +501,17 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              const Text('Masukkan NIS Anda untuk mematikan alarm:', style: TextStyle(fontSize: 13)),
+              const Text('Masukkan password Anda untuk mematikan alarm:', style: TextStyle(fontSize: 13)),
               const SizedBox(height: 10),
               TextField(
                 controller: pwCtrl,
                 obscureText: true,
                 autofocus: true,
-                keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  hintText: 'NIS',
+                  hintText: 'Password',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  prefixIcon: const Icon(Icons.vpn_key_outlined, size: 18),
+                  prefixIcon: const Icon(Icons.lock_outline, size: 18),
                   errorText: errorText,
                 ),
                 textInputAction: TextInputAction.go,
@@ -599,7 +552,7 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
     }
   }
 
-  // ── PASSWORD EXIT DIALOG ──────────────────────────────
+  // ── EXIT DIALOG (NIS siswa + konsekuensi) ──────────────
   bool _exitDialogOpen = false;
 
   Future<bool> _onWillPop() async {
@@ -607,100 +560,143 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
     _exitDialogOpen = true;
 
     final pwCtrl = TextEditingController();
+    var busy = false;
+
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: const Row(children: [
-          Icon(Icons.lock_outline, color: Colors.red, size: 22),
-          SizedBox(width: 8),
-          Text('Akses Terkunci'),
-        ]),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('Masukkan password admin/guru untuk keluar dari ujian:', style: TextStyle(fontSize: 13)),
-          const SizedBox(height: 12),
-          TextField(
-            controller: pwCtrl,
-            obscureText: true,
-            autofocus: true,
-            decoration: InputDecoration(
-              hintText: 'Password',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Row(children: [
+            Icon(Icons.logout, color: Colors.red, size: 22),
+            SizedBox(width: 8),
+            Text('Kembali ke Dashboard'),
+          ]),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.redLight,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.red.withValues(alpha:.3)),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  const Icon(Icons.warning_amber_rounded, size: 16, color: Colors.red),
+                  const SizedBox(width: 6),
+                  const Text('PERHATIAN!', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Colors.red)),
+                ]),
+                const SizedBox(height: 8),
+                Text(
+                  'Dengan keluar dari ujian, Anda MENERIMA KONSEKUENSI bahwa:\n'
+                  '• Ujian akan berakhir secara otomatis\n'
+                  '• Jawaban yang sudah diisi akan disimpan & dikumpulkan\n'
+                  '• Nilai akan dihitung berdasarkan jawaban saat ini\n'
+                  '• Anda TIDAK dapat melanjutkan ujian kembali',
+                  style: TextStyle(fontSize: 12, color: Colors.red[900], height: 1.5),
+                ),
+              ]),
             ),
-            textInputAction: TextInputAction.go,
-            onSubmitted: (_) {
-              if (pwCtrl.text.isNotEmpty) Navigator.pop(ctx, true);
-            },
-          ),
-          const SizedBox(height: 8),
-          Text('Catatan: Keluar tanpa password akan dicatat sebagai pelanggaran',
-            style: TextStyle(fontSize: 11, color: Colors.grey[600]), textAlign: TextAlign.center),
-        ]),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              if (pwCtrl.text.isNotEmpty) Navigator.pop(ctx, true);
-            },
-            icon: const Icon(Icons.logout, size: 16),
-            label: const Text('Verifikasi & Keluar'),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-          ),
-        ],
+            const SizedBox(height: 16),
+            const Text('Masukkan NIS Anda untuk konfirmasi:', style: TextStyle(fontSize: 13)),
+            const SizedBox(height: 10),
+            TextField(
+              controller: pwCtrl,
+              obscureText: true,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                hintText: 'NIS',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                prefixIcon: const Icon(Icons.vpn_key_outlined, size: 18),
+              ),
+              textInputAction: TextInputAction.go,
+              enabled: !busy,
+              onSubmitted: (_) {
+                if (pwCtrl.text.isNotEmpty && !busy) {
+                  busy = true;
+                  setDialogState(() {});
+                  Navigator.pop(ctx, true);
+                }
+              },
+            ),
+            if (busy) const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+            ),
+          ]),
+          actions: [
+            TextButton(
+              onPressed: busy ? null : () => Navigator.pop(ctx, false),
+              child: const Text('Batal, Lanjutkan Ujian'),
+            ),
+            ElevatedButton.icon(
+              onPressed: busy ? null : () {
+                if (pwCtrl.text.isNotEmpty) {
+                  busy = true;
+                  setDialogState(() {});
+                  Navigator.pop(ctx, true);
+                }
+              },
+              icon: const Icon(Icons.logout, size: 16),
+              label: const Text('Ya, Saya Keluar'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            ),
+          ],
+        ),
       ),
     );
 
     _exitDialogOpen = false;
-    final password = pwCtrl.text;
+    final nis = pwCtrl.text.trim();
     pwCtrl.dispose();
 
-    if (confirmed == true && password.isNotEmpty) {
-      await _verifyExitPassword(password);
+    if (confirmed == true && nis.isNotEmpty) {
+      await _exitUjian(nis);
     }
 
-    return false; // never allow direct pop
+    return false;
   }
 
-  Future<void> _verifyExitPassword(String password) async {
-    try {
-      final repo = ref.read(_ujianRepoProvider);
-      final result = await repo.verifyExitPassword(
-        _session!.sessionId,
-        password,
-      );
-      if (result['valid'] == true) {
-        // Password benar — stop alarm + auto-submit ujian
-        await ExamAlarmService.stopAlarm();
-        AntiCheatService.exitLockTask();
-        AntiCheatService.disableKeyboardBlock();
-        await SecureStorage.clearExamSession();
-        WindowsAntiCheat.unlock();
-        AntiCheatService.disableSecureFlag();
-        WakelockPlus.disable();
-        SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-        if (result['submitted'] == true && mounted) {
-          final res = ExamResultModel.fromJson(result['result'] as Map<String, dynamic>);
-          context.pushReplacement('/siswa/result/${_session!.sessionId}', extra: res);
-        } else if (mounted) {
-          context.go('/siswa');
-        }
-      } else {
-        // Salah — catat violation
-        _recordViolation('wrong_password');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Password salah! Pelanggaran dicatat.'),
-            backgroundColor: Colors.red,
-          ));
-        }
+  Future<void> _exitUjian(String nis) async {
+    final session = _session;
+    if (session == null) return;
+
+    // Validasi NIS — harus sesuai dengan NIS siswa yg login
+    final user = await SecureStorage.getUser();
+    final userNis = user?['nis'] as String? ?? '';
+    if (nis != userNis && nis != _nisCtrl.text.trim()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('NIS tidak sesuai!'),
+          backgroundColor: Colors.red,
+        ));
       }
-    } catch (_) {
-      // Offline fallback — masih catat violation
-      _recordViolation('wrong_password');
+      return;
+    }
+
+    // Submit ujian
+    setState(() => _submitting = true);
+    try {
+      await ExamAlarmService.stopAlarm();
+      AntiCheatService.exitLockTask();
+      AntiCheatService.disableKeyboardBlock();
+      await ref.read(_ujianRepoProvider).bulkSaveAnswers(session.sessionId, _answers.cast<int, String?>());
+      final result = await ref.read(_ujianRepoProvider).submitExam(session.sessionId);
+      await SecureStorage.clearExamSession();
+      WindowsAntiCheat.unlock();
+      AntiCheatService.disableSecureFlag();
+      WakelockPlus.disable();
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      if (mounted) {
+        context.pushReplacement('/siswa/result/${session.sessionId}', extra: result);
+      }
+    } catch (e) {
+      setState(() => _submitting = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: AppColors.red));
+      }
     }
   }
   @override
@@ -761,7 +757,7 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [const Icon(Icons.warning_amber_rounded, size: 15, color: Color(0xFF92400E)), const SizedBox(width: 6), Text('Peraturan Ujian', style: AppTextStyles.bodySmall.copyWith(color: const Color(0xFF92400E), fontWeight: FontWeight.w700))]),
                 const SizedBox(height: 8),
-                ...['Dilarang berpindah aplikasi selama ujian','Setiap pelanggaran akan dicatat','Ujian otomatis dikumpul saat waktu habis','Sesi tersimpan otomatis jika terjadi gangguan',
+                ...['Dilarang berpindah aplikasi selama ujian','Alarm keamanan aktif jika meninggalkan layar','Ujian otomatis dikumpul saat waktu habis','Sesi tersimpan otomatis jika terjadi gangguan',
                     _exam?.randomizeQuestions == true ? 'Urutan soal diacak per siswa (LCG)' : 'Urutan soal tetap',
                 ].map((r) => Padding(padding: const EdgeInsets.only(bottom: 3), child: Row(children: [
                   Container(width: 4, height: 4, margin: const EdgeInsets.only(right: 8, top: 5), decoration: const BoxDecoration(color: AppColors.amber, shape: BoxShape.circle)),
@@ -826,9 +822,14 @@ class _UjianScreenState extends ConsumerState<UjianScreen> with WidgetsBindingOb
         backgroundColor: AppColors.bg,
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          titleSpacing: 12,
+          titleSpacing: 0,
           title: Text(_exam?.title ?? 'Ujian', style: AppTextStyles.bodySmall.copyWith(color: AppColors.ink, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
           actions: [
+            IconButton(
+              icon: Icon(Icons.logout, size: 18, color: AppColors.ink2),
+              tooltip: 'Kembali ke Dashboard',
+              onPressed: () { _onWillPop(); },
+            ),
             Container(
               margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
             padding: const EdgeInsets.symmetric(horizontal: 12),

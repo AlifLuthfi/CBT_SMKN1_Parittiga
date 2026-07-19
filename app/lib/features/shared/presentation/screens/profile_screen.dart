@@ -24,7 +24,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _biometricAvail   = false;
   bool _biometricEnabled = false;
   bool _obscureOld = true, _obscureNew = true, _obscureConf = true;
-  String _appVersion = '1.0.0';
+  final String _appVersion = '1.0.0';
 
   @override
   void initState() {
@@ -244,7 +244,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _toggleTile(String label, String sub, bool value, IconData icon, ValueChanged<bool> onChanged) => SwitchListTile.adaptive(
     value:    value,
     onChanged: onChanged,
-    activeColor: AppColors.navy,
+    activeTrackColor: AppColors.navy,
     secondary: Icon(icon, size: 20, color: AppColors.ink3),
     title:    Text(label, style: AppTextStyles.body.copyWith(fontSize: 13.5)),
     subtitle: Text(sub,   style: AppTextStyles.bodySmall.copyWith(fontSize: 11.5)),

@@ -68,19 +68,23 @@ class GradeReportService
             $dist[$grade]++;
         }
 
-        // Exam trends
+        // Exam trends — single GROUP BY query instead of N+1
+        $trends = ExamSession::whereHas('exam', fn($q) => $q->where('class_id', $classId)->where('status', 'ended'))
+            ->whereIn('status', ['submitted', 'timeout', 'force_submitted'])
+            ->whereNotNull('score')
+            ->selectRaw('exam_id, ROUND(AVG(score), 2) as average')
+            ->groupBy('exam_id')
+            ->pluck('average', 'exam_id');
+
         $exams = $class->exams()
-            ->where('status','ended')
+            ->where('status', 'ended')
             ->orderBy('end_time')
             ->get();
 
-        $trends = $exams->map(function($exam) {
-            $avg = ExamSession::where('exam_id', $exam->id)
-                ->whereIn('status',['submitted','timeout','force_submitted'])
-                ->whereNotNull('score')
-                ->avg('score');
-            return ['exam_title'=>substr($exam->title,0,20),'average'=>round($avg ?? 0, 2)];
-        });
+        $trendList = $exams->map(fn($exam) => [
+            'exam_title' => substr($exam->title, 0, 20),
+            'average'    => round($trends[$exam->id] ?? 0, 2),
+        ]);
 
         return [
             'class_name'        => $class->name,
@@ -92,7 +96,7 @@ class GradeReportService
             'pass_rate'         => round($reports->avg('pass_rate'), 2),
             'highest'           => ['score'=>$reports->max('highest_score'),'name'=>$reports->sortByDesc('highest_score')->first()?->student->name],
             'lowest'            => ['score'=>$reports->min('lowest_score'),'name'=>$reports->sortBy('lowest_score')->first()?->student->name],
-            'exam_trends'       => $trends,
+            'exam_trends'       => $trendList,
             'grade_distribution'=> $dist,
             'rankings'          => $reports->values()->map(function($r, $i) {
                 $trend = 'stable';

@@ -29,16 +29,22 @@ class StudentExamController extends Controller
         $exams = Exam::whereIn('class_id', $classIds)
             ->where('status', 'active')
             ->with(['classRoom', 'teacher'])
+            ->get();
+
+        // Eager load sessions for all exams in one query
+        $sessionMap = ExamSession::whereIn('exam_id', $exams->pluck('id'))
+            ->where('student_id', $student->id)
             ->get()
-            ->map(function (Exam $exam) use ($student) {
-                $session = ExamSession::where('exam_id', $exam->id)
-                    ->where('student_id', $student->id)->first();
-                return array_merge($exam->toArray(), [
-                    'session_status' => $session?->status,
-                    'session_id'     => $session?->id,
-                    'can_start'      => !$session || $session->status === 'in_progress',
-                ]);
-            });
+            ->keyBy('exam_id');
+
+        $result = $exams->map(function (Exam $exam) use ($sessionMap, $student) {
+            $session = $sessionMap->get($exam->id);
+            return array_merge($exam->toArray(), [
+                'session_status' => $session?->status,
+                'session_id'     => $session?->id,
+                'can_start'      => !$session || $session->status === 'in_progress',
+            ]);
+        });
 
         return response()->json(['data' => $exams]);
     }
@@ -84,7 +90,8 @@ class StudentExamController extends Controller
         if ($exam->status !== 'active') return response()->json(['message' => 'Ujian tidak aktif.'], 403);
 
         // Cek sesi aktif — lanjutkan dengan seed & urutan SAMA
-        $existingSession = ExamSession::where('exam_id', $exam->id)
+        $existingSession = ExamSession::with(['exam', 'extensions'])
+            ->where('exam_id', $exam->id)
             ->where('student_id', $student->id)->where('status', 'in_progress')->first();
 
         $isResumed = false;
@@ -93,7 +100,7 @@ class StudentExamController extends Controller
             $isResumed = true;
             // Hitung sisa waktu terkini
             $elapsed   = now()->diffInSeconds($existingSession->started_at);
-            $extSeconds= $existingSession->extensions()->sum('minutes') * 60;
+            $extSeconds= $existingSession->extensions->sum('minutes') * 60;
             $total     = ($exam->duration_minutes * 60) + $extSeconds;
             $remaining = max(0, $total - $elapsed);
             $existingSession->update(['remaining_seconds' => (int) $remaining, 'last_activity_at' => now()]);
@@ -159,7 +166,8 @@ class StudentExamController extends Controller
 
         // Cek waktu habis
         $elapsed   = now()->diffInSeconds($session->started_at);
-        $total     = ($session->exam->duration_minutes * 60) + $session->extensions()->sum('minutes') * 60;
+        $session->loadMissing(['exam', 'extensions']);
+        $total     = ($session->exam->duration_minutes * 60) + $session->extensions->sum('minutes') * 60;
         $remaining = max(0, $total - $elapsed);
 
         if ($remaining <= 0) {
@@ -193,7 +201,8 @@ class StudentExamController extends Controller
 
         // Cek waktu habis
         $elapsed   = now()->diffInSeconds($session->started_at);
-        $extSeconds = $session->extensions()->sum('minutes') * 60;
+        $session->loadMissing(['exam', 'extensions']);
+        $extSeconds = $session->extensions->sum('minutes') * 60;
         $total     = ($session->exam->duration_minutes * 60) + $extSeconds;
         $remaining = max(0, $total - $elapsed);
 
@@ -297,7 +306,8 @@ class StudentExamController extends Controller
         }
 
         $elapsed    = now()->diffInSeconds($session->started_at);
-        $extSeconds = $session->extensions()->sum('minutes') * 60;
+        $session->loadMissing(['exam', 'extensions']);
+        $extSeconds = $session->extensions->sum('minutes') * 60;
         $total      = ($session->exam->duration_minutes * 60) + $extSeconds;
         $remaining  = max(0, $total - $elapsed);
 
@@ -322,16 +332,17 @@ class StudentExamController extends Controller
     public function history(Request $request)
     {
         $student = $request->user();
+        $perPage = (int) ($request->per_page ?? 20);
         $sessions = ExamSession::where('student_id', $student->id)
             ->whereIn('status', ['submitted', 'timeout', 'force_submitted'])
-            ->with('exam.classRoom')
+            ->with(['exam.classRoom', 'answers'])
             ->orderByDesc('submitted_at')
-            ->get()
-            ->map(function ($s) {
-                $exam = $s->exam;
-                $correct    = $s->answers()->where('is_correct', true)->count();
-                $wrong      = $s->answers()->where('is_correct', false)->whereNotNull('answer')->count();
-                $total      = $exam?->total_questions ?? $s->answers()->count();
+            ->paginate($perPage)
+            ->through(function ($s) {
+                $exam     = $s->exam;
+                $correct  = $s->answers->where('is_correct', true)->count();
+                $wrong    = $s->answers->where('is_correct', false)->whereNotNull('answer')->count();
+                $total    = $exam?->total_questions ?? $s->answers->count();
                 $unanswered = max(0, $total - $correct - $wrong);
                 return [
                     'id'             => $s->id,
@@ -347,7 +358,7 @@ class StudentExamController extends Controller
                 ];
             });
 
-        return response()->json(['data' => $sessions]);
+        return response()->json($sessions);
     }
 
     private function authorizeSession(Request $request, ExamSession $session): void
@@ -441,5 +452,22 @@ class StudentExamController extends Controller
             'valid'   => true,
             'message' => 'Password valid. Keluar diizinkan.',
         ]);
+    }
+
+    /* ── Verifikasi password siswa untuk matikan alarm ──── */
+    public function verifyAlarmPassword(Request $request)
+    {
+        $data = $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        $user  = $request->user();
+        $valid = \Illuminate\Support\Facades\Hash::check($data['password'], $user->password);
+
+        if (!$valid) {
+            return response()->json(['valid' => false, 'message' => 'Password salah!'], 422);
+        }
+
+        return response()->json(['valid' => true, 'message' => 'Password valid.']);
     }
 }

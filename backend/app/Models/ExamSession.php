@@ -28,7 +28,10 @@ class ExamSession extends Model
         if ($this->status !== 'in_progress') return 0;
         if (!$this->started_at) return $this->exam->duration_minutes * 60;
         $elapsed = now()->diffInSeconds($this->started_at);
-        $total   = ($this->exam->duration_minutes * 60) + $this->extensions()->sum('minutes') * 60;
+        $ext     = $this->relationLoaded('extensions')
+            ? $this->extensions->sum('minutes')
+            : $this->extensions()->sum('minutes');
+        $total   = ($this->exam->duration_minutes * 60) + $ext * 60;
         return max(0, $total - $elapsed);
     }
 }

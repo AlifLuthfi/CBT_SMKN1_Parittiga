@@ -32,10 +32,12 @@ class QuestionPackageController extends Controller
         $data['teacher_id'] = $request->user()->id;
         $package = QuestionPackage::create($data);
 
+        $syncData = [];
         $order = 1;
         foreach ($data['question_ids'] as $qId) {
-            $package->questions()->attach($qId, ['display_order' => $order++]);
+            $syncData[$qId] = ['display_order' => $order++];
         }
+        $package->questions()->sync($syncData);
 
         return response()->json(['message' => 'Paket soal dibuat.', 'package' => $package->load(['classRoom', 'questions'])], 201);
     }
@@ -62,11 +64,12 @@ class QuestionPackageController extends Controller
         $package->update($data);
 
         if (isset($data['question_ids'])) {
-            $package->questions()->detach();
+            $syncData = [];
             $order = 1;
             foreach ($data['question_ids'] as $qId) {
-                $package->questions()->attach($qId, ['display_order' => $order++]);
+                $syncData[$qId] = ['display_order' => $order++];
             }
+            $package->questions()->sync($syncData);
         }
 
         return response()->json(['message' => 'Paket soal diperbarui.', 'package' => $package->fresh()->load(['classRoom', 'questions'])]);

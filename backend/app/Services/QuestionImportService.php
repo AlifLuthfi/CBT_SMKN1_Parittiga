@@ -121,7 +121,7 @@ class QuestionImportService
         $rows = $xlsx->rows();
         array_shift($rows); // buang header
 
-        return array_values(array_filter($rows, fn($r) => !empty(array_filter($r, fn($v) => trim((string)$v) !== ''))));
+        return array_values(array_filter($rows, function(array $r) { return !empty(array_filter($r, fn($v) => trim((string)$v) !== '')); }));
     }
 
     // ─── Baca CSV ───────────────────────────────────────────────────────────
@@ -144,6 +144,12 @@ class QuestionImportService
         $success = 0;
         $errors  = [];
 
+        // Load existing question_texts for duplicate check — satu query batch
+        $existingTexts = Question::where('teacher_id', $teacherId)
+            ->whereIn('question_text', array_column($rows, 'question_text'))
+            ->pluck('question_text')
+            ->toArray();
+
         foreach ($rows as $i => $row) {
             $rowNum    = $i + 2;
             $validated = $this->validateRow($row, $rowNum, $teacherId);
@@ -155,12 +161,8 @@ class QuestionImportService
 
             $data = $validated['data'];
 
-            // Cek duplikat question_text milik guru yang sama
-            $exists = Question::where('teacher_id', $teacherId)
-                ->where('question_text', $data['question_text'])
-                ->exists();
-
-            if ($exists) {
+            // Cek duplikat question_text dari memory batch
+            if (in_array($data['question_text'], $existingTexts)) {
                 $errors[] = "Baris $rowNum: Soal duplikat sudah ada di bank soal Anda.";
                 continue;
             }

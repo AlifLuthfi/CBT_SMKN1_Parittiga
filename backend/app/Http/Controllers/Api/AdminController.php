@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\Violation;
 use App\Services\ExamSchedulerService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
@@ -18,7 +19,8 @@ class AdminController extends Controller
 
     public function dashboard()
     {
-        return response()->json([
+        return response()->json(Cache::remember('admin_dashboard', 300, function () {
+            return [
             'stats' => [
                 'guru'         => User::guru()->count(),
                 'siswa'        => User::siswa()->count(),
@@ -31,7 +33,8 @@ class AdminController extends Controller
             'exams'    => Exam::with(['teacher','classRoom'])->withCount('sessions')->latest()->take(10)->get(),
             'violations'=> Violation::with(['student','session.exam'])->whereDate('created_at',today())->orderByDesc('updated_at')->take(5)->get(),
             'activities'=> ActivityLog::with('user')->latest()->take(10)->get(),
-        ]);
+            ];
+        }));
     }
 
     public function users(Request $request)

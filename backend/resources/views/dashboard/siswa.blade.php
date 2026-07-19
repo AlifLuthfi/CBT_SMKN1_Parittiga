@@ -13,7 +13,7 @@
   </div>
   <div class="stat-card orange">
     <div class="sc-header"><span class="sc-label">RATA-RATA NILAI</span><span class="sc-status warn">RATA-RATA</span></div>
-    <div class="sc-value">{{ $avgScore ? number_format($avgScore, 1) : '-' }}</div>
+    <div class="sc-value">{{ $avgScore !== null ? number_format($avgScore, 1) : '-' }}</div>
   </div>
 </div>
 

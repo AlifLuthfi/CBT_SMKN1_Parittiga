@@ -186,12 +186,14 @@ class GuruWebController extends Controller
         $data['show_result_immediately'] = false;
         $data['max_violations']          = $request->max_violations ?? 5;
         $exam = Exam::create($data);
-        // Link questions ke exam via pivot
+        // Link questions ke exam via pivot — batch insert
         if ($questionIds) {
+            $records = [];
             $order = 1;
             foreach ($questionIds as $qId) {
-                \App\Models\ExamQuestion::create(['exam_id' => $exam->id, 'question_id' => $qId, 'display_order' => $order++]);
+                $records[] = ['exam_id' => $exam->id, 'question_id' => $qId, 'display_order' => $order++, 'created_at' => now(), 'updated_at' => now()];
             }
+            \App\Models\ExamQuestion::insert($records);
         }
         return back()->with('success', 'Ujian berhasil dibuat.');
     }

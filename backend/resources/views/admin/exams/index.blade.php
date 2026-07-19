@@ -26,19 +26,23 @@
           <td class="td-sm">
             @php
               $badge = match($exam->status) {
-                'active' => 'badge badge-success',
-                'draft'  => 'badge badge-warning',
-                'ended'  => 'badge badge-secondary',
-                default  => 'badge',
+                'active'    => 'b-green',
+                'draft'     => 'b-amber',
+                'ended'     => 'b-navy',
+                'paused'    => 'b-orange',
+                'scheduled' => 'b-sky',
+                default     => 'b-gray',
               };
               $label = match($exam->status) {
-                'active' => 'Aktif',
-                'draft'  => 'Draft',
-                'ended'  => 'Selesai',
-                default  => $exam->status,
+                'active'    => 'Aktif',
+                'draft'     => 'Draft',
+                'ended'     => 'Selesai',
+                'paused'    => 'Jeda',
+                'scheduled' => 'Terjadwal',
+                default     => $exam->status,
               };
             @endphp
-            <span class="{{ $badge }}">{{ $label }}</span>
+            <span class="badge {{ $badge }}">{{ $label }}</span>
           </td>
           <td class="td-sm">{{ $exam->duration_minutes }} mnt</td>
           <td class="right" style="display:flex;gap:4px;justify-content:flex-end;flex-wrap:nowrap">

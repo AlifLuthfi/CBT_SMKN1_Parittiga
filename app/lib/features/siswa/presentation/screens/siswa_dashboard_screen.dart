@@ -68,7 +68,12 @@ class SiswaDashboardScreen extends ConsumerWidget {
       else ...[
         Text('Ujian Aktif (${exams.length})', style: AppTextStyles.h4),
         const SizedBox(height: 12),
-        ...exams.map((e) => _examCard(context, e)),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: exams.length,
+          itemBuilder: (_, i) => _examCard(context, exams[i]),
+        ),
       ],
     ]);
   }

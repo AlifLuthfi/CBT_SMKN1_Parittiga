@@ -75,7 +75,8 @@ class ExamSchedulerService
 
     public function submitTimedOutSessions(): void
     {
-        ExamSession::where('status','in_progress')
+        ExamSession::with(['exam', 'extensions'])
+            ->where('status','in_progress')
             ->whereHas('exam',fn($q)=>$q->where('status','active'))
             ->each(function(ExamSession $session) {
                 $remaining = $session->remaining_seconds;
