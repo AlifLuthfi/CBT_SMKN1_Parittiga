@@ -7,7 +7,7 @@ class AppConstants {
   static const String baseUrlLocal        = 'http://127.0.0.1:8000/api';
   static const String baseUrlAndroidEmu   = 'http://10.0.2.2:8000/api';
   static const String baseUrlLocalNetwork = 'http://192.168.74.128:8000/api';
-  static const String baseUrlHosting    = ''; // set via .env atau runtime
+  static const String baseUrlHosting    = 'https://enlighten-ascension-unseen.ngrok-free.dev/api';
   static String get baseUrlDefault => kIsWeb || defaultTargetPlatform != TargetPlatform.android
       ? baseUrlWeb
       : baseUrlAndroidEmu;
