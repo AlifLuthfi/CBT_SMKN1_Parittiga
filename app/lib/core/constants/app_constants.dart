@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class AppConstants {
   AppConstants._();
 
@@ -8,9 +6,7 @@ class AppConstants {
   static const String baseUrlAndroidEmu   = 'http://10.0.2.2:8000/api';
   static const String baseUrlLocalNetwork = 'http://192.168.74.128:8000/api';
   static const String baseUrlHosting    = 'https://enlighten-ascension-unseen.ngrok-free.dev/api';
-  static String get baseUrlDefault => kIsWeb || defaultTargetPlatform != TargetPlatform.android
-      ? baseUrlWeb
-      : baseUrlAndroidEmu;
+  static String get baseUrlDefault => baseUrlHosting;
 
   static const int    connectTimeoutMs    = 30000;
   static const int    receiveTimeoutMs    = 30000;
